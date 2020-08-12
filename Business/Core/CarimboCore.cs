@@ -1,4 +1,5 @@
 ﻿using Business.Core.ICore;
+using iText.IO.Source;
 using iText.Kernel.Colors;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
@@ -32,6 +33,7 @@ namespace Business.Core
             //await CarimboLateralStream();
         }
 
+        #region carimbos
 
         private async Task CarimboLateralStream()
         {
@@ -162,7 +164,7 @@ namespace Business.Core
             doc.Close();
         }
 
-
+        #endregion
 
         public void SeccionarPDF()
         {
@@ -173,14 +175,28 @@ namespace Business.Core
             pdfDocument.Close();
         }
 
-        public void Copia(string codigoProcesso, string geradoPor, string dataHora, int paginaInicial = 1)
+        public byte[] Copia(byte[] arquivo, string codigoProcesso, string geradoPor, string dataHora, int paginaInicial = 1)
         {
-            PdfDocument pdf = new PdfDocument(new PdfReader(@"C:\Users\prodest1\Desktop\output.pdf"), new PdfWriter(@"C:\Users\prodest1\Desktop\output2.pdf"));
-            paginaInicial--;
-            int paginaFinal = paginaInicial + pdf.GetNumberOfPages();
-            for (int i = 1; i <= pdf.GetNumberOfPages(); i++)
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            PdfDocument pdfDocument;
+            try
             {
-                PdfPage page = pdf.GetPage(i);
+                pdfDocument = new PdfDocument(
+                    new PdfReader(new MemoryStream(arquivo)), 
+                    new PdfWriter(baos)
+                );
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
+                throw;
+            }
+
+            paginaInicial--;
+            int paginaFinal = paginaInicial + pdfDocument.GetNumberOfPages();
+            for (int i = 1; i <= pdfDocument.GetNumberOfPages(); i++)
+            {
+                PdfPage page = pdfDocument.GetPage(i);
                 Rectangle rectangle = new Rectangle(0, 0, 10, page.GetPageSize().GetHeight());
                 Canvas canvas = new Canvas(page, rectangle);
 
@@ -202,7 +218,10 @@ namespace Business.Core
 
                 canvas.Close();
             }
-            pdf.Close();
+
+            pdfDocument.Close();
+
+            return baos.ToArray();
         }
 
         #region Auxiliares

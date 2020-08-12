@@ -6,6 +6,8 @@
 
   <ItemGroup>
     <PackageReference Include="itext7" Version="7.1.12" />
+    <PackageReference Include="itext7.pdfocr.tesseract4" Version="1.0.1" />
+    <PackageReference Include="Tesseract-OCR" Version="1.0.4" />
   </ItemGroup>
 
 </Project>
