@@ -19,15 +19,36 @@ namespace API.Controllers
 
         [HttpPost]
         [Consumes("multipart/form-data", "application/x-www-form-urlencoded")]
-        public async Task<IActionResult> Copia([FromForm]PostObject postObject)
+        public async Task<IActionResult> ValorLegal([FromForm] IFormFile arquivo, [FromForm]string registro, [FromForm] string valorLegal, [FromForm] string dataHora)
+        {
+            if (arquivo.Length > 0)
+            {
+                var arquivoByteArray = await ObterArquivo(arquivo);
+
+                var arquivoCarimbado = CarimboCore.ValorLegal(
+                    arquivoByteArray,
+                    registro,
+                    valorLegal,
+                    dataHora
+                );
+
+                return File(arquivoCarimbado, "application/octet-stream");
+            }
+
+            return BadRequest();
+        }
+
+        [HttpPost]
+        [Consumes("multipart/form-data", "application/x-www-form-urlencoded")]
+        public async Task<IActionResult> CopiaProcesso([FromForm]PostObject postObject)
         {
             if (postObject.arquivo.Length > 0)
             {
                 var arquivo = await ObterArquivo(postObject.arquivo);
 
-                var arquivoCarimbado = CarimboCore.Copia(
+                var arquivoCarimbado = CarimboCore.CopiaProcesso(
                     arquivo,
-                    postObject.codigo,
+                    postObject.protocolo,
                     postObject.geradoPor,
                     postObject.dataHora,
                     postObject.paginaInicial
@@ -44,7 +65,7 @@ namespace API.Controllers
         public class PostObject 
         {
             public IFormFile arquivo { get; set; }
-            public string codigo { get; set; }
+            public string protocolo { get; set; }
             public string geradoPor { get; set; }
             public string dataHora { get; set; }
             public int paginaInicial { get; set; }
