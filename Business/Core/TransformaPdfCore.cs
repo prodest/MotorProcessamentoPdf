@@ -1,4 +1,5 @@
 ﻿using Business.Core.ICore;
+using iText.Html2pdf;
 using iText.Kernel.Pdf;
 using iText.Kernel.Utils;
 using System.Collections.Generic;
@@ -9,6 +10,14 @@ namespace Business.Core
 {
     public class TransformaPdfCore : ITransformaPdfCore
     {
+        public byte[] HtmlPdf(byte[] file)
+        {
+            var html = new MemoryStream(file);
+            var output = new MemoryStream();
+            HtmlConverter.ConvertToPdf(html, output);
+            return output.ToArray();
+        }
+
         public byte[] PdfPagination(byte[] file, int itemsByPage, int page)
         {
             PdfDocument pdfDocument = new PdfDocument(new PdfReader(new MemoryStream(file)));

@@ -33,6 +33,22 @@ namespace API.Controllers
             return BadRequest();
         }
 
+        [HttpPost]
+        [Consumes("multipart/form-data", "application/x-www-form-urlencoded")]
+        public async Task<IActionResult> HtmlPdf([FromForm] IFormFile arquivo)
+        {
+            if (arquivo.Length > 0)
+            {
+                var arquivoBytes = await ObterArquivo(arquivo);
+
+                var output = TransformaPdfCore.HtmlPdf(arquivoBytes);
+
+                return File(output, "application/octet-stream");
+            }
+
+            return BadRequest();
+        }
+
         private async Task<byte[]> ObterArquivo(IFormFile ArquivoAnexo)
         {
             byte[] arquivoDados = null;
