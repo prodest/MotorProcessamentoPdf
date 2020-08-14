@@ -1,36 +1,51 @@
-﻿using iText.Kernel.Pdf;
+﻿using Business.Core.ICore;
+using iText.Kernel.Pdf;
 using iText.Kernel.Utils;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace Business.Core
 {
-    public class TransformaPdfCore
+    public class TransformaPdfCore : ITransformaPdfCore
     {
-        //public ICollection<byte[]> SeccionarPDF(byte[] arquivo)
-        //{
-        //    //PdfDocument pdfDocument = new PdfDocument(new PdfReader(RESOURCE));
-        //    PdfDocument pdfDocument = new PdfDocument(new PdfReader(new MemoryStream(arquivo)));
-        //    IList<PdfDocument> splitDocuments = new CustomPdfSplitter(pdfDocument, DEST).SplitByPageCount(2);
-        //    foreach (PdfDocument doc in splitDocuments)
-        //        doc.Close();
-        //    pdfDocument.Close();
-        //}
+        public byte[] PdfPagination(byte[] file, int itemsByPage, int page)
+        {
+            PdfDocument pdfDocument = new PdfDocument(new PdfReader(new MemoryStream(file)));
+            ICollection<byte[]> output = new CustomPdfSplitter(pdfDocument).SplitByPageCount(itemsByPage);
+            pdfDocument.Close();
+            return output.ElementAt(page);
+        }
 
-        //private class CustomPdfSplitter : PdfSplitter
-        //{
-        //    private string dest;
-        //    private int partNumber = 1;
+        private class CustomPdfSplitter : PdfSplitter
+        {
+            private List<MemoryStream> Destination;
+            private int DestionationIndex = 0;
 
-        //    public CustomPdfSplitter(PdfDocument pdfDocument, string dest) : base(pdfDocument)
-        //    {
-        //        this.dest = dest;
-        //    }
+            public CustomPdfSplitter(PdfDocument pdfDocument) : base(pdfDocument)
+            {
+                Destination = new List<MemoryStream>();
+            }
 
-        //    protected override PdfWriter GetNextPdfWriter(PageRange documentPageRange)
-        //    {
-        //        return new PdfWriter(string.Format(dest, partNumber++));
-        //    }
-        //}
+            protected override PdfWriter GetNextPdfWriter(PageRange documentPageRange)
+            {
+                Destination.Add(new MemoryStream());
+                return new PdfWriter(Destination[DestionationIndex++]);
+            }
+
+            public ICollection<byte[]> SplitByPageCount(int pageNumber)
+            {
+                ICollection<byte[]> output = new List<byte[]>();
+
+                var splitDocuments = base.SplitByPageCount(pageNumber);
+                foreach (PdfDocument doc in splitDocuments)
+                    doc.Close();
+                
+                foreach (var item in Destination)
+                    output.Add(item.ToArray());
+
+                return output;
+            }
+        }
     }
 }

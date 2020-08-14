@@ -21,6 +21,7 @@ namespace API
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddTransient<ICarimboCore, CarimboCore>();
+            services.AddTransient<ITransformaPdfCore, TransformaPdfCore>();
             services.AddControllers();
         }
 
