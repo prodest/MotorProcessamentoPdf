@@ -2,6 +2,7 @@
 using iText.Html2pdf;
 using iText.Kernel.Pdf;
 using iText.Kernel.Utils;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -24,6 +25,34 @@ namespace Business.Core
             ICollection<byte[]> output = new CustomPdfSplitter(pdfDocument).SplitByPageCount(itemsByPage);
             pdfDocument.Close();
             return output.ElementAt(page);
+        }
+
+        public bool IsPdf(byte[] file)
+        {
+            try
+            {
+                var reader = new PdfReader(new MemoryStream(file));
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        public bool IsPdfa(byte[] file)
+        {
+            try
+            {
+                var reader = new PdfReader(new MemoryStream(file));
+                if (reader.GetPdfAConformanceLevel() == null)
+                    return false;
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
         private class CustomPdfSplitter : PdfSplitter

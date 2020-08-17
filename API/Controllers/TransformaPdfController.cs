@@ -1,7 +1,7 @@
-﻿using Business.Core.ICore;
+﻿using API.Tools;
+using Business.Core.ICore;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.IO;
 using System.Threading.Tasks;
 
 namespace API.Controllers
@@ -23,7 +23,7 @@ namespace API.Controllers
         {
             if (arquivo.Length > 0)
             {
-                var arquivoBytes = await ObterArquivo(arquivo);
+                var arquivoBytes = await PdfTools.ObterArquivo(arquivo);
                 
                 var output = TransformaPdfCore.PdfPagination(arquivoBytes, itensPorPagina, pagina);
 
@@ -39,7 +39,7 @@ namespace API.Controllers
         {
             if (arquivo.Length > 0)
             {
-                var arquivoBytes = await ObterArquivo(arquivo);
+                var arquivoBytes = await PdfTools.ObterArquivo(arquivo);
 
                 var output = TransformaPdfCore.HtmlPdf(arquivoBytes);
 
@@ -49,18 +49,23 @@ namespace API.Controllers
             return BadRequest();
         }
 
-        private async Task<byte[]> ObterArquivo(IFormFile ArquivoAnexo)
-        {
-            byte[] arquivoDados = null;
 
-            //copia o IFormFile para byte array (referencia: https://docs.microsoft.com/en-us/aspnet/core/mvc/models/file-uploads?view=aspnetcore-2.0 )
-            using (var memoryStream = new MemoryStream())
+        [HttpPost]
+        [Consumes("multipart/form-data", "application/x-www-form-urlencoded")]
+        public async Task<IActionResult> IsPdf([FromForm] IFormFile arquivo)
+        {
+            if (arquivo.Length > 0)
             {
-                await ArquivoAnexo.CopyToAsync(memoryStream);
-                arquivoDados = memoryStream.ToArray();
+                var arquivoBytes = await PdfTools.ObterArquivo(arquivo);
+
+                var isPdf = TransformaPdfCore.IsPdf(arquivoBytes);
+                var isPdfa = TransformaPdfCore.IsPdfa(arquivoBytes);
+
+                return Ok(new { IsPdf = isPdf, IsPdfa = isPdfa });
             }
 
-            return arquivoDados;
+            return BadRequest();
         }
+
     }
 }
