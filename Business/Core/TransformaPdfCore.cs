@@ -55,6 +55,23 @@ namespace Business.Core
             }
         }
 
+        public byte[] RemoveAnnotations(byte[] file)
+        {
+            if (!IsPdf(file))
+                throw new Exception("Este arquivo não é um documento PDF.");
+
+            var stream = new MemoryStream(file);
+            var outputStream = new MemoryStream();
+            var pdfDocument = new PdfDocument(new PdfReader(stream), new PdfWriter(outputStream));
+            
+            for (int i = 1; i <= pdfDocument.GetNumberOfPages(); i++)
+                pdfDocument.GetPage(i).GetPdfObject().Remove(PdfName.Annots);
+
+            pdfDocument.Close();
+
+            return outputStream.ToArray();
+        }
+
         private class CustomPdfSplitter : PdfSplitter
         {
             private List<MemoryStream> Destination;

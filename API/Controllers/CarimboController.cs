@@ -1,7 +1,7 @@
-﻿using Business.Core.ICore;
+﻿using API.Tools;
+using Business.Core.ICore;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System.IO;
 using System.Threading.Tasks;
 
 namespace API.Controllers
@@ -23,7 +23,7 @@ namespace API.Controllers
         {
             if (arquivo.Length > 0)
             {
-                var arquivoByteArray = await ObterArquivo(arquivo);
+                var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
 
                 var arquivoCarimbado = CarimboCore.ValorLegal(
                     arquivoByteArray,
@@ -44,7 +44,7 @@ namespace API.Controllers
         {
             if (postObject.arquivo.Length > 0)
             {
-                var arquivo = await ObterArquivo(postObject.arquivo);
+                var arquivo = await PdfTools.ObterArquivo(postObject.arquivo);
 
                 var arquivoCarimbado = CarimboCore.CopiaProcesso(
                     arquivo,
@@ -69,20 +69,6 @@ namespace API.Controllers
             public string geradoPor { get; set; }
             public string dataHora { get; set; }
             public int paginaInicial { get; set; }
-        }
-
-        private async Task<byte[]> ObterArquivo(IFormFile ArquivoAnexo)
-        {
-            byte[] arquivoDados = null;
-
-            //copia o IFormFile para byte array (referencia: https://docs.microsoft.com/en-us/aspnet/core/mvc/models/file-uploads?view=aspnetcore-2.0 )
-            using (var memoryStream = new MemoryStream())
-            {
-                await ArquivoAnexo.CopyToAsync(memoryStream);
-                arquivoDados = memoryStream.ToArray();
-            }
-
-            return arquivoDados;
         }
 
         #endregion

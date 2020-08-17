@@ -49,7 +49,6 @@ namespace API.Controllers
             return BadRequest();
         }
 
-
         [HttpPost]
         [Consumes("multipart/form-data", "application/x-www-form-urlencoded")]
         public async Task<IActionResult> IsPdf([FromForm] IFormFile arquivo)
@@ -67,5 +66,18 @@ namespace API.Controllers
             return BadRequest();
         }
 
+        [HttpPost]
+        [Consumes("multipart/form-data", "application/x-www-form-urlencoded")]
+        public async Task<IActionResult> RemoverAnotacoes([FromForm] IFormFile arquivo)
+        {
+            if (arquivo.Length > 0)
+            {
+                var arquivoBytes = await PdfTools.ObterArquivo(arquivo);
+                var arquivoLimpo = TransformaPdfCore.RemoveAnnotations(arquivoBytes);
+                return File(arquivoLimpo, "application/octet-stream");
+            }
+
+            return BadRequest();
+        }
     }
 }

@@ -6,5 +6,6 @@
         byte[] PdfPagination(byte[] file, int itemsByPage, int page);
         bool IsPdf(byte[] file);
         bool IsPdfa(byte[] file);
+        byte[] RemoveAnnotations(byte[] file);
     }
 }
