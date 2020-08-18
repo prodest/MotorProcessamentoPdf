@@ -27,6 +27,23 @@ namespace Business.Core
             return output.ElementAt(page);
         }
 
+        public byte[] PdfConcatenation(ICollection<byte[]> files)
+        {
+            var outputStream = new MemoryStream();
+            var outputDocument = new PdfDocument(new PdfWriter(outputStream));
+
+            foreach (var file in files)
+            {
+                var document = new PdfDocument(new PdfReader(new MemoryStream(file)));
+                document.CopyPagesTo(1, document.GetNumberOfPages(), outputDocument);
+                document.Close();
+            }
+
+            outputDocument.Close();
+
+            return outputStream.ToArray();
+        }
+
         public bool IsPdf(byte[] file)
         {
             try

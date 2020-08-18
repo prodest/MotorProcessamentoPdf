@@ -79,5 +79,20 @@ namespace API.Controllers
 
             return BadRequest();
         }
+
+        [HttpPost]
+        public async Task<IActionResult> ConcatenarPdfs(IFormFile[] arquivos)
+        {
+            if(arquivos.Length > 1)
+            {
+                var arquivosBytes = await PdfTools.ObterArquivos(arquivos);
+
+                var output = TransformaPdfCore.PdfConcatenation(arquivosBytes);
+
+                return File(output, "application/octet-stream");
+            }
+
+            return BadRequest();
+        }
     }
 }
