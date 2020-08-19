@@ -2,6 +2,9 @@
 using Business.Core.ICore;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace API.Controllers
@@ -94,5 +97,17 @@ namespace API.Controllers
 
             return BadRequest();
         }
+
+        [HttpPost]
+        public async Task<IActionResult> ConcatenarPdfsUsingMinio([FromForm]string arquivo1, [FromForm] string arquivo2)
+        {
+            var asd = new List<string>() { arquivo1, arquivo2 };
+
+            var output = await TransformaPdfCore.PdfConcatenationUsingMinio(asd);
+            return File(output, "application/octet-stream");
+
+            return BadRequest();
+        }
+
     }
 }

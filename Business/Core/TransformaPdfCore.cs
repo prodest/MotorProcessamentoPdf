@@ -1,4 +1,5 @@
 ﻿using Business.Core.ICore;
+using Infrastructure.Repositories.IRepositories;
 using iText.Html2pdf;
 using iText.Kernel.Pdf;
 using iText.Kernel.Utils;
@@ -6,11 +7,19 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Business.Core
 {
     public class TransformaPdfCore : ITransformaPdfCore
     {
+        private readonly IArquivoRepository ArquivoRepository;
+
+        public TransformaPdfCore(IArquivoRepository arquivoRepository)
+        {
+            ArquivoRepository = arquivoRepository;
+        }
+
         public byte[] HtmlPdf(byte[] file)
         {
             var html = new MemoryStream(file);
@@ -39,6 +48,27 @@ namespace Business.Core
                 document.Close();
             }
 
+            outputDocument.Close();
+
+            return outputStream.ToArray();
+        }
+
+        public async Task<byte[]> PdfConcatenationUsingMinio(ICollection<string> files)
+        {
+            // buscar arquivos no Minio
+            var minioFiles = new List<byte[]>();
+            foreach (var file in files)
+                minioFiles.Add(await ArquivoRepository.GetDocumentoCapturadoAsync(file));
+
+            // concatenar arquivos do Minio
+            var outputStream = new MemoryStream();
+            var outputDocument = new PdfDocument(new PdfWriter(outputStream));
+            foreach (var file in minioFiles)
+            {
+                var document = new PdfDocument(new PdfReader(new MemoryStream(file)));
+                document.CopyPagesTo(1, document.GetNumberOfPages(), outputDocument);
+                document.Close();
+            }
             outputDocument.Close();
 
             return outputStream.ToArray();
