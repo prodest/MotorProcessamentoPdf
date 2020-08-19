@@ -89,9 +89,7 @@ namespace API.Controllers
             if(arquivos.Length > 1)
             {
                 var arquivosBytes = await PdfTools.ObterArquivos(arquivos);
-
                 var output = TransformaPdfCore.PdfConcatenation(arquivosBytes);
-
                 return File(output, "application/octet-stream");
             }
 
@@ -99,12 +97,13 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> ConcatenarPdfsUsingMinio([FromForm]string arquivo1, [FromForm] string arquivo2)
+        public async Task<IActionResult> ConcatenarPdfsUsingMinio([FromForm]params string[] arquivos)
         {
-            var asd = new List<string>() { arquivo1, arquivo2 };
-
-            var output = await TransformaPdfCore.PdfConcatenationUsingMinio(asd);
-            return File(output, "application/octet-stream");
+            if (arquivos.Length > 1)
+            {
+                var output = await TransformaPdfCore.PdfConcatenationUsingMinio(arquivos);
+                return File(output, "application/octet-stream");
+            }
 
             return BadRequest();
         }
