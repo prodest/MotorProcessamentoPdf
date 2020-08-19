@@ -2,9 +2,8 @@
 using Business.Core.ICore;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace API.Controllers
@@ -20,16 +19,16 @@ namespace API.Controllers
             TransformaPdfCore = transformaPdfCore;
         }
 
+        //https://docs.microsoft.com/pt-br/aspnet/core/web-api/?view=aspnetcore-3.1#binding-source-parameter-inference
+
         [HttpPost]
-        [Consumes("multipart/form-data", "application/x-www-form-urlencoded")]
-        public async Task<IActionResult> PaginacaoDePDF([FromForm]IFormFile arquivo, [FromForm] int itensPorPagina, [FromForm] int pagina)
+        public async Task<IActionResult> PaginacaoDePDF(IFormFile arquivo, [FromForm]int itensPorPagina, [FromForm]int pagina)
         {
             if (arquivo.Length > 0)
             {
                 var arquivoBytes = await PdfTools.ObterArquivo(arquivo);
-                
                 var output = TransformaPdfCore.PdfPagination(arquivoBytes, itensPorPagina, pagina);
-
+                
                 return File(output, "application/octet-stream");
             }
 
@@ -37,13 +36,11 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        [Consumes("multipart/form-data", "application/x-www-form-urlencoded")]
-        public async Task<IActionResult> HtmlPdf([FromForm] IFormFile arquivo)
+        public async Task<IActionResult> HtmlPdf(IFormFile arquivo)
         {
             if (arquivo.Length > 0)
             {
                 var arquivoBytes = await PdfTools.ObterArquivo(arquivo);
-
                 var output = TransformaPdfCore.HtmlPdf(arquivoBytes);
 
                 return File(output, "application/octet-stream");
@@ -53,13 +50,11 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        [Consumes("multipart/form-data", "application/x-www-form-urlencoded")]
-        public async Task<IActionResult> IsPdf([FromForm] IFormFile arquivo)
+        public async Task<IActionResult> IsPdf(IFormFile arquivo)
         {
             if (arquivo.Length > 0)
             {
                 var arquivoBytes = await PdfTools.ObterArquivo(arquivo);
-
                 var isPdf = TransformaPdfCore.IsPdf(arquivoBytes);
                 var isPdfa = TransformaPdfCore.IsPdfa(arquivoBytes);
 
@@ -70,13 +65,13 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        [Consumes("multipart/form-data", "application/x-www-form-urlencoded")]
-        public async Task<IActionResult> RemoverAnotacoes([FromForm] IFormFile arquivo)
+        public async Task<IActionResult> RemoverAnotacoes(IFormFile arquivo)
         {
             if (arquivo.Length > 0)
             {
                 var arquivoBytes = await PdfTools.ObterArquivo(arquivo);
                 var arquivoLimpo = TransformaPdfCore.RemoveAnnotations(arquivoBytes);
+
                 return File(arquivoLimpo, "application/octet-stream");
             }
 
@@ -84,12 +79,13 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> ConcatenarPdfs(IFormFile[] arquivos)
+        public async Task<IActionResult> ConcatenarPdfs(IFormFileCollection arquivos)
         {
-            if(arquivos.Length > 1)
+            if(arquivos.Count() > 1)
             {
                 var arquivosBytes = await PdfTools.ObterArquivos(arquivos);
                 var output = TransformaPdfCore.PdfConcatenation(arquivosBytes);
+
                 return File(output, "application/octet-stream");
             }
 
@@ -97,11 +93,12 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> ConcatenarPdfsUsingMinio([FromForm]params string[] arquivos)
+        public async Task<IActionResult> ConcatenarPdfsUsingMinio([FromForm]IEnumerable<string> arquivos)
         {
-            if (arquivos.Length > 1)
+            if (arquivos.Count() > 1)
             {
                 var output = await TransformaPdfCore.PdfConcatenationUsingMinio(arquivos);
+                
                 return File(output, "application/octet-stream");
             }
 

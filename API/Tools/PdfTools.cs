@@ -21,7 +21,7 @@ namespace API.Tools
             return arquivoBytes;
         }
 
-        public static async Task<ICollection<byte[]>> ObterArquivos(IFormFile[] arquivos)
+        public static async Task<IEnumerable<byte[]>> ObterArquivos(IFormFileCollection arquivos)
         {
             var arquivosBytes = new List<byte[]>();
 

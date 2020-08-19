@@ -36,7 +36,7 @@ namespace Business.Core
             return output.ElementAt(page);
         }
 
-        public byte[] PdfConcatenation(ICollection<byte[]> files)
+        public byte[] PdfConcatenation(IEnumerable<byte[]> files)
         {
             var outputStream = new MemoryStream();
             var outputDocument = new PdfDocument(new PdfWriter(outputStream));
@@ -53,7 +53,7 @@ namespace Business.Core
             return outputStream.ToArray();
         }
 
-        public async Task<byte[]> PdfConcatenationUsingMinio(ICollection<string> files)
+        public async Task<byte[]> PdfConcatenationUsingMinio(IEnumerable<string> files)
         {
             // buscar arquivos no Minio
             var minioFiles = new List<byte[]>();
