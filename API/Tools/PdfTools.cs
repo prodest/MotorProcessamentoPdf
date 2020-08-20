@@ -29,7 +29,6 @@ namespace API.Tools
             {
                 if(arquivo.Length > 0)
                 {
-                    //copia o IFormFile para byte array (referencia: https://docs.microsoft.com/en-us/aspnet/core/mvc/models/file-uploads?view=aspnetcore-2.0 )
                     using (var memoryStream = new MemoryStream())
                     {
                         await arquivo.CopyToAsync(memoryStream);

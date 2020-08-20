@@ -18,13 +18,11 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        [Consumes("multipart/form-data", "application/x-www-form-urlencoded")]
-        public async Task<IActionResult> ValorLegal([FromForm] IFormFile arquivo, [FromForm]string registro, [FromForm] string valorLegal, [FromForm] string dataHora)
+        public async Task<IActionResult> ValorLegal(IFormFile arquivo, [FromForm]string registro, [FromForm] string valorLegal, [FromForm] string dataHora)
         {
             if (arquivo.Length > 0)
             {
                 var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
-
                 var arquivoCarimbado = CarimboCore.ValorLegal(
                     arquivoByteArray,
                     registro,
@@ -39,19 +37,17 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        [Consumes("multipart/form-data", "application/x-www-form-urlencoded")]
-        public async Task<IActionResult> CopiaProcesso([FromForm]PostObject postObject)
+        public async Task<IActionResult> CopiaProcesso(IFormFile arquivo, [FromForm] string protocolo, [FromForm]string geradoPor, [FromForm]string dataHora, [FromForm]int paginaInicial)
         {
-            if (postObject.arquivo.Length > 0)
+            if (arquivo.Length > 0)
             {
-                var arquivo = await PdfTools.ObterArquivo(postObject.arquivo);
-
+                var arquivoBytes = await PdfTools.ObterArquivo(arquivo);
                 var arquivoCarimbado = CarimboCore.CopiaProcesso(
-                    arquivo,
-                    postObject.protocolo,
-                    postObject.geradoPor,
-                    postObject.dataHora,
-                    postObject.paginaInicial
+                    arquivoBytes,
+                    protocolo,
+                    geradoPor,
+                    dataHora,
+                    paginaInicial
                 );
 
                 return File(arquivoCarimbado, "application/octet-stream");
@@ -59,19 +55,6 @@ namespace API.Controllers
 
             return BadRequest();
         }
-
-        #region Auxiliares
-
-        public class PostObject 
-        {
-            public IFormFile arquivo { get; set; }
-            public string protocolo { get; set; }
-            public string geradoPor { get; set; }
-            public string dataHora { get; set; }
-            public int paginaInicial { get; set; }
-        }
-
-        #endregion
 
     }
 }
