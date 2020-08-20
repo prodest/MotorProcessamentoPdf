@@ -131,7 +131,6 @@ namespace Business.Core
             style.SetFontColor(new DeviceRgb(0, 124, 191));
 
             style.SetPaddingBottom(8);
-            //style.SetBackgroundColor(ColorConstants.GRAY);
             text.AddStyle(style);
 
             var paragraph = new Paragraph(text);
@@ -150,7 +149,6 @@ namespace Business.Core
             style.SetFontColor(ColorConstants.RED);
 
             style.SetPaddingTop(8);
-            //style.SetBackgroundColor(ColorConstants.GRAY);
             text.AddStyle(style);
 
             var paragraph = new Paragraph(text);
