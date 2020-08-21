@@ -66,7 +66,7 @@ namespace Business.Core
             return baos.ToArray();
         }
 
-        public byte[] CopiaProcesso(byte[] arquivo, string protocolo, string geradoPor, string dataHora, int paginaInicial = 1)
+        public byte[] CopiaProcesso(byte[] arquivo, string protocolo, string geradoPor, string dataHora, int totalPaginas, int paginaInicial = 1)
         {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             PdfDocument pdfDocument;
@@ -84,7 +84,6 @@ namespace Business.Core
             }
 
             paginaInicial--;
-            int paginaFinal = paginaInicial + pdfDocument.GetNumberOfPages();
             for (int i = 1; i <= pdfDocument.GetNumberOfPages(); i++)
             {
                 PdfPage page = pdfDocument.GetPage(i);
@@ -96,7 +95,7 @@ namespace Business.Core
                     geradoPor,
                     dataHora,
                     paginaInicial + i,
-                    paginaFinal
+                    totalPaginas
                 );
 
                 canvas.ShowTextAligned(

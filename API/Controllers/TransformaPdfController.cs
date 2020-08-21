@@ -19,7 +19,7 @@ namespace API.Controllers
             TransformaPdfCore = transformaPdfCore;
         }
 
-        //https://docs.microsoft.com/pt-br/aspnet/core/web-api/?view=aspnetcore-3.1#binding-source-parameter-inference
+        // https://docs.microsoft.com/pt-br/aspnet/core/web-api/?view=aspnetcore-3.1#binding-source-parameter-inference
 
         [HttpPost]
         public async Task<IActionResult> PaginacaoDePDF(IFormFile arquivo, [FromForm]int itensPorPagina, [FromForm]int pagina)
@@ -104,6 +104,5 @@ namespace API.Controllers
 
             return BadRequest();
         }
-
     }
 }

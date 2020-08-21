@@ -37,7 +37,7 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CopiaProcesso(IFormFile arquivo, [FromForm] string protocolo, [FromForm]string geradoPor, [FromForm]string dataHora, [FromForm]int paginaInicial)
+        public async Task<IActionResult> CopiaProcesso(IFormFile arquivo, [FromForm] string protocolo, [FromForm]string geradoPor, [FromForm]string dataHora, [FromForm] int totalPaginas, [FromForm] int paginaInicial)
         {
             if (arquivo.Length > 0)
             {
@@ -47,6 +47,7 @@ namespace API.Controllers
                     protocolo,
                     geradoPor,
                     dataHora,
+                    totalPaginas,
                     paginaInicial
                 );
 
@@ -55,6 +56,5 @@ namespace API.Controllers
 
             return BadRequest();
         }
-
     }
 }
