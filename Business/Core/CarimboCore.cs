@@ -118,7 +118,7 @@ namespace Business.Core
         {
             var text = new Text($"{protocolo.ToUpper()} - E-DOCS - {valorLegal.ToUpper()}    {dataHora}    PÁGINA {paginaInicial} / {paginaFinal}");
 
-            PdfFont font = PdfFontFactory.CreateFont(StandardFonts.TIMES_ROMAN);
+            PdfFont font = PdfFontFactory.CreateFont(StandardFonts.HELVETICA);
 
             var style = new Style();
             style.SetFont(font);
@@ -136,7 +136,7 @@ namespace Business.Core
         {
             var text = new Text($"E-DOCS - CÓPIA DO PROCESSO {protocolo.ToUpper()} GERADO POR {geradoPor.ToUpper()} EM {dataHora} PÁGINA {paginaInicial} / {paginaFinal}");
 
-            PdfFont font = PdfFontFactory.CreateFont(StandardFonts.TIMES_ROMAN);
+            PdfFont font = PdfFontFactory.CreateFont(StandardFonts.HELVETICA);
 
             var style = new Style();
             style.SetFont(font);
