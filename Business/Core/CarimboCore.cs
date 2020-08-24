@@ -1,6 +1,6 @@
 ﻿using Business.Core.ICore;
+using Business.Helpers;
 using iText.IO.Font.Constants;
-using iText.IO.Source;
 using iText.Kernel.Colors;
 using iText.Kernel.Font;
 using iText.Kernel.Geom;
@@ -15,17 +15,17 @@ namespace Business.Core
 {
     public class CarimboCore : ICarimboCore
     {
-        #region carimbos
+        private readonly string dateFormat = "dd/MM/yyyy hh:mm";
 
         public byte[] ValorLegal(byte[] arquivo, string registro, string valorLegal, string dataHora)
         {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            MemoryStream outputStream = new MemoryStream();
             PdfDocument pdfDocument;
             try
             {
                 pdfDocument = new PdfDocument(
                     new PdfReader(new MemoryStream(arquivo)),
-                    new PdfWriter(baos)
+                    new PdfWriter(outputStream)
                 );
             }
             catch (Exception e)
@@ -63,58 +63,67 @@ namespace Business.Core
 
             pdfDocument.Close();
 
-            return baos.ToArray();
+            return outputStream.ToArray();
         }
 
-        public byte[] CopiaProcesso(byte[] arquivo, string protocolo, string geradoPor, string dataHora, int totalPaginas, int paginaInicial = 1)
+        public byte[] CopiaProcesso(byte[] arquivo, string protocolo, string geradoPor, DateTime dataHora, int totalPaginas, int paginaInicial = 1)
         {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            PdfDocument pdfDocument;
-            try
+            // validações
+            Validations.ArquivoValido(arquivo);
+            Validations.ProtocoloValido(protocolo);
+            GeradoPorValido(geradoPor);
+            Validations.dataHoraValida(dataHora);
+            TotalPaginasValido(totalPaginas);
+            PaginaInicialValida(paginaInicial, totalPaginas);
+
+            using (MemoryStream outputStream = new MemoryStream())
             {
-                pdfDocument = new PdfDocument(
-                    new PdfReader(new MemoryStream(arquivo)),
-                    new PdfWriter(baos)
-                );
+                PdfDocument pdfDocument;
+                try
+                {
+                    pdfDocument = new PdfDocument(
+                        new PdfReader(new MemoryStream(arquivo)),
+                        new PdfWriter(outputStream)
+                    );
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                    throw;
+                }
+
+                paginaInicial--;
+                for (int i = 1; i <= pdfDocument.GetNumberOfPages(); i++)
+                {
+                    PdfPage page = pdfDocument.GetPage(i);
+                    Rectangle rectangle = new Rectangle(0, 0, 10, page.GetPageSize().GetHeight());
+                    Canvas canvas = new Canvas(page, rectangle);
+
+                    var paragraph = CopiaProcessoParagrafo(
+                        protocolo,
+                        geradoPor,
+                        dataHora.ToString(dateFormat),
+                        paginaInicial + i,
+                        totalPaginas
+                    );
+
+                    canvas.ShowTextAligned(
+                        paragraph,
+                        0, page.GetPageSize().GetHeight() / 2,
+                        i,
+                        TextAlignment.CENTER, VerticalAlignment.TOP,
+                        0.5f * (float)Math.PI
+                    );
+
+                    canvas.Close();
+                }
+
+                pdfDocument.Close();
+
+                return outputStream.ToArray();
             }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-                throw;
-            }
 
-            paginaInicial--;
-            for (int i = 1; i <= pdfDocument.GetNumberOfPages(); i++)
-            {
-                PdfPage page = pdfDocument.GetPage(i);
-                Rectangle rectangle = new Rectangle(0, 0, 10, page.GetPageSize().GetHeight());
-                Canvas canvas = new Canvas(page, rectangle);
-
-                var paragraph = CopiaProcessoParagrafo(
-                    protocolo,
-                    geradoPor,
-                    dataHora,
-                    paginaInicial + i,
-                    totalPaginas
-                );
-
-                canvas.ShowTextAligned(
-                    paragraph,
-                    0, page.GetPageSize().GetHeight() / 2,
-                    i,
-                    TextAlignment.CENTER, VerticalAlignment.TOP,
-                    0.5f * (float)Math.PI
-                );
-
-                canvas.Close();
-            }
-
-            pdfDocument.Close();
-
-            return baos.ToArray();
         }
-
-        #endregion
 
         #region Auxiliares
 
@@ -152,6 +161,30 @@ namespace Business.Core
 
             var paragraph = new Paragraph(text);
             return paragraph;
+        }
+
+        #endregion
+
+        #region Validações
+
+        private void PaginaInicialValida(int paginaInicial, int totalPaginas)
+        {
+            if (paginaInicial <= 0)
+                throw new Exception("O número da página inicial da cópia de processo precisa ser maior que zero.");
+            if (paginaInicial > totalPaginas)
+                throw new Exception("O número da página inicial da cópia de processo não pode ser superior ao número total de páginas.");
+        }
+
+        private void TotalPaginasValido(int totalPaginas)
+        {
+            if (totalPaginas <= 0)
+                throw new Exception("O número total de páginas da cópia de processo precisa ser maior que zero.");
+        }
+
+        private void GeradoPorValido(string geradoPor)
+        {
+            if (string.IsNullOrWhiteSpace(geradoPor))
+                throw new Exception("O nome do solicitante da cópia de processo está vazio.");
         }
 
         #endregion
