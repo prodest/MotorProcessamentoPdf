@@ -76,53 +76,40 @@ namespace Business.Core
             TotalPaginasValido(totalPaginas);
             PaginaInicialValida(paginaInicial, totalPaginas);
 
+            using (MemoryStream inputStream = new MemoryStream(arquivo))
+            using (PdfReader reader = new PdfReader(inputStream))
             using (MemoryStream outputStream = new MemoryStream())
+            using (PdfWriter writer = new PdfWriter(outputStream))
+            using (PdfDocument pdfDocument = new PdfDocument(reader, writer))
             {
-                PdfDocument pdfDocument;
-                try
-                {
-                    pdfDocument = new PdfDocument(
-                        new PdfReader(new MemoryStream(arquivo)),
-                        new PdfWriter(outputStream)
-                    );
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e.Message);
-                    throw;
-                }
-
                 paginaInicial--;
                 for (int i = 1; i <= pdfDocument.GetNumberOfPages(); i++)
                 {
                     PdfPage page = pdfDocument.GetPage(i);
                     Rectangle rectangle = new Rectangle(0, 0, 10, page.GetPageSize().GetHeight());
-                    Canvas canvas = new Canvas(page, rectangle);
+                    using (Canvas canvas = new Canvas(page, rectangle))
+                    {
+                        var paragraph = CopiaProcessoParagrafo(
+                            protocolo,
+                            geradoPor,
+                            dataHora.ToString(dateFormat),
+                            paginaInicial + i,
+                            totalPaginas
+                        );
 
-                    var paragraph = CopiaProcessoParagrafo(
-                        protocolo,
-                        geradoPor,
-                        dataHora.ToString(dateFormat),
-                        paginaInicial + i,
-                        totalPaginas
-                    );
-
-                    canvas.ShowTextAligned(
-                        paragraph,
-                        0, page.GetPageSize().GetHeight() / 2,
-                        i,
-                        TextAlignment.CENTER, VerticalAlignment.TOP,
-                        0.5f * (float)Math.PI
-                    );
-
-                    canvas.Close();
+                        canvas.ShowTextAligned(
+                            paragraph,
+                            0, page.GetPageSize().GetHeight() / 2,
+                            i,
+                            TextAlignment.CENTER, VerticalAlignment.TOP,
+                            0.5f * (float)Math.PI
+                        );
+                    }
                 }
-
                 pdfDocument.Close();
 
                 return outputStream.ToArray();
             }
-
         }
 
         #region Auxiliares

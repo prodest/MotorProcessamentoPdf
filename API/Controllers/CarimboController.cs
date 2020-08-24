@@ -40,22 +40,18 @@ namespace API.Controllers
         [HttpPost]
         public async Task<IActionResult> CopiaProcesso(IFormFile arquivo, [FromForm]string protocolo, [FromForm]string geradoPor, [FromForm]DateTime dataHora, [FromForm]int totalPaginas, [FromForm]int paginaInicial)
         {
-            if (arquivo.Length > 0)
-            {
-                var arquivoBytes = await PdfTools.ObterArquivo(arquivo);
-                var arquivoCarimbado = CarimboCore.CopiaProcesso(
-                    arquivoBytes,
-                    protocolo,
-                    geradoPor,
-                    dataHora,
-                    totalPaginas,
-                    paginaInicial
-                );
+            var arquivoBytes = await PdfTools.ObterArquivo(arquivo);
+         
+            var arquivoCarimbado = CarimboCore.CopiaProcesso(
+                arquivoBytes,
+                protocolo,
+                geradoPor,
+                dataHora,
+                totalPaginas,
+                paginaInicial
+            );
 
-                return File(arquivoCarimbado, "application/octet-stream");
-            }
-
-            return BadRequest();
+            return File(arquivoCarimbado, "application/octet-stream");
         }
     }
 }
