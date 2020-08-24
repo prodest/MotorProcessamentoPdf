@@ -17,53 +17,51 @@ namespace Business.Core
     {
         private readonly string dateFormat = "dd/MM/yyyy hh:mm";
 
-        public byte[] ValorLegal(byte[] arquivo, string registro, string valorLegal, string dataHora)
+        public byte[] Documento(byte[] arquivo, string registro, int natureza, int valorLegal, DateTime dataHora)
         {
-            MemoryStream outputStream = new MemoryStream();
-            PdfDocument pdfDocument;
-            try
+            // validações
+            Validations.ArquivoValido(arquivo);
+            Validations.RegistroValido(registro);
+            Validations.dataHoraValida(dataHora);
+
+            using (MemoryStream inputStream = new MemoryStream(arquivo))
+            using (PdfReader reader = new PdfReader(inputStream))
+            using (MemoryStream outputStream = new MemoryStream())
+            using (PdfWriter writer = new PdfWriter(outputStream))
+            using (PdfDocument pdfDocument = new PdfDocument(reader, writer))
             {
-                pdfDocument = new PdfDocument(
-                    new PdfReader(new MemoryStream(arquivo)),
-                    new PdfWriter(outputStream)
-                );
+                for (int i = 1; i <= pdfDocument.GetNumberOfPages(); i++)
+                {
+                    PdfPage page = pdfDocument.GetPage(i);
+                    Rectangle rectangle = new Rectangle(0, 0, 10, page.GetPageSize().GetHeight());
+                    using (Canvas canvas = new Canvas(page, rectangle))
+                    {
+                        var paragraph = ValorLegalParagrafo(
+                            registro,
+                            CarimboDocumentoHelper.CarimboDocumento(natureza, valorLegal),
+                            dataHora.ToString(dateFormat),
+                            i,
+                            pdfDocument.GetNumberOfPages()
+                        );
+
+                        Rectangle pageSize = pdfDocument.GetPage(i).GetPageSize();
+                        canvas.ShowTextAligned(
+                            paragraph,
+                            pageSize.GetWidth(),
+                            pageSize.GetHeight() / 2,
+                            i,
+                            TextAlignment.CENTER, VerticalAlignment.BOTTOM,
+                            0.5f * (float)Math.PI
+                        );
+                    
+                        canvas.Close();
+                    }
+                }
+
+                pdfDocument.Close();
+
+                return outputStream.ToArray();
             }
-            catch (Exception e)
-            {
-                Console.WriteLine(e.Message);
-                throw;
-            }
-
-            for (int i = 1; i <= pdfDocument.GetNumberOfPages(); i++)
-            {
-                PdfPage page = pdfDocument.GetPage(i);
-                Rectangle rectangle = new Rectangle(0, 0, 10, page.GetPageSize().GetHeight());
-                Canvas canvas = new Canvas(page, rectangle);
-
-                var paragraph = ValorLegalParagrafo(
-                    registro,
-                    valorLegal,
-                    dataHora,
-                    i,
-                    pdfDocument.GetNumberOfPages()
-                );
-
-                Rectangle pageSize = pdfDocument.GetPage(i).GetPageSize();
-                canvas.ShowTextAligned(
-                    paragraph,
-                    pageSize.GetWidth(),
-                    pageSize.GetHeight() / 2,
-                    i,
-                    TextAlignment.CENTER, VerticalAlignment.BOTTOM,
-                    0.5f * (float)Math.PI
-                );
-
-                canvas.Close();
-            }
-
-            pdfDocument.Close();
-
-            return outputStream.ToArray();
         }
 
         public byte[] CopiaProcesso(byte[] arquivo, string protocolo, string geradoPor, DateTime dataHora, int totalPaginas, int paginaInicial = 1)
@@ -104,8 +102,11 @@ namespace Business.Core
                             TextAlignment.CENTER, VerticalAlignment.TOP,
                             0.5f * (float)Math.PI
                         );
+
+                        canvas.Close();
                     }
                 }
+
                 pdfDocument.Close();
 
                 return outputStream.ToArray();
@@ -175,7 +176,6 @@ namespace Business.Core
         }
 
         #endregion
-
     }
 
 }

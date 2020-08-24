@@ -37,16 +37,28 @@ namespace Business.Helpers
         {
             if (string.IsNullOrWhiteSpace(protocolo))
                 throw new Exception("O protocolo informado está vazio.");
-            else if (!Regex.IsMatch(protocolo, "^[0-9]{4}-[A-Z0-9]{5}"))
+
+            if (!Regex.IsMatch(protocolo, "^[0-9]{4}-[A-Z0-9]{5}"))
                 throw new Exception("O protocolo informado está fora do padrão.");
+        }
+
+        public static void RegistroValido(string registro)
+        {
+            if (string.IsNullOrWhiteSpace(registro))
+                throw new Exception("O registro informado está vazio.");
+
+            if (!Regex.IsMatch(registro, "^[0-9]{4}-[A-Z0-9]{6}"))
+                throw new Exception("O registro informado está fora do padrão.");
         }
 
         internal static void dataHoraValida(DateTime dataHora)
         {
             if(dataHora == null)
                 throw new Exception("O conjunto de data e hora informado está vazio.");
+            
             if (dataHora == default(DateTime))
                 throw new Exception("O conjunto de data e hora informado é inválido.");
         }
+
     }
 }
