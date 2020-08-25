@@ -19,17 +19,33 @@ namespace Business.Helpers
         {
             try
             {
-                using (var memoryStream = new MemoryStream(arquivo))
+                using (var readStream = new MemoryStream(arquivo))
+                using (var reader = new PdfReader(readStream))
                 {
-                    using (var reader = new PdfReader(memoryStream))
-                    {
-                        // ok, o arquivo é um documento pdf
-                    }
+                    // ok, o arquivo é um documento pdf
                 }
             }
             catch (Exception)
             {
                 throw new Exception("Este arquivo não é um documento PDF válido.");
+            }
+        }
+
+        public static void IsPdfa(byte[] arquivo)
+        {
+            try
+            {
+                using (MemoryStream readStream = new MemoryStream(arquivo))
+                using (PdfReader reader = new PdfReader(readStream))
+                using (PdfDocument pdfDocument = new PdfDocument(reader))
+                {
+                    if (reader.GetPdfAConformanceLevel() == null)
+                        throw new Exception();
+                }
+            }
+            catch (Exception)
+            {
+                throw new Exception("Este arquivo não é um documento PDF/A válido.");
             }
         }
 
