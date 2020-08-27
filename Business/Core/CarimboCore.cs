@@ -24,11 +24,11 @@ namespace Business.Core
             Validations.RegistroValido(registro);
             Validations.dataHoraValida(dataHora);
 
-            using (MemoryStream inputStream = new MemoryStream(arquivo))
-            using (PdfReader reader = new PdfReader(inputStream))
-            using (MemoryStream outputStream = new MemoryStream())
-            using (PdfWriter writer = new PdfWriter(outputStream))
-            using (PdfDocument pdfDocument = new PdfDocument(reader, writer))
+            using (MemoryStream readingStream = new MemoryStream(arquivo))
+            using (PdfReader pdfReader = new PdfReader(readingStream))
+            using (MemoryStream writingStream = new MemoryStream())
+            using (PdfWriter pdfWriter = new PdfWriter(writingStream))
+            using (PdfDocument pdfDocument = new PdfDocument(pdfReader, pdfWriter))
             {
                 for (int i = 1; i <= pdfDocument.GetNumberOfPages(); i++)
                 {
@@ -53,14 +53,14 @@ namespace Business.Core
                             TextAlignment.CENTER, VerticalAlignment.BOTTOM,
                             0.5f * (float)Math.PI
                         );
-                    
+
                         canvas.Close();
                     }
                 }
 
                 pdfDocument.Close();
 
-                return outputStream.ToArray();
+                return writingStream.ToArray();
             }
         }
 

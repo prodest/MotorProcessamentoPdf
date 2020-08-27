@@ -1,8 +1,15 @@
 ﻿using Business.Core.ICore;
+using Business.Helpers;
 using Infrastructure.Repositories.IRepositories;
 using iText.Html2pdf;
+using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
+using iText.Kernel.Pdf.Canvas;
+using iText.Kernel.Pdf.Extgstate;
 using iText.Kernel.Utils;
+using iText.Layout;
+using iText.Layout.Element;
+using iText.Layout.Properties;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -18,6 +25,46 @@ namespace Business.Core
         public TransformaPdfCore(IArquivoRepository arquivoRepository)
         {
             ArquivoRepository = arquivoRepository;
+        }
+
+        public byte[] AdicionarMarcaDagua(byte[] file, string text)
+        {
+            // validações
+            Validations.ArquivoValido(file);
+
+            using (MemoryStream readingStream = new MemoryStream(file))
+            using (PdfReader pdfReader = new PdfReader(readingStream))
+            using (MemoryStream writingStream = new MemoryStream())
+            using (PdfWriter pdfWriter = new PdfWriter(writingStream))
+            using (PdfDocument pdfDocument = new PdfDocument(pdfReader, pdfWriter))
+            {
+                Document document = new Document(pdfDocument);
+                Rectangle pageSize;
+                PdfCanvas canvas;
+                int n = pdfDocument.GetNumberOfPages();
+                for (int i = 1; i <= n; i++) {
+                    PdfPage page = pdfDocument.GetPage(i);
+                    pageSize = page.GetPageSize();
+                    canvas = new PdfCanvas(page);
+                    //Draw watermark
+                    Paragraph p = new Paragraph(text).SetFontSize(60);
+                    canvas.SaveState();
+                    PdfExtGState gs1 = new PdfExtGState().SetFillOpacity(0.2f);
+                    canvas.SetExtGState(gs1);
+                    document.ShowTextAligned(
+                        p,
+                        pageSize.GetWidth() / 2, pageSize.GetHeight() / 2,
+                        pdfDocument.GetPageNumber(page),
+                        TextAlignment.CENTER, 
+                        VerticalAlignment.MIDDLE, 
+                        45);
+                    canvas.RestoreState();
+                }
+                pdfDocument.Close();
+
+                return writingStream.ToArray();
+            }
+
         }
 
         public byte[] HtmlPdf(byte[] file)
@@ -76,30 +123,14 @@ namespace Business.Core
 
         public bool IsPdf(byte[] file)
         {
-            try
-            {
-                var reader = new PdfReader(new MemoryStream(file));
-                return true;
-            }
-            catch (Exception)
-            {
-                return false;
-            }
+            Validations.IsPdf(file);
+            return true;
         }
 
-        public bool IsPdfa(byte[] file)
+        public bool IsPdfa1b(byte[] file)
         {
-            try
-            {
-                var reader = new PdfReader(new MemoryStream(file));
-                if (reader.GetPdfAConformanceLevel() == null)
-                    return false;
-                return true;
-            }
-            catch (Exception)
-            {
-                return false;
-            }
+            Validations.IsPdfa1b(file);
+            return true;
         }
 
         public byte[] RemoveAnnotations(byte[] file)

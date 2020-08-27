@@ -10,7 +10,8 @@ namespace Business.Core.ICore
         byte[] HtmlPdf(byte[] file);
         byte[] PdfPagination(byte[] file, int itemsByPage, int page);
         bool IsPdf(byte[] file);
-        bool IsPdfa(byte[] file);
+        bool IsPdfa1b(byte[] file);
         byte[] RemoveAnnotations(byte[] file);
+        byte[] AdicionarMarcaDagua(byte[] file, string text);
     }
 }

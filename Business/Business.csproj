@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
@@ -7,7 +7,6 @@
   <ItemGroup>
     <PackageReference Include="itext7" Version="7.1.12" />
     <PackageReference Include="itext7.pdfhtml" Version="3.0.1" />
-    <PackageReference Include="Tesseract-OCR" Version="1.0.4" />
   </ItemGroup>
 
   <ItemGroup>

@@ -31,7 +31,7 @@ namespace Business.Helpers
             }
         }
 
-        public static void IsPdfa(byte[] arquivo)
+        public static void IsPdfa1b(byte[] arquivo)
         {
             try
             {
@@ -39,13 +39,14 @@ namespace Business.Helpers
                 using (PdfReader reader = new PdfReader(readStream))
                 using (PdfDocument pdfDocument = new PdfDocument(reader))
                 {
-                    if (reader.GetPdfAConformanceLevel() == null)
-                        throw new Exception();
+                    var conformanceLevel = reader.GetPdfAConformanceLevel();
+                    if(conformanceLevel == null || (conformanceLevel.GetPart() != "1" || conformanceLevel.GetConformance() != "B"))
+                        throw new Exception("Este arquivo não é um documento PDF/A-1B válido.");
                 }
             }
             catch (Exception)
             {
-                throw new Exception("Este arquivo não é um documento PDF/A válido.");
+                throw new Exception("Este arquivo não é um documento PDF/A-1B válido.");
             }
         }
 

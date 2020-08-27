@@ -56,7 +56,7 @@ namespace API.Controllers
             {
                 var arquivoBytes = await PdfTools.ObterArquivo(arquivo);
                 var isPdf = TransformaPdfCore.IsPdf(arquivoBytes);
-                var isPdfa = TransformaPdfCore.IsPdfa(arquivoBytes);
+                var isPdfa = TransformaPdfCore.IsPdfa1b(arquivoBytes);
 
                 return Ok(new { IsPdf = isPdf, IsPdfa = isPdfa });
             }
@@ -76,6 +76,19 @@ namespace API.Controllers
             }
 
             return BadRequest();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AdicionarMarcaDagua(IFormFile arquivo, [FromForm]string texto)
+        {
+            var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
+
+            var arquivoMarcado = TransformaPdfCore.AdicionarMarcaDagua(
+                arquivoByteArray,
+                texto
+            );
+
+            return File(arquivoMarcado, "application/octet-stream");
         }
 
         [HttpPost]
