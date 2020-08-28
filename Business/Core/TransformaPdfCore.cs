@@ -2,6 +2,7 @@
 using Business.Helpers;
 using Infrastructure.Repositories.IRepositories;
 using iText.Html2pdf;
+using iText.Kernel.Colors;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas;
@@ -10,6 +11,7 @@ using iText.Kernel.Utils;
 using iText.Layout;
 using iText.Layout.Element;
 using iText.Layout.Properties;
+using iText.Signatures;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -27,7 +29,7 @@ namespace Business.Core
             ArquivoRepository = arquivoRepository;
         }
 
-        public byte[] AdicionarMarcaDagua(byte[] file, string text)
+        public byte[] AdicionarMarcaDagua(byte[] file, string text, int angleDegrees = 30, int quantity = 5, float opacity = 0.1f)
         {
             // validações
             Validations.ArquivoValido(file);
@@ -37,34 +39,70 @@ namespace Business.Core
             using (MemoryStream writingStream = new MemoryStream())
             using (PdfWriter pdfWriter = new PdfWriter(writingStream))
             using (PdfDocument pdfDocument = new PdfDocument(pdfReader, pdfWriter))
+            using (Document document = new Document(pdfDocument))
             {
-                Document document = new Document(pdfDocument);
                 Rectangle pageSize;
                 PdfCanvas canvas;
                 int n = pdfDocument.GetNumberOfPages();
+                float angleRads = (angleDegrees * (float)Math.PI) / 180;
                 for (int i = 1; i <= n; i++) {
                     PdfPage page = pdfDocument.GetPage(i);
                     pageSize = page.GetPageSize();
                     canvas = new PdfCanvas(page);
-                    //Draw watermark
-                    Paragraph p = new Paragraph(text).SetFontSize(60);
+                    // Desenhar Marca D'dágua
+                    Paragraph p = new Paragraph(text).SetFontSize(60).SetFontColor(ColorConstants.RED);
                     canvas.SaveState();
-                    PdfExtGState gs1 = new PdfExtGState().SetFillOpacity(0.2f);
+                    PdfExtGState gs1 = new PdfExtGState().SetFillOpacity(opacity);
                     canvas.SetExtGState(gs1);
-                    document.ShowTextAligned(
-                        p,
-                        pageSize.GetWidth() / 2, pageSize.GetHeight() / 2,
-                        pdfDocument.GetPageNumber(page),
-                        TextAlignment.CENTER, 
-                        VerticalAlignment.MIDDLE, 
-                        45);
+                    for (int j = 1; j <= quantity; j++)
+                    {
+                        document.ShowTextAligned(
+                            p,
+                            pageSize.GetWidth() / 2, 
+                            (pageSize.GetHeight()/(quantity + 1)) * j,
+                            pdfDocument.GetPageNumber(page),
+                            TextAlignment.CENTER, VerticalAlignment.MIDDLE,
+                            angleRads
+                        );
+                    }
                     canvas.RestoreState();
                 }
                 pdfDocument.Close();
 
                 return writingStream.ToArray();
             }
+        }
 
+        public void VerificarAssinaturaDigital(byte[] file)
+        {
+            Validations.ArquivoValido(file);
+
+            using (MemoryStream readingStream = new MemoryStream(file))
+            using (PdfReader pdfReader = new PdfReader(readingStream))
+            using (PdfDocument pdfDocument = new PdfDocument(pdfReader))
+            {
+                SignatureUtil signUtil = new SignatureUtil(pdfDocument);
+                IList<String> names = signUtil.GetSignatureNames();
+
+                foreach (String name in names)
+                {
+                    Console.WriteLine("===== " + name + " =====");
+                    VerifySignature(signUtil, name);
+                }
+
+                pdfDocument.Close();
+            }
+        }
+
+        public PdfPKCS7 VerifySignature(SignatureUtil signUtil, String name)
+        {
+            PdfPKCS7 pkcs7 = signUtil.ReadSignatureData(name);
+
+            Console.WriteLine("Signature covers whole document: " + signUtil.SignatureCoversWholeDocument(name));
+            Console.WriteLine("Document revision: " + signUtil.GetRevision(name) + " of "
+                                  + signUtil.GetTotalRevisions());
+            Console.WriteLine("Integrity check OK? " + pkcs7.VerifySignatureIntegrityAndAuthenticity());
+            return pkcs7;
         }
 
         public byte[] HtmlPdf(byte[] file)

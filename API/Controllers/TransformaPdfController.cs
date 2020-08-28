@@ -79,16 +79,31 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> AdicionarMarcaDagua(IFormFile arquivo, [FromForm]string texto)
+        public async Task<IActionResult> AdicionarMarcaDagua(IFormFile arquivo, [FromForm]string texto, [FromForm]int anguloGraus = 30, [FromForm]int quantidade = 5, [FromForm]float opacidade = 0.1f)
         {
             var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
 
             var arquivoMarcado = TransformaPdfCore.AdicionarMarcaDagua(
                 arquivoByteArray,
-                texto
+                texto,
+                anguloGraus,
+                quantidade,
+                opacidade
             );
 
             return File(arquivoMarcado, "application/octet-stream");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> VerificarAssinaturaDigital(IFormFile arquivo)
+        {
+            var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
+
+            TransformaPdfCore.VerificarAssinaturaDigital(
+                arquivoByteArray
+            );
+
+            return Ok();
         }
 
         [HttpPost]
