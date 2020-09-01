@@ -73,38 +73,6 @@ namespace Business.Core
             }
         }
 
-        public void VerificarAssinaturaDigital(byte[] file)
-        {
-            Validations.ArquivoValido(file);
-
-            using (MemoryStream readingStream = new MemoryStream(file))
-            using (PdfReader pdfReader = new PdfReader(readingStream))
-            using (PdfDocument pdfDocument = new PdfDocument(pdfReader))
-            {
-                SignatureUtil signUtil = new SignatureUtil(pdfDocument);
-                IList<String> names = signUtil.GetSignatureNames();
-
-                foreach (String name in names)
-                {
-                    Console.WriteLine("===== " + name + " =====");
-                    VerifySignature(signUtil, name);
-                }
-
-                pdfDocument.Close();
-            }
-        }
-
-        public PdfPKCS7 VerifySignature(SignatureUtil signUtil, String name)
-        {
-            PdfPKCS7 pkcs7 = signUtil.ReadSignatureData(name);
-
-            Console.WriteLine("Signature covers whole document: " + signUtil.SignatureCoversWholeDocument(name));
-            Console.WriteLine("Document revision: " + signUtil.GetRevision(name) + " of "
-                                  + signUtil.GetTotalRevisions());
-            Console.WriteLine("Integrity check OK? " + pkcs7.VerifySignatureIntegrityAndAuthenticity());
-            return pkcs7;
-        }
-
         public byte[] HtmlPdf(byte[] file)
         {
             var html = new MemoryStream(file);
@@ -164,6 +132,60 @@ namespace Business.Core
             Validations.IsPdf(file);
             return true;
         }
+
+        //public byte[] OCR(byte[] file)
+        //{
+        //    var tesseractReader = new Tesseract4LibOcrEngine(tesseract4OcrEngineProperties);
+        //    tesseract4OcrEngineProperties.SetPathToTessData(new FileInfo(TESS_DATA_FOLDER));
+
+        //    var ocrPdfCreator = new OcrPdfCreator(tesseractReader);
+        //    using (var writer = new PdfWriter(OUTPUT_PDF))
+        //    {
+        //        ocrPdfCreator.CreatePdf(LIST_IMAGES_OCR, writer).Close();
+        //    }
+        //}
+
+        //static PdfOutputIntent GetRgbPdfOutputIntent()
+        //{
+        //    Stream @is = new FileStream(DEFAULT_RGB_COLOR_PROFILE_PATH, FileMode.Open, FileAccess.Read);
+        //    return new PdfOutputIntent("", "", "", "sRGB IEC61966-2.1", @is);
+        //}
+
+        #region Assinatura digital
+
+        public void VerificarAssinaturaDigital(byte[] file)
+        {
+            Validations.ArquivoValido(file);
+
+            using (MemoryStream readingStream = new MemoryStream(file))
+            using (PdfReader pdfReader = new PdfReader(readingStream))
+            using (PdfDocument pdfDocument = new PdfDocument(pdfReader))
+            {
+                SignatureUtil signUtil = new SignatureUtil(pdfDocument);
+                IList<String> names = signUtil.GetSignatureNames();
+
+                foreach (String name in names)
+                {
+                    Console.WriteLine("===== " + name + " =====");
+                    VerifySignature(signUtil, name);
+                }
+
+                pdfDocument.Close();
+            }
+        }
+
+        public PdfPKCS7 VerifySignature(SignatureUtil signUtil, String name)
+        {
+            PdfPKCS7 pkcs7 = signUtil.ReadSignatureData(name);
+
+            Console.WriteLine("Signature covers whole document: " + signUtil.SignatureCoversWholeDocument(name));
+            Console.WriteLine("Document revision: " + signUtil.GetRevision(name) + " of "
+                                  + signUtil.GetTotalRevisions());
+            Console.WriteLine("Integrity check OK? " + pkcs7.VerifySignatureIntegrityAndAuthenticity());
+            return pkcs7;
+        }
+
+        #endregion
 
         public bool IsPdfa1b(byte[] file)
         {

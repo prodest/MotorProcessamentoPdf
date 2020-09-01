@@ -13,10 +13,12 @@ namespace API.Controllers
     public class TransformaPdfController : ControllerBase
     {
         private readonly ITransformaPdfCore TransformaPdfCore;
+        private readonly IAssinaturaDigitalCore AssinaturaDigitalCore;
 
-        public TransformaPdfController(ITransformaPdfCore transformaPdfCore)
+        public TransformaPdfController(ITransformaPdfCore transformaPdfCore, IAssinaturaDigitalCore assinaturaDigitalCore)
         {
             TransformaPdfCore = transformaPdfCore;
+            AssinaturaDigitalCore = assinaturaDigitalCore;
         }
 
         // https://docs.microsoft.com/pt-br/aspnet/core/web-api/?view=aspnetcore-3.1#binding-source-parameter-inference
@@ -99,7 +101,7 @@ namespace API.Controllers
         {
             var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
 
-            TransformaPdfCore.VerificarAssinaturaDigital(
+            await AssinaturaDigitalCore.Signaturevalidation(
                 arquivoByteArray
             );
 

@@ -7,6 +7,9 @@
   <ItemGroup>
     <PackageReference Include="itext7" Version="7.1.12" />
     <PackageReference Include="itext7.pdfhtml" Version="3.0.1" />
+    <PackageReference Include="itext7.pdfocr.api" Version="1.0.1" />
+    <PackageReference Include="itext7.pdfocr.tesseract4" Version="1.0.1" />
+    <PackageReference Include="iTextSharp.LGPLv2.Core" Version="1.6.7" />
   </ItemGroup>
 
   <ItemGroup>

@@ -25,6 +25,7 @@ namespace API
             services.AddTransient<IArquivoRepository, ArquivoRepository>();
             services.AddTransient<ICarimboCore, CarimboCore>();
             services.AddTransient<ITransformaPdfCore, TransformaPdfCore>();
+            services.AddTransient<IAssinaturaDigitalCore, AssinaturaDigitalCore>();
             services.AddControllers();
 
             services.AddSwaggerGen();
