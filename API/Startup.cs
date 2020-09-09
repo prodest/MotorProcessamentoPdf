@@ -1,3 +1,4 @@
+using API.Shared.Filters;
 using Business.Core;
 using Business.Core.ICore;
 using Infrastructure.Repositories;
@@ -26,7 +27,9 @@ namespace API
             services.AddTransient<ICarimboCore, CarimboCore>();
             services.AddTransient<ITransformaPdfCore, TransformaPdfCore>();
             services.AddTransient<IAssinaturaDigitalCore, AssinaturaDigitalCore>();
-            services.AddControllers();
+            services.AddControllers(options =>
+                options.Filters.Add(new HttpResponseExceptionFilter())
+            );
 
             services.AddSwaggerGen();
         }

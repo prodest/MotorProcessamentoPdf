@@ -4,6 +4,6 @@ namespace Business.Core.ICore
 {
     public interface IAssinaturaDigitalCore
     {
-        Task<byte[]> Signaturevalidation(byte[] file);
+        Task SignatureValidation(byte[] file);
     }
 }

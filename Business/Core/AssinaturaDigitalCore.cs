@@ -6,10 +6,9 @@ namespace Business.Core
 {
     public class AssinaturaDigitalCore : IAssinaturaDigitalCore
     {
-        public async Task<byte[]> Signaturevalidation(byte[] file)
+        public async Task SignatureValidation(byte[] file)
         {
             await AssinaturaDigitalHelper.ValidateDigitalSignatures(file);
-            return file;
         }
     }
 }
