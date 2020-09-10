@@ -38,6 +38,20 @@ namespace API.Controllers
         }
 
         [HttpPost]
+        public async Task<IActionResult> MetaPDFA(IFormFile arquivo)
+        {
+            if (arquivo.Length > 0)
+            {
+                var arquivoBytes = await PdfTools.ObterArquivo(arquivo);
+                var output = TransformaPdfCore.MetaPDFA(arquivoBytes);
+
+                return File(output, "application/octet-stream");
+            }
+
+            return BadRequest();
+        }
+
+        [HttpPost]
         public async Task<IActionResult> HtmlPdf(IFormFile arquivo)
         {
             if (arquivo.Length > 0)

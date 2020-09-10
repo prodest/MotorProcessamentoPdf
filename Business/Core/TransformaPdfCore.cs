@@ -11,6 +11,7 @@ using iText.Kernel.Utils;
 using iText.Layout;
 using iText.Layout.Element;
 using iText.Layout.Properties;
+using iText.Pdfa;
 using iText.Signatures;
 using System;
 using System.Collections.Generic;
@@ -22,6 +23,8 @@ namespace Business.Core
 {
     public class TransformaPdfCore : ITransformaPdfCore
     {
+        private const string Intent = "./wwwroot/resources/color/sRGB_CS_profile.icm";
+
         private readonly IArquivoRepository ArquivoRepository;
 
         public TransformaPdfCore(IArquivoRepository arquivoRepository)
@@ -208,6 +211,31 @@ namespace Business.Core
             pdfDocument.Close();
 
             return outputStream.ToArray();
+        }
+
+        public byte[] MetaPDFA(byte[] file)
+        {
+            using (MemoryStream readingMemoryStream = new MemoryStream(file))
+            using (PdfReader pdfReader = new PdfReader(readingMemoryStream))
+            using (PdfDocument readingPdfDocument = new PdfDocument(pdfReader))
+            using (MemoryStream writingMemoryStream = new MemoryStream())
+            using (PdfWriter pdfWriter = new PdfWriter(writingMemoryStream))
+            using (FileStream intentFileStream = new FileStream(Intent, FileMode.Open, FileAccess.Read))
+            using (PdfADocument pdfaDocument = new PdfADocument(pdfWriter, PdfAConformanceLevel.PDF_A_1B, new PdfOutputIntent(
+                "Custom",
+                "",
+                "http://www.color.org",
+                "sRGB IEC61966-2.1",
+                intentFileStream
+            )))
+            {
+                readingPdfDocument.CopyPagesTo(1, readingPdfDocument.GetNumberOfPages(), pdfaDocument);
+
+                readingPdfDocument.Close();
+                pdfaDocument.Close();
+
+                return writingMemoryStream.ToArray();
+            }
         }
 
         private class CustomPdfSplitter : PdfSplitter
