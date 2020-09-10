@@ -14,7 +14,7 @@ namespace API.Shared.Filters
         {
             if (context.Exception != null)
             {
-                context.Result = new ObjectResult(new ApiResponse(500, context.Exception.Message))
+                context.Result = new ObjectResult(new ApiResponse<object>(500, context.Exception.Message))
                 {
                     StatusCode = 500
                 };

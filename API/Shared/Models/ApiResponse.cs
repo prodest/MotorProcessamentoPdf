@@ -1,14 +1,16 @@
 ﻿namespace API.Shared.Models
 {
-    public class ApiResponse
+    public class ApiResponse<T> where T : class
     {
         public int StatusCode { get; }
         public string Message { get; }
+        public T Data { get; }
 
-        public ApiResponse(int statusCode, string message = null)
+        public ApiResponse(int statusCode, string message = null, T data = null)
         {
             StatusCode = statusCode;
             Message = message ?? GetDefaultMessageForStatusCode(statusCode);
+            Data = data;
         }
 
         private string GetDefaultMessageForStatusCode(int statusCode)

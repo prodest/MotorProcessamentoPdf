@@ -1,4 +1,5 @@
-﻿using API.Tools;
+﻿using API.Shared.Models;
+using API.Tools;
 using Business.Core.ICore;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -21,34 +22,44 @@ namespace API.Controllers
         [HttpPost]
         public async Task<IActionResult> Documento(IFormFile arquivo, [FromForm]string registro, [FromForm]int natureza, [FromForm]int valorLegal, [FromForm]DateTime dataHora)
         {
-            var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
+            if (arquivo.Length > 0)
+            {
+                var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
             
-            var arquivoCarimbado = CarimboCore.Documento(
-                arquivoByteArray,
-                registro,
-                natureza,
-                valorLegal,
-                dataHora
-            );
+                var arquivoCarimbado = CarimboCore.Documento(
+                    arquivoByteArray,
+                    registro,
+                    natureza,
+                    valorLegal,
+                    dataHora
+                );
 
-            return File(arquivoCarimbado, "application/octet-stream");
+                return Ok(new ApiResponse<byte[]>(200, "success", arquivoCarimbado));
+            }
+            else
+                return BadRequest();
         }
 
         [HttpPost]
         public async Task<IActionResult> CopiaProcesso(IFormFile arquivo, [FromForm]string protocolo, [FromForm]string geradoPor, [FromForm]DateTime dataHora, [FromForm]int totalPaginas, [FromForm]int paginaInicial)
         {
-            var arquivoBytes = await PdfTools.ObterArquivo(arquivo);
-         
-            var arquivoCarimbado = CarimboCore.CopiaProcesso(
-                arquivoBytes,
-                protocolo,
-                geradoPor,
-                dataHora,
-                totalPaginas,
-                paginaInicial
-            );
+            if (arquivo.Length > 0)
+            {
+                var arquivoBytes = await PdfTools.ObterArquivo(arquivo);
 
-            return File(arquivoCarimbado, "application/octet-stream");
+                var arquivoCarimbado = CarimboCore.CopiaProcesso(
+                    arquivoBytes,
+                    protocolo,
+                    geradoPor,
+                    dataHora,
+                    totalPaginas,
+                    paginaInicial
+                );
+
+                return Ok(new ApiResponse<byte[]>(200, "success", arquivoCarimbado));
+            }
+            else
+                return BadRequest();
         }
     }
 }
