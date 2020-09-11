@@ -65,13 +65,13 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> TokenEdocs(IFormFile arquivo, [FromForm] string registro)
+        public async Task<IActionResult> AdicionarTokenEdocs(IFormFile arquivo, [FromForm] string registro)
         {
             if (arquivo.Length > 0)
             {
                 var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
 
-                byte[] arquivoCarimbado = CarimboCore.TokenEdocs(arquivoByteArray, registro);
+                byte[] arquivoCarimbado = CarimboCore.AdicionarTokenEdocs(arquivoByteArray, registro);
 
                 return File(arquivoCarimbado, "application/octet-stream");
             }
@@ -84,12 +84,12 @@ namespace API.Controllers
         #region Validações
 
         [HttpPost]
-        public async Task<IActionResult> ContemTokenEdocs(IFormFile arquivo)
+        public async Task<IActionResult> ValidarTokenEdocs(IFormFile arquivo)
         {
             if (arquivo.Length > 0)
             {
                 var arquivoBytes = await PdfTools.ObterArquivo(arquivo);
-                var result = CarimboCore.ContemTokenEdocs(arquivoBytes);
+                var result = CarimboCore.ValidarTokenEdocs(arquivoBytes);
                 return Ok(new ApiResponse<bool>(200, "success", result));
             }
 

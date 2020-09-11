@@ -6,7 +6,7 @@ namespace Business.Core.ICore
     {
         byte[] CopiaProcesso(byte[] arquivo, string protocolo, string geradoPor, DateTime dataHora, int totalPaginas, int paginaInicial = 1);
         byte[] Documento(byte[] arquivo, string registro, int natureza, int valorLegal, DateTime dataHora);
-        byte[] TokenEdocs(byte[] arquivo, string registro);
-        bool ContemTokenEdocs(byte[] arquivo);
+        byte[] AdicionarTokenEdocs(byte[] arquivo, string registro);
+        bool ValidarTokenEdocs(byte[] arquivo);
     }
 }

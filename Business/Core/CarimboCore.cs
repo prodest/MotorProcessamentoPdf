@@ -121,7 +121,7 @@ namespace Business.Core
             }
         }
 
-        public byte[] TokenEdocs(byte[] arquivo, string registro)
+        public byte[] AdicionarTokenEdocs(byte[] arquivo, string registro)
         {
             // validações
             Validations.ArquivoValido(arquivo);
@@ -166,7 +166,7 @@ namespace Business.Core
 
         #region Validações
 
-        public bool ContemTokenEdocs(byte[] arquivo)
+        public bool ValidarTokenEdocs(byte[] arquivo)
         {
             // validações
             Validations.ArquivoValido(arquivo);
