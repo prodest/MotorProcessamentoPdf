@@ -19,28 +19,15 @@ namespace API.Controllers
             CarimboCore = carimboCore;
         }
 
+        #region Adição de Carimbos
+
         [HttpPost]
-        public async Task<IActionResult> IdentificadorDocumentoEdocs(IFormFile arquivo)
+        public async Task<IActionResult> Documento(IFormFile arquivo, [FromForm] string registro, [FromForm] int natureza, [FromForm] int valorLegal, [FromForm] DateTime dataHora)
         {
             if (arquivo.Length > 0)
             {
                 var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
 
-                byte[] arquivoCarimbado = CarimboCore.IdentificadorDocumentoEdocs(arquivoByteArray);
-
-                return File(arquivoCarimbado, "application/octet-stream");
-            }
-            else
-                return BadRequest();
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> Documento(IFormFile arquivo, [FromForm]string registro, [FromForm]int natureza, [FromForm]int valorLegal, [FromForm]DateTime dataHora)
-        {
-            if (arquivo.Length > 0)
-            {
-                var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
-            
                 var arquivoCarimbado = CarimboCore.Documento(
                     arquivoByteArray,
                     registro,
@@ -56,7 +43,7 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CopiaProcesso(IFormFile arquivo, [FromForm]string protocolo, [FromForm]string geradoPor, [FromForm]DateTime dataHora, [FromForm]int totalPaginas, [FromForm]int paginaInicial)
+        public async Task<IActionResult> CopiaProcesso(IFormFile arquivo, [FromForm] string protocolo, [FromForm] string geradoPor, [FromForm] DateTime dataHora, [FromForm] int totalPaginas, [FromForm] int paginaInicial)
         {
             if (arquivo.Length > 0)
             {
@@ -76,5 +63,39 @@ namespace API.Controllers
             else
                 return BadRequest();
         }
+
+        [HttpPost]
+        public async Task<IActionResult> TokenEdocs(IFormFile arquivo, [FromForm] string registro)
+        {
+            if (arquivo.Length > 0)
+            {
+                var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
+
+                byte[] arquivoCarimbado = CarimboCore.TokenEdocs(arquivoByteArray, registro);
+
+                return File(arquivoCarimbado, "application/octet-stream");
+            }
+            else
+                return BadRequest();
+        }
+
+        #endregion
+
+        #region Validações
+
+        [HttpPost]
+        public async Task<IActionResult> ContemTokenEdocs(IFormFile arquivo)
+        {
+            if (arquivo.Length > 0)
+            {
+                var arquivoBytes = await PdfTools.ObterArquivo(arquivo);
+                var result = CarimboCore.ContemTokenEdocs(arquivoBytes);
+                return Ok(new ApiResponse<bool>(200, "success", result));
+            }
+
+            return BadRequest();
+        }
+
+        #endregion
     }
 }

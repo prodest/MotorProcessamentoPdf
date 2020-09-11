@@ -6,19 +6,24 @@ using iText.Kernel.Font;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas;
+using iText.Kernel.Pdf.Canvas.Parser;
+using iText.Kernel.Pdf.Canvas.Parser.Listener;
 using iText.Kernel.Pdf.Extgstate;
 using iText.Layout;
 using iText.Layout.Element;
 using iText.Layout.Properties;
 using System;
 using System.IO;
+using System.Text.RegularExpressions;
 
 namespace Business.Core
 {
     public class CarimboCore : ICarimboCore
     {
         private readonly string dateFormat = "dd/MM/yyyy hh:mm";
-        private readonly string identificadorEdocs = $"<edocs>{Guid.NewGuid().ToString().ToUpper().Replace("-","")}</edocs>";
+        private readonly string identificadorEdocs = "<edocs>registro</edocs>";
+
+        #region Adição de Carimbos
 
         public byte[] Documento(byte[] arquivo, string registro, int natureza, int valorLegal, DateTime dataHora)
         {
@@ -116,12 +121,12 @@ namespace Business.Core
             }
         }
 
-        public byte[] IdentificadorDocumentoEdocs(byte[] file)
+        public byte[] TokenEdocs(byte[] arquivo, string registro)
         {
             // validações
-            Validations.ArquivoValido(file);
+            Validations.ArquivoValido(arquivo);
 
-            using (MemoryStream readingStream = new MemoryStream(file))
+            using (MemoryStream readingStream = new MemoryStream(arquivo))
             using (PdfReader pdfReader = new PdfReader(readingStream))
             using (MemoryStream writingStream = new MemoryStream())
             using (PdfWriter pdfWriter = new PdfWriter(writingStream))
@@ -137,9 +142,10 @@ namespace Business.Core
                     pageSize = page.GetPageSize();
                     canvas = new PdfCanvas(page);
                     // Desenhar Marca D'dágua
-                    Paragraph p = new Paragraph(identificadorEdocs).SetFontSize(5);
+                    var text = identificadorEdocs.Replace("registro", registro);
+                    Paragraph p = new Paragraph(text).SetFontSize(5);
                     canvas.SaveState();
-                    PdfExtGState gs1 = new PdfExtGState().SetFillOpacity(0.2f);
+                    PdfExtGState gs1 = new PdfExtGState().SetFillOpacity(0);
                     canvas.SetExtGState(gs1);
                     document.ShowTextAligned(
                         p,
@@ -156,7 +162,64 @@ namespace Business.Core
             }
         }
 
+        #endregion
+
+        #region Validações
+
+        public bool ContemTokenEdocs(byte[] arquivo)
+        {
+            // validações
+            Validations.ArquivoValido(arquivo);
+
+            int paginaValidada = 1;
+
+            using (MemoryStream readingStream = new MemoryStream(arquivo))
+            using (PdfReader pdfReader = new PdfReader(readingStream))
+            using (PdfDocument pdfDocument = new PdfDocument(pdfReader))
+            {
+                string text = PdfTextExtractor.GetTextFromPage(
+                    pdfDocument.GetPage(paginaValidada),
+                    new SimpleTextExtractionStrategy()
+                );
+                return ValidarIdentificadorEdocs(text);
+            }
+        }
+
+        private void PaginaInicialValida(int paginaInicial, int totalPaginas)
+        {
+            if (paginaInicial <= 0)
+                throw new Exception("O número da página inicial da cópia de processo precisa ser maior que zero.");
+            if (paginaInicial > totalPaginas)
+                throw new Exception("O número da página inicial da cópia de processo não pode ser superior ao número total de páginas.");
+        }
+
+        private void TotalPaginasValido(int totalPaginas)
+        {
+            if (totalPaginas <= 0)
+                throw new Exception("O número total de páginas da cópia de processo precisa ser maior que zero.");
+        }
+
+        private void GeradoPorValido(string geradoPor)
+        {
+            if (string.IsNullOrWhiteSpace(geradoPor))
+                throw new Exception("O nome do solicitante da cópia de processo está vazio.");
+        }
+
+        #endregion
+
         #region Auxiliares
+
+        private bool ValidarIdentificadorEdocs(string text)
+        {
+            var tokenIdentificadorEdocs = Regex.Match(text, "<edocs>.*</edocs>").Value;
+            var registro = tokenIdentificadorEdocs
+                .Replace("<edocs>", "")
+                .Replace("</edocs>", "");
+            if (Regex.IsMatch(registro.ToUpper(), "^20[0-9]{2}-([0-9B-DF-HJ-NP-TV-Z]){6}"))
+                return true;
+            else
+                return false;
+        }
 
         private Paragraph ValorLegalParagrafo(string protocolo, string valorLegal, string dataHora, int paginaInicial, int paginaFinal)
         {
@@ -195,30 +258,5 @@ namespace Business.Core
         }
 
         #endregion
-
-        #region Validações
-
-        private void PaginaInicialValida(int paginaInicial, int totalPaginas)
-        {
-            if (paginaInicial <= 0)
-                throw new Exception("O número da página inicial da cópia de processo precisa ser maior que zero.");
-            if (paginaInicial > totalPaginas)
-                throw new Exception("O número da página inicial da cópia de processo não pode ser superior ao número total de páginas.");
-        }
-
-        private void TotalPaginasValido(int totalPaginas)
-        {
-            if (totalPaginas <= 0)
-                throw new Exception("O número total de páginas da cópia de processo precisa ser maior que zero.");
-        }
-
-        private void GeradoPorValido(string geradoPor)
-        {
-            if (string.IsNullOrWhiteSpace(geradoPor))
-                throw new Exception("O nome do solicitante da cópia de processo está vazio.");
-        }
-
-        #endregion
     }
-
 }

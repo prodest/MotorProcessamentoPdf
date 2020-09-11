@@ -1,4 +1,5 @@
-﻿using API.Tools;
+﻿using API.Shared.Models;
+using API.Tools;
 using Business.Core.ICore;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -24,20 +25,6 @@ namespace API.Controllers
         // https://docs.microsoft.com/pt-br/aspnet/core/web-api/?view=aspnetcore-3.1#binding-source-parameter-inference
 
         #region Validações
-
-        [HttpPost]
-        public async Task<IActionResult> ContemIdentificadorDocumentoEdocs(IFormFile arquivo)
-        {
-            if (arquivo.Length > 0)
-            {
-                var arquivoBytes = await PdfTools.ObterArquivo(arquivo);
-                TransformaPdfCore.ContemIdentificadorDocumentoEdocs(arquivoBytes);
-
-                return Ok();
-            }
-
-            return BadRequest();
-        }
 
         [HttpPost]
         public async Task<IActionResult> IsPdf(IFormFile arquivo)

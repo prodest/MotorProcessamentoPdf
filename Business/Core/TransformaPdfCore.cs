@@ -6,8 +6,6 @@ using iText.Kernel.Colors;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas;
-using iText.Kernel.Pdf.Canvas.Parser;
-using iText.Kernel.Pdf.Canvas.Parser.Listener;
 using iText.Kernel.Pdf.Extgstate;
 using iText.Kernel.Utils;
 using iText.Layout;
@@ -19,7 +17,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Business.Core
@@ -35,6 +32,101 @@ namespace Business.Core
             ArquivoRepository = arquivoRepository;
         }
 
+        #region Validações
+
+        public bool IsPdf(byte[] file)
+        {
+            Validations.IsPdf(file);
+            return true;
+        }
+
+        public bool IsPdfa1b(byte[] file)
+        {
+            Validations.IsPdfa1b(file);
+            return true;
+        }
+
+        #endregion
+
+        #region Assinatura digital
+
+        public void VerificarAssinaturaDigital(byte[] file)
+        {
+            Validations.ArquivoValido(file);
+
+            using (MemoryStream readingStream = new MemoryStream(file))
+            using (PdfReader pdfReader = new PdfReader(readingStream))
+            using (PdfDocument pdfDocument = new PdfDocument(pdfReader))
+            {
+                SignatureUtil signUtil = new SignatureUtil(pdfDocument);
+                IList<String> names = signUtil.GetSignatureNames();
+
+                foreach (String name in names)
+                {
+                    Console.WriteLine("===== " + name + " =====");
+                    VerifySignature(signUtil, name);
+                }
+
+                pdfDocument.Close();
+            }
+        }
+
+        public PdfPKCS7 VerifySignature(SignatureUtil signUtil, String name)
+        {
+            PdfPKCS7 pkcs7 = signUtil.ReadSignatureData(name);
+
+            Console.WriteLine("Signature covers whole document: " + signUtil.SignatureCoversWholeDocument(name));
+            Console.WriteLine("Document revision: " + signUtil.GetRevision(name) + " of "
+                                  + signUtil.GetTotalRevisions());
+            Console.WriteLine("Integrity check OK? " + pkcs7.VerifySignatureIntegrityAndAuthenticity());
+            return pkcs7;
+        }
+
+        #endregion
+
+        #region Outros
+
+        public byte[] RemoveAnnotations(byte[] file)
+        {
+            if (!IsPdf(file))
+                throw new Exception("Este arquivo não é um documento PDF.");
+
+            var stream = new MemoryStream(file);
+            var outputStream = new MemoryStream();
+            var pdfDocument = new PdfDocument(new PdfReader(stream), new PdfWriter(outputStream));
+
+            for (int i = 1; i <= pdfDocument.GetNumberOfPages(); i++)
+                pdfDocument.GetPage(i).GetPdfObject().Remove(PdfName.Annots);
+
+            pdfDocument.Close();
+
+            return outputStream.ToArray();
+        }
+
+        public byte[] MetaPDFA(byte[] file)
+        {
+            using (MemoryStream readingMemoryStream = new MemoryStream(file))
+            using (PdfReader pdfReader = new PdfReader(readingMemoryStream))
+            using (PdfDocument readingPdfDocument = new PdfDocument(pdfReader))
+            using (MemoryStream writingMemoryStream = new MemoryStream())
+            using (PdfWriter pdfWriter = new PdfWriter(writingMemoryStream))
+            using (FileStream intentFileStream = new FileStream(Intent, FileMode.Open, FileAccess.Read))
+            using (PdfADocument pdfaDocument = new PdfADocument(pdfWriter, PdfAConformanceLevel.PDF_A_1B, new PdfOutputIntent(
+                "Custom",
+                "",
+                "http://www.color.org",
+                "sRGB IEC61966-2.1",
+                intentFileStream
+            )))
+            {
+                readingPdfDocument.CopyPagesTo(1, readingPdfDocument.GetNumberOfPages(), pdfaDocument);
+
+                readingPdfDocument.Close();
+                pdfaDocument.Close();
+
+                return writingMemoryStream.ToArray();
+            }
+        }
         public byte[] AdicionarMarcaDagua(byte[] file, string text, int angleDegrees = 30, int quantity = 5, float opacity = 0.1f)
         {
             // validações
@@ -51,7 +143,8 @@ namespace Business.Core
                 PdfCanvas canvas;
                 int n = pdfDocument.GetNumberOfPages();
                 float angleRads = (angleDegrees * (float)Math.PI) / 180;
-                for (int i = 1; i <= n; i++) {
+                for (int i = 1; i <= n; i++)
+                {
                     PdfPage page = pdfDocument.GetPage(i);
                     pageSize = page.GetPageSize();
                     canvas = new PdfCanvas(page);
@@ -64,8 +157,8 @@ namespace Business.Core
                     {
                         document.ShowTextAligned(
                             p,
-                            pageSize.GetWidth() / 2, 
-                            (pageSize.GetHeight()/(quantity + 1)) * j,
+                            pageSize.GetWidth() / 2,
+                            (pageSize.GetHeight() / (quantity + 1)) * j,
                             pdfDocument.GetPageNumber(page),
                             TextAlignment.CENTER, VerticalAlignment.MIDDLE,
                             angleRads
@@ -133,12 +226,6 @@ namespace Business.Core
             return outputStream.ToArray();
         }
 
-        public bool IsPdf(byte[] file)
-        {
-            Validations.IsPdf(file);
-            return true;
-        }
-
         //public byte[] OCR(byte[] file)
         //{
         //    var tesseractReader = new Tesseract4LibOcrEngine(tesseract4OcrEngineProperties);
@@ -157,116 +244,9 @@ namespace Business.Core
         //    return new PdfOutputIntent("", "", "", "sRGB IEC61966-2.1", @is);
         //}
 
-        #region Assinatura digital
-
-        public void VerificarAssinaturaDigital(byte[] file)
-        {
-            Validations.ArquivoValido(file);
-
-            using (MemoryStream readingStream = new MemoryStream(file))
-            using (PdfReader pdfReader = new PdfReader(readingStream))
-            using (PdfDocument pdfDocument = new PdfDocument(pdfReader))
-            {
-                SignatureUtil signUtil = new SignatureUtil(pdfDocument);
-                IList<String> names = signUtil.GetSignatureNames();
-
-                foreach (String name in names)
-                {
-                    Console.WriteLine("===== " + name + " =====");
-                    VerifySignature(signUtil, name);
-                }
-
-                pdfDocument.Close();
-            }
-        }
-
-        public PdfPKCS7 VerifySignature(SignatureUtil signUtil, String name)
-        {
-            PdfPKCS7 pkcs7 = signUtil.ReadSignatureData(name);
-
-            Console.WriteLine("Signature covers whole document: " + signUtil.SignatureCoversWholeDocument(name));
-            Console.WriteLine("Document revision: " + signUtil.GetRevision(name) + " of "
-                                  + signUtil.GetTotalRevisions());
-            Console.WriteLine("Integrity check OK? " + pkcs7.VerifySignatureIntegrityAndAuthenticity());
-            return pkcs7;
-        }
-
         #endregion
 
-        public bool IsPdfa1b(byte[] file)
-        {
-            Validations.IsPdfa1b(file);
-            return true;
-        }
-
-        public byte[] RemoveAnnotations(byte[] file)
-        {
-            if (!IsPdf(file))
-                throw new Exception("Este arquivo não é um documento PDF.");
-
-            var stream = new MemoryStream(file);
-            var outputStream = new MemoryStream();
-            var pdfDocument = new PdfDocument(new PdfReader(stream), new PdfWriter(outputStream));
-            
-            for (int i = 1; i <= pdfDocument.GetNumberOfPages(); i++)
-                pdfDocument.GetPage(i).GetPdfObject().Remove(PdfName.Annots);
-
-            pdfDocument.Close();
-
-            return outputStream.ToArray();
-        }
-
-        public byte[] MetaPDFA(byte[] file)
-        {
-            using (MemoryStream readingMemoryStream = new MemoryStream(file))
-            using (PdfReader pdfReader = new PdfReader(readingMemoryStream))
-            using (PdfDocument readingPdfDocument = new PdfDocument(pdfReader))
-            using (MemoryStream writingMemoryStream = new MemoryStream())
-            using (PdfWriter pdfWriter = new PdfWriter(writingMemoryStream))
-            using (FileStream intentFileStream = new FileStream(Intent, FileMode.Open, FileAccess.Read))
-            using (PdfADocument pdfaDocument = new PdfADocument(pdfWriter, PdfAConformanceLevel.PDF_A_1B, new PdfOutputIntent(
-                "Custom",
-                "",
-                "http://www.color.org",
-                "sRGB IEC61966-2.1",
-                intentFileStream
-            )))
-            {
-                readingPdfDocument.CopyPagesTo(1, readingPdfDocument.GetNumberOfPages(), pdfaDocument);
-
-                readingPdfDocument.Close();
-                pdfaDocument.Close();
-
-                return writingMemoryStream.ToArray();
-            }
-        }
-
-        public void ContemIdentificadorDocumentoEdocs(byte[] file)
-        {
-            // validações
-            Validations.ArquivoValido(file);
-
-            using (MemoryStream readingStream = new MemoryStream(file))
-            using (PdfReader pdfReader = new PdfReader(readingStream))
-            using (PdfDocument pdfDocument = new PdfDocument(pdfReader))
-            {
-                string text = PdfTextExtractor.GetTextFromPage(
-                    pdfDocument.GetPage(1), 
-                    new SimpleTextExtractionStrategy()
-                );
-                bool adsad = ValidarIdentificadorEdocs(text);
-            }
-        }
-
-        private bool ValidarIdentificadorEdocs(string text)
-        {
-            var tokenIdentificadorEdocs = Regex.Match(text, "<edocs>.*</edocs>").Value;
-            var registro = tokenIdentificadorEdocs
-                .Replace("<edocs>", "")
-                .Replace("</edocs>", "");
-            //if(Regex.IsMatch(registro, "^20[0-9]-"))
-            return true;
-        }
+        #region  Auxiliares
 
         private class CustomPdfSplitter : PdfSplitter
         {
@@ -291,12 +271,14 @@ namespace Business.Core
                 var splitDocuments = base.SplitByPageCount(pageNumber);
                 foreach (PdfDocument doc in splitDocuments)
                     doc.Close();
-                
+
                 foreach (var item in Destination)
                     output.Add(item.ToArray());
 
                 return output;
             }
         }
+        
+        #endregion
     }
 }
