@@ -14,6 +14,7 @@ using iText.Layout.Element;
 using iText.Layout.Properties;
 using System;
 using System.IO;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace Business.Core
@@ -165,6 +166,27 @@ namespace Business.Core
         #endregion
 
         #region Validações
+
+        public bool ValidarMetadadosEdocs(byte[] arquivo)
+        {
+            // validações
+            Validations.ArquivoValido(arquivo);
+
+            using (MemoryStream readingStream = new MemoryStream(arquivo))
+            using (PdfReader pdfReader = new PdfReader(readingStream))
+            using (PdfDocument pdfDocument = new PdfDocument(pdfReader))
+            {
+                var metadados = pdfDocument.GetXmpMetadata();
+                if (metadados == null)
+                    return false;
+                    
+                string metadadosString = Encoding.UTF8.GetString(metadados);
+                if (metadadosString.Contains("<xmp:CreatorTool>E-DOCS</xmp:CreatorTool>"))
+                    return true;
+                else 
+                    return false;
+            }
+        }
 
         public bool ValidarTokenEdocs(byte[] arquivo)
         {

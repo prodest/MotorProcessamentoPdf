@@ -70,10 +70,8 @@ namespace API.Controllers
             if (arquivo.Length > 0)
             {
                 var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
-
-                byte[] arquivoCarimbado = CarimboCore.AdicionarTokenEdocs(arquivoByteArray, registro);
-
-                return File(arquivoCarimbado, "application/octet-stream");
+                var arquivoCarimbado = CarimboCore.AdicionarTokenEdocs(arquivoByteArray, registro);
+                return Ok(new ApiResponse<byte[]>(200, "success", arquivoCarimbado));
             }
             else
                 return BadRequest();
@@ -90,6 +88,19 @@ namespace API.Controllers
             {
                 var arquivoBytes = await PdfTools.ObterArquivo(arquivo);
                 var result = CarimboCore.ValidarTokenEdocs(arquivoBytes);
+                return Ok(new ApiResponse<bool>(200, "success", result));
+            }
+
+            return BadRequest();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ValidarMetadadosEdocs(IFormFile arquivo)
+        {
+            if (arquivo.Length > 0)
+            {
+                var arquivoBytes = await PdfTools.ObterArquivo(arquivo);
+                var result = CarimboCore.ValidarMetadadosEdocs(arquivoBytes);
                 return Ok(new ApiResponse<bool>(200, "success", result));
             }
 

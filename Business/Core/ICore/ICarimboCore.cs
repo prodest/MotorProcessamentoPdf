@@ -8,5 +8,6 @@ namespace Business.Core.ICore
         byte[] Documento(byte[] arquivo, string registro, int natureza, int valorLegal, DateTime dataHora);
         byte[] AdicionarTokenEdocs(byte[] arquivo, string registro);
         bool ValidarTokenEdocs(byte[] arquivo);
+        bool ValidarMetadadosEdocs(byte[] arquivoBytes);
     }
 }
