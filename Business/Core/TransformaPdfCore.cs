@@ -6,6 +6,8 @@ using iText.Kernel.Colors;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas;
+using iText.Kernel.Pdf.Canvas.Parser;
+using iText.Kernel.Pdf.Canvas.Parser.Listener;
 using iText.Kernel.Pdf.Extgstate;
 using iText.Kernel.Utils;
 using iText.Layout;
@@ -17,6 +19,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Business.Core
@@ -236,6 +239,33 @@ namespace Business.Core
 
                 return writingMemoryStream.ToArray();
             }
+        }
+
+        public void ContemIdentificadorDocumentoEdocs(byte[] file)
+        {
+            // validações
+            Validations.ArquivoValido(file);
+
+            using (MemoryStream readingStream = new MemoryStream(file))
+            using (PdfReader pdfReader = new PdfReader(readingStream))
+            using (PdfDocument pdfDocument = new PdfDocument(pdfReader))
+            {
+                string text = PdfTextExtractor.GetTextFromPage(
+                    pdfDocument.GetPage(1), 
+                    new SimpleTextExtractionStrategy()
+                );
+                bool adsad = ValidarIdentificadorEdocs(text);
+            }
+        }
+
+        private bool ValidarIdentificadorEdocs(string text)
+        {
+            var tokenIdentificadorEdocs = Regex.Match(text, "<edocs>.*</edocs>").Value;
+            var registro = tokenIdentificadorEdocs
+                .Replace("<edocs>", "")
+                .Replace("</edocs>", "");
+            //if(Regex.IsMatch(registro, "^20[0-9]-"))
+            return true;
         }
 
         private class CustomPdfSplitter : PdfSplitter

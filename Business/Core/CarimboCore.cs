@@ -5,6 +5,8 @@ using iText.Kernel.Colors;
 using iText.Kernel.Font;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
+using iText.Kernel.Pdf.Canvas;
+using iText.Kernel.Pdf.Extgstate;
 using iText.Layout;
 using iText.Layout.Element;
 using iText.Layout.Properties;
@@ -16,6 +18,7 @@ namespace Business.Core
     public class CarimboCore : ICarimboCore
     {
         private readonly string dateFormat = "dd/MM/yyyy hh:mm";
+        private readonly string identificadorEdocs = $"<edocs>{Guid.NewGuid().ToString().ToUpper().Replace("-","")}</edocs>";
 
         public byte[] Documento(byte[] arquivo, string registro, int natureza, int valorLegal, DateTime dataHora)
         {
@@ -110,6 +113,46 @@ namespace Business.Core
                 pdfDocument.Close();
 
                 return outputStream.ToArray();
+            }
+        }
+
+        public byte[] IdentificadorDocumentoEdocs(byte[] file)
+        {
+            // validações
+            Validations.ArquivoValido(file);
+
+            using (MemoryStream readingStream = new MemoryStream(file))
+            using (PdfReader pdfReader = new PdfReader(readingStream))
+            using (MemoryStream writingStream = new MemoryStream())
+            using (PdfWriter pdfWriter = new PdfWriter(writingStream))
+            using (PdfDocument pdfDocument = new PdfDocument(pdfReader, pdfWriter))
+            using (Document document = new Document(pdfDocument))
+            {
+                Rectangle pageSize;
+                PdfCanvas canvas;
+                int n = pdfDocument.GetNumberOfPages();
+                for (int i = 1; i <= n; i++)
+                {
+                    PdfPage page = pdfDocument.GetPage(i);
+                    pageSize = page.GetPageSize();
+                    canvas = new PdfCanvas(page);
+                    // Desenhar Marca D'dágua
+                    Paragraph p = new Paragraph(identificadorEdocs).SetFontSize(5);
+                    canvas.SaveState();
+                    PdfExtGState gs1 = new PdfExtGState().SetFillOpacity(0.2f);
+                    canvas.SetExtGState(gs1);
+                    document.ShowTextAligned(
+                        p,
+                        0, 0,
+                        pdfDocument.GetPageNumber(page),
+                        TextAlignment.LEFT, VerticalAlignment.TOP,
+                        0
+                    );
+                    canvas.RestoreState();
+                }
+                pdfDocument.Close();
+
+                return writingStream.ToArray();
             }
         }
 

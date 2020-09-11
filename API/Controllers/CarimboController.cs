@@ -20,6 +20,21 @@ namespace API.Controllers
         }
 
         [HttpPost]
+        public async Task<IActionResult> IdentificadorDocumentoEdocs(IFormFile arquivo)
+        {
+            if (arquivo.Length > 0)
+            {
+                var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
+
+                byte[] arquivoCarimbado = CarimboCore.IdentificadorDocumentoEdocs(arquivoByteArray);
+
+                return File(arquivoCarimbado, "application/octet-stream");
+            }
+            else
+                return BadRequest();
+        }
+
+        [HttpPost]
         public async Task<IActionResult> Documento(IFormFile arquivo, [FromForm]string registro, [FromForm]int natureza, [FromForm]int valorLegal, [FromForm]DateTime dataHora)
         {
             if (arquivo.Length > 0)

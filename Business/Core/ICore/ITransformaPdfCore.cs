@@ -15,5 +15,6 @@ namespace Business.Core.ICore
         byte[] AdicionarMarcaDagua(byte[] file, string text, int angleDegrees = 30, int quantity = 5, float opacity = 0.1f);
         void VerificarAssinaturaDigital(byte[] arquivoByteArray);
         byte[] MetaPDFA(byte[] arquivoBytes);
+        void ContemIdentificadorDocumentoEdocs(byte[] arquivoBytes);
     }
 }

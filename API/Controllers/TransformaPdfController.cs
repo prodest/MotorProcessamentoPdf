@@ -23,14 +23,98 @@ namespace API.Controllers
 
         // https://docs.microsoft.com/pt-br/aspnet/core/web-api/?view=aspnetcore-3.1#binding-source-parameter-inference
 
+        #region Validações
+
         [HttpPost]
-        public async Task<IActionResult> PaginacaoDePDF(IFormFile arquivo, [FromForm]int itensPorPagina, [FromForm]int pagina)
+        public async Task<IActionResult> ContemIdentificadorDocumentoEdocs(IFormFile arquivo)
         {
             if (arquivo.Length > 0)
             {
                 var arquivoBytes = await PdfTools.ObterArquivo(arquivo);
-                var output = TransformaPdfCore.PdfPagination(arquivoBytes, itensPorPagina, pagina);
+                TransformaPdfCore.ContemIdentificadorDocumentoEdocs(arquivoBytes);
+
+                return Ok();
+            }
+
+            return BadRequest();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> IsPdf(IFormFile arquivo)
+        {
+            if (arquivo.Length > 0)
+            {
+                var arquivoBytes = await PdfTools.ObterArquivo(arquivo);
+                TransformaPdfCore.IsPdf(arquivoBytes);
+
+                return Ok();
+            }
+
+            return BadRequest();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> IsPdfa(IFormFile arquivo)
+        {
+            if (arquivo.Length > 0)
+            {
+                var arquivoBytes = await PdfTools.ObterArquivo(arquivo);
+                TransformaPdfCore.IsPdf(arquivoBytes);
+                TransformaPdfCore.IsPdfa1b(arquivoBytes);
+
+                return Ok();
+            }
+
+            return BadRequest();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ValidarAssinaturaDigital(IFormFile arquivo)
+        {
+            if (arquivo.Length > 0)
+            {
+                var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
+                await AssinaturaDigitalCore.SignatureValidation(arquivoByteArray);
                 
+                return Ok();
+            }
+
+            return BadRequest();
+        }
+
+        #endregion
+
+        [HttpPost]
+        public async Task<IActionResult> AdicionarMarcaDagua(IFormFile arquivo, [FromForm]string texto, [FromForm]int anguloGraus = 30, [FromForm]int quantidade = 5, [FromForm]string opacidade = "0.1")
+        {
+            if (arquivo.Length > 0)
+            {
+                var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
+                var arquivoMarcado = TransformaPdfCore.AdicionarMarcaDagua(
+                    arquivoByteArray,
+                    texto,
+                    anguloGraus,
+                    quantidade,
+                    float.Parse(opacidade)
+                );
+
+                return File(arquivoMarcado, "application/octet-stream");
+            }
+
+            return BadRequest();
+        }
+
+
+        #region Outros
+
+        [HttpPost]
+        public async Task<IActionResult> ConcatenarPdfs(IFormFileCollection arquivos)
+        {
+            if (arquivos.Count() > 1)
+            {
+                var arquivosBytes = await PdfTools.ObterArquivos(arquivos);
+                var output = TransformaPdfCore.PdfConcatenation(arquivosBytes);
+
                 return File(output, "application/octet-stream");
             }
 
@@ -38,12 +122,11 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> MetaPDFA(IFormFile arquivo)
+        public async Task<IActionResult> ConcatenarPdfsUsingMinio([FromForm] IEnumerable<string> arquivos)
         {
-            if (arquivo.Length > 0)
+            if (arquivos.Count() > 1)
             {
-                var arquivoBytes = await PdfTools.ObterArquivo(arquivo);
-                var output = TransformaPdfCore.MetaPDFA(arquivoBytes);
+                var output = await TransformaPdfCore.PdfConcatenationUsingMinio(arquivos);
 
                 return File(output, "application/octet-stream");
             }
@@ -66,21 +149,6 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> IsPdf(IFormFile arquivo)
-        {
-            if (arquivo.Length > 0)
-            {
-                var arquivoBytes = await PdfTools.ObterArquivo(arquivo);
-                var isPdf = TransformaPdfCore.IsPdf(arquivoBytes);
-                var isPdfa = TransformaPdfCore.IsPdfa1b(arquivoBytes);
-
-                return Ok(new { IsPdf = isPdf, IsPdfa = isPdfa });
-            }
-
-            return BadRequest();
-        }
-
-        [HttpPost]
         public async Task<IActionResult> RemoverAnotacoes(IFormFile arquivo)
         {
             if (arquivo.Length > 0)
@@ -95,46 +163,12 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> AdicionarMarcaDagua(IFormFile arquivo, [FromForm]string texto, [FromForm]int anguloGraus = 30, [FromForm]int quantidade = 5, [FromForm]float opacidade = 0.1f)
+        public async Task<IActionResult> PaginacaoDePDF(IFormFile arquivo, [FromForm] int itensPorPagina, [FromForm] int pagina)
         {
             if (arquivo.Length > 0)
             {
-                var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
-                var arquivoMarcado = TransformaPdfCore.AdicionarMarcaDagua(
-                    arquivoByteArray,
-                    texto,
-                    anguloGraus,
-                    quantidade,
-                    opacidade
-                );
-
-                return File(arquivoMarcado, "application/octet-stream");
-            }
-
-            return BadRequest();
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> ValidarAssinaturaDigital(IFormFile arquivo)
-        {
-            if (arquivo.Length > 0)
-            {
-                var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
-                await AssinaturaDigitalCore.SignatureValidation(arquivoByteArray);
-                
-                return Ok();
-            }
-
-            return BadRequest();
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> ConcatenarPdfs(IFormFileCollection arquivos)
-        {
-            if(arquivos.Count() > 1)
-            {
-                var arquivosBytes = await PdfTools.ObterArquivos(arquivos);
-                var output = TransformaPdfCore.PdfConcatenation(arquivosBytes);
+                var arquivoBytes = await PdfTools.ObterArquivo(arquivo);
+                var output = TransformaPdfCore.PdfPagination(arquivoBytes, itensPorPagina, pagina);
 
                 return File(output, "application/octet-stream");
             }
@@ -143,16 +177,19 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> ConcatenarPdfsUsingMinio([FromForm]IEnumerable<string> arquivos)
+        public async Task<IActionResult> MetaPDFA(IFormFile arquivo)
         {
-            if (arquivos.Count() > 1)
+            if (arquivo.Length > 0)
             {
-                var output = await TransformaPdfCore.PdfConcatenationUsingMinio(arquivos);
-                
+                var arquivoBytes = await PdfTools.ObterArquivo(arquivo);
+                var output = TransformaPdfCore.MetaPDFA(arquivoBytes);
+
                 return File(output, "application/octet-stream");
             }
 
             return BadRequest();
         }
+
+        #endregion
     }
 }
