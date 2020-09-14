@@ -1,5 +1,6 @@
 ﻿using Business.Core.ICore;
 using Business.Helpers;
+using Business.Shared.Models;
 using iText.IO.Font.Constants;
 using iText.Kernel.Colors;
 using iText.Kernel.Font;
@@ -167,13 +168,20 @@ namespace Business.Core
 
         #region Validações
 
-        public bool ValidarDocumentoDuplicado(byte[] arquivo)
+        public ApiResponse<string> ValidarDocumentoDuplicado(byte[] arquivo)
         {
-            bool documentoExistente = ValidarMetadadosEdocs(arquivo) || ValidarTokenEdocs(arquivo);
-            return documentoExistente;
+            var result = ValidarMetadadosEdocs(arquivo);
+            if (result != null)
+                return new ApiResponse<string>(200, "success", result);
+
+            var token = ValidarTokenEdocs(arquivo);
+            if(token != null)
+                return new ApiResponse<string>(200, "success", result);
+
+            return new ApiResponse<string>(200, "success", null);
         }
 
-        private bool ValidarMetadadosEdocs(byte[] arquivo)
+        private string ValidarMetadadosEdocs(byte[] arquivo)
         {
             // validações
             Validations.ArquivoValido(arquivo);
@@ -184,17 +192,21 @@ namespace Business.Core
             {
                 var metadados = pdfDocument.GetXmpMetadata();
                 if (metadados == null)
-                    return false;
-                    
+                    return null;
+
                 string metadadosString = Encoding.UTF8.GetString(metadados);
                 if (metadadosString.Contains("<xmp:CreatorTool>E-DOCS</xmp:CreatorTool>"))
-                    return true;
-                else 
-                    return false;
+                {
+                    string texto = "E-DOCS, Documento capturado pelo E-DOCS, ";
+                    string registroDocumento = metadadosString.Substring(metadadosString.IndexOf(texto) + texto.Length, 11);
+                    return $"Este documento já foi capturado e está disponível no E-Docs sob registro: {registroDocumento}";
+                }
+                else
+                    return null;
             }
         }
 
-        private bool ValidarTokenEdocs(byte[] arquivo)
+        private string ValidarTokenEdocs(byte[] arquivo)
         {
             // validações
             Validations.ArquivoValido(arquivo);
@@ -209,7 +221,7 @@ namespace Business.Core
                     pdfDocument.GetPage(paginaValidada),
                     new SimpleTextExtractionStrategy()
                 );
-                return ValidarIdentificadorEdocs(text);
+                return BuscarIdentificadorEdocs(text);
             }
         }
 
@@ -237,16 +249,17 @@ namespace Business.Core
 
         #region Auxiliares
 
-        private bool ValidarIdentificadorEdocs(string text)
+        private string BuscarIdentificadorEdocs(string text)
         {
             var tokenIdentificadorEdocs = Regex.Match(text, "<edocs>.*</edocs>").Value;
             var registro = tokenIdentificadorEdocs
                 .Replace("<edocs>", "")
                 .Replace("</edocs>", "");
-            if (Regex.IsMatch(registro.ToUpper(), "^20[0-9]{2}-([0-9B-DF-HJ-NP-TV-Z]){6}"))
-                return true;
+            var match = Regex.Match(registro.ToUpper(), "^20[0-9]{2}-([0-9B-DF-HJ-NP-TV-Z]){6}");
+            if (match.Success)
+                return match.Value;
             else
-                return false;
+                return null;
         }
 
         private Paragraph ValorLegalParagrafo(string protocolo, string valorLegal, string dataHora, int paginaInicial, int paginaFinal)

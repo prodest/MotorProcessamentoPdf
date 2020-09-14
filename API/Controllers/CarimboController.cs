@@ -1,6 +1,6 @@
-﻿using API.Shared.Models;
-using API.Tools;
+﻿using API.Tools;
 using Business.Core.ICore;
+using Business.Shared.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -88,7 +88,7 @@ namespace API.Controllers
             {
                 var arquivoBytes = await PdfTools.ObterArquivo(arquivo);
                 var result = CarimboCore.ValidarDocumentoDuplicado(arquivoBytes);
-                return Ok(new ApiResponse<bool>(200, "success", result));
+                return Ok(result);
             }
 
             return BadRequest();

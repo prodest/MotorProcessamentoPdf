@@ -1,5 +1,4 @@
-﻿using API.Shared.Models;
-using API.Tools;
+﻿using API.Tools;
 using Business.Core.ICore;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

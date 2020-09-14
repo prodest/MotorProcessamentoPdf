@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Business.Shared.Models;
+using System;
 
 namespace Business.Core.ICore
 {
@@ -7,6 +8,6 @@ namespace Business.Core.ICore
         byte[] CopiaProcesso(byte[] arquivo, string protocolo, string geradoPor, DateTime dataHora, int totalPaginas, int paginaInicial = 1);
         byte[] Documento(byte[] arquivo, string registro, int natureza, int valorLegal, DateTime dataHora);
         byte[] AdicionarTokenEdocs(byte[] arquivo, string registro);
-        bool ValidarDocumentoDuplicado(byte[] arquivo);
+        ApiResponse<string> ValidarDocumentoDuplicado(byte[] arquivo);
     }
 }

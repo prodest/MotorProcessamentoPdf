@@ -1,4 +1,4 @@
-﻿namespace API.Shared.Models
+﻿namespace Business.Shared.Models
 {
     public class ApiResponse<T>
     {
