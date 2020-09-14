@@ -8,17 +8,22 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Prodest.HealthCheck;
 
 namespace API
 {
     public class Startup
     {
-        public Startup(IConfiguration configuration)
+        private readonly IHostEnvironment _env;
+        public IConfiguration Configuration { get; }
+
+        public Startup(IConfiguration configuration, IHostEnvironment env)
         {
             Configuration = configuration;
+
+            _env = env;
         }
 
-        public IConfiguration Configuration { get; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -32,6 +37,11 @@ namespace API
             );
 
             services.AddSwaggerGen();
+
+            services.AddCustomHealthChecks(new CustomHealthCheckOptions
+            {
+                ContentRootFileProvider = _env.ContentRootFileProvider
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -51,6 +61,8 @@ namespace API
             app.UseHttpsRedirection();
 
             app.UseRouting();
+
+            app.UseCustomHealthChecks();
 
             app.UseAuthorization();
 
