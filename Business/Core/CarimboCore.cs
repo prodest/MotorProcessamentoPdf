@@ -167,7 +167,13 @@ namespace Business.Core
 
         #region Validações
 
-        public bool ValidarMetadadosEdocs(byte[] arquivo)
+        public bool ValidarDocumentoDuplicado(byte[] arquivo)
+        {
+            bool documentoExistente = ValidarMetadadosEdocs(arquivo) || ValidarTokenEdocs(arquivo);
+            return documentoExistente;
+        }
+
+        private bool ValidarMetadadosEdocs(byte[] arquivo)
         {
             // validações
             Validations.ArquivoValido(arquivo);
@@ -188,7 +194,7 @@ namespace Business.Core
             }
         }
 
-        public bool ValidarTokenEdocs(byte[] arquivo)
+        private bool ValidarTokenEdocs(byte[] arquivo)
         {
             // validações
             Validations.ArquivoValido(arquivo);

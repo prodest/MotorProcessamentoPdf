@@ -82,25 +82,12 @@ namespace API.Controllers
         #region Validações
 
         [HttpPost]
-        public async Task<IActionResult> ValidarTokenEdocs(IFormFile arquivo)
+        public async Task<IActionResult> ValidarDocumentoDuplicado(IFormFile arquivo)
         {
             if (arquivo.Length > 0)
             {
                 var arquivoBytes = await PdfTools.ObterArquivo(arquivo);
-                var result = CarimboCore.ValidarTokenEdocs(arquivoBytes);
-                return Ok(new ApiResponse<bool>(200, "success", result));
-            }
-
-            return BadRequest();
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> ValidarMetadadosEdocs(IFormFile arquivo)
-        {
-            if (arquivo.Length > 0)
-            {
-                var arquivoBytes = await PdfTools.ObterArquivo(arquivo);
-                var result = CarimboCore.ValidarMetadadosEdocs(arquivoBytes);
+                var result = CarimboCore.ValidarDocumentoDuplicado(arquivoBytes);
                 return Ok(new ApiResponse<bool>(200, "success", result));
             }
 
