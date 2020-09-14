@@ -170,13 +170,13 @@ namespace Business.Core
 
         public ApiResponse<string> ValidarDocumentoDuplicado(byte[] arquivo)
         {
-            var result = ValidarMetadadosEdocs(arquivo);
-            if (result != null)
-                return new ApiResponse<string>(200, "success", result);
+            var registro = ValidarMetadadosEdocs(arquivo);
+            if (registro != null)
+                return new ApiResponse<string>(200, "success", registro);
 
             var token = ValidarTokenEdocs(arquivo);
             if(token != null)
-                return new ApiResponse<string>(200, "success", result);
+                return new ApiResponse<string>(200, "success", token);
 
             return new ApiResponse<string>(200, "success", null);
         }
@@ -257,7 +257,7 @@ namespace Business.Core
                 .Replace("</edocs>", "");
             var match = Regex.Match(registro.ToUpper(), "^20[0-9]{2}-([0-9B-DF-HJ-NP-TV-Z]){6}");
             if (match.Success)
-                return match.Value;
+                return $"Este documento já foi capturado e está disponível no E-Docs sob registro: {match.Value}";
             else
                 return null;
         }
