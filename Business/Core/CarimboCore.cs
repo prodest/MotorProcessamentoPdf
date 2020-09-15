@@ -135,25 +135,25 @@ namespace Business.Core
             using (PdfDocument pdfDocument = new PdfDocument(pdfReader, pdfWriter))
             using (Document document = new Document(pdfDocument))
             {
-                Rectangle pageSize;
                 PdfCanvas canvas;
                 int n = pdfDocument.GetNumberOfPages();
+
                 for (int i = 1; i <= n; i++)
                 {
                     PdfPage page = pdfDocument.GetPage(i);
-                    pageSize = page.GetPageSize();
+                    var pageSize = page.GetPageSize();
                     canvas = new PdfCanvas(page);
                     // Desenhar Marca D'dágua
                     var text = identificadorEdocs.Replace("registro", registro);
-                    Paragraph p = new Paragraph(text).SetFontSize(5);
+                    Paragraph p = new Paragraph(text).SetFontColor(ColorConstants.RED).SetFontSize(0.1f);
                     canvas.SaveState();
                     PdfExtGState gs1 = new PdfExtGState().SetFillOpacity(0);
                     canvas.SetExtGState(gs1);
                     document.ShowTextAligned(
                         p,
-                        0, 0,
+                        pageSize.GetWidth()/2, pageSize.GetHeight()/2,
                         pdfDocument.GetPageNumber(page),
-                        TextAlignment.LEFT, VerticalAlignment.TOP,
+                        TextAlignment.LEFT, VerticalAlignment.BOTTOM,
                         0
                     );
                     canvas.RestoreState();
@@ -170,13 +170,9 @@ namespace Business.Core
 
         public ApiResponse<string> ValidarDocumentoDuplicado(byte[] arquivo)
         {
-            var registro = ValidarMetadadosEdocs(arquivo);
-            if (registro != null)
-                return new ApiResponse<string>(200, "success", registro);
-
-            var token = ValidarTokenEdocs(arquivo);
-            if(token != null)
-                return new ApiResponse<string>(200, "success", token);
+            var carimboDocumento = BuscarCarimbos(arquivo);
+            if (carimboDocumento != null)
+                return new ApiResponse<string>(200, "success", carimboDocumento);
 
             return new ApiResponse<string>(200, "success", null);
         }
@@ -206,13 +202,60 @@ namespace Business.Core
             }
         }
 
-        private string ValidarTokenEdocs(byte[] arquivo)
+        private string BuscarCarimbos(byte[] arquivo)
         {
             // validações
             Validations.ArquivoValido(arquivo);
 
-            // Todas as páginas de um documento capturado recebem o token de identificação, 
-            // mas a validação verifica a existencia do mesmo apenas na primeira página.
+            using (MemoryStream readingStream = new MemoryStream(arquivo))
+            using (PdfReader pdfReader = new PdfReader(readingStream))
+            using (PdfDocument pdfDocument = new PdfDocument(pdfReader))
+            {
+                int n = pdfDocument.GetNumberOfPages();
+
+                for (int i = 1; i <= n; i++)
+                {
+                    string text = PdfTextExtractor.GetTextFromPage(
+                        pdfDocument.GetPage(i),
+                        new SimpleTextExtractionStrategy()
+                    );
+
+                    #region Documento
+                    
+                    var carimboDocumento = Regex.Match(text, "20[0-9]{2}-[0-9B-DF-HJ-NP-TV-Z]{6} - E-DOCS");
+                    if (carimboDocumento.Success)
+                    {
+                        var possivelCarimbo = text.Substring(carimboDocumento.Index, text.Length - carimboDocumento.Index);
+                        var carimbo = Regex.Match(possivelCarimbo, "20[0-9]{2}-[0-9B-DF-HJ-NP-TV-Z]{6} - E-DOCS .* [0-9]{2}/[0-9]{2}/20[0-9]{2} [0-9]{2}:[0-9]{2} .* PÁGINA");
+                        if (carimbo.Success)
+                        {
+                            return $"Este documento já foi capturado e está disponível no E-Docs sob registro: {possivelCarimbo.Substring(0, 11)}";
+                        }
+                    }
+
+                    var carimboCopiaProcesso = Regex.Match(text, "E-DOCS - CÓPIA DO PROCESSO 20[0-9]{2}-[0-9B-DF-HJ-NP-TV-Z]{5}");
+                    if (carimboCopiaProcesso.Success)
+                    {
+                        var possivelCarimbo = text.Substring(carimboCopiaProcesso.Index, text.Length - carimboCopiaProcesso.Index);
+                        var carimbo = Regex.Match(possivelCarimbo, "E-DOCS - CÓPIA DO PROCESSO 20[0-9]{2}-[0-9B-DF-HJ-NP-TV-Z]{5} GERADO POR .* [0-9]{2}/[0-9]{2}/20[0-9]{2} [0-9]{2}:[0-9]{2} PÁGINA");
+                        if (carimbo.Success)
+                        {
+                            return $"Não é permitido capturar uma Cópia de Processo";
+                        }
+                    }
+
+                    #endregion
+                }
+
+                return null;
+            }
+        }
+
+        private string BuscarCarimboDocumento(byte[] arquivo)
+        {
+            // validações
+            Validations.ArquivoValido(arquivo);
+
             int paginaValidada = 1;
 
             using (MemoryStream readingStream = new MemoryStream(arquivo))
@@ -223,7 +266,50 @@ namespace Business.Core
                     pdfDocument.GetPage(paginaValidada),
                     new SimpleTextExtractionStrategy()
                 );
-                return BuscarIdentificadorEdocs(text);
+
+                var carimboDocumento = Regex.Match(text, "20[0-9]{2}-[0-9B-DF-HJ-NP-TV-Z]{6} - E-DOCS");
+                if (carimboDocumento.Success)
+                {
+                    var possivelCarimbo = text.Substring(carimboDocumento.Index, text.Length - carimboDocumento.Index);
+                    var carimbo = Regex.Match(possivelCarimbo, "20[0-9]{2}-[0-9B-DF-HJ-NP-TV-Z]{6} - E-DOCS .* [0-9]{2}/[0-9]{2}/20[0-9]{2} [0-9]{2}:[0-9]{2} .* PÁGINA");
+                    if (carimbo.Success)
+                    {
+                        return $"Este documento já foi capturado e está disponível no E-Docs sob registro: {possivelCarimbo.Substring(0, 11)}";
+                    }
+                }
+
+                return null;
+            }
+        }
+
+        private string BuscarCarimboCopiaProcesso(byte[] arquivo)
+        {
+            // validações
+            Validations.ArquivoValido(arquivo);
+
+            int paginaValidada = 1;
+
+            using (MemoryStream readingStream = new MemoryStream(arquivo))
+            using (PdfReader pdfReader = new PdfReader(readingStream))
+            using (PdfDocument pdfDocument = new PdfDocument(pdfReader))
+            {
+                string text = PdfTextExtractor.GetTextFromPage(
+                    pdfDocument.GetPage(paginaValidada),
+                    new SimpleTextExtractionStrategy()
+                );
+
+                var carimboCopiaProcesso = Regex.Match(text, "E-DOCS - CÓPIA DO PROCESSO 20[0-9]{2}-[0-9B-DF-HJ-NP-TV-Z]{5}");
+                if (carimboCopiaProcesso.Success)
+                {
+                    var possivelCarimbo = text.Substring(carimboCopiaProcesso.Index, text.Length - carimboCopiaProcesso.Index);
+                    var carimbo = Regex.Match(possivelCarimbo, "E-DOCS - CÓPIA DO PROCESSO 20[0-9]{2}-[0-9B-DF-HJ-NP-TV-Z]{5} GERADO POR .* [0-9]{2}/[0-9]{2}/20[0-9]{2} [0-9]{2}:[0-9]{2} PÁGINA");
+                    if (carimbo.Success)
+                    {
+                        return $"Não é permitido capturar uma Cópia de Processo";
+                    }
+                }
+
+                return null;
             }
         }
 
@@ -250,21 +336,6 @@ namespace Business.Core
         #endregion
 
         #region Auxiliares
-
-        private string BuscarIdentificadorEdocs(string text)
-        {
-            var tokenIdentificadorEdocs = Regex.Match(text, "<edocs>.*</edocs>").Value;
-            var registro = tokenIdentificadorEdocs
-                .Replace("<edocs>", "")
-                .Replace("</edocs>", "");
-            var match = Regex.Match(registro.ToUpper(), "^[0-9]{4}-([0-9B-DF-HJ-NP-TV-Z]){6}");
-            if (match.Success && match.Value.Equals("0000-C0P14S"))
-                return $"Você não pode capturar uma Cópia de Processo.";
-            else if(match.Success)
-                return $"Este documento já foi capturado e está disponível no E-Docs sob registro: {match.Value}";
-            else
-                return null;
-        }
 
         private Paragraph ValorLegalParagrafo(string protocolo, string valorLegal, string dataHora, int paginaInicial, int paginaFinal)
         {
