@@ -211,6 +211,8 @@ namespace Business.Core
             // validações
             Validations.ArquivoValido(arquivo);
 
+            // Todas as páginas de um documento capturado recebem o token de identificação, 
+            // mas a validação verifica a existencia do mesmo apenas na primeira página.
             int paginaValidada = 1;
 
             using (MemoryStream readingStream = new MemoryStream(arquivo))
@@ -255,8 +257,10 @@ namespace Business.Core
             var registro = tokenIdentificadorEdocs
                 .Replace("<edocs>", "")
                 .Replace("</edocs>", "");
-            var match = Regex.Match(registro.ToUpper(), "^20[0-9]{2}-([0-9B-DF-HJ-NP-TV-Z]){6}");
-            if (match.Success)
+            var match = Regex.Match(registro.ToUpper(), "^[0-9]{4}-([0-9B-DF-HJ-NP-TV-Z]){6}");
+            if (match.Success && match.Value.Equals("0000-C0P14S"))
+                return $"Você não pode capturar uma Cópia de Processo.";
+            else if(match.Success)
                 return $"Este documento já foi capturado e está disponível no E-Docs sob registro: {match.Value}";
             else
                 return null;
