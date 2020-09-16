@@ -40,7 +40,7 @@ namespace API.Controllers
                     repeticoes
                 );
 
-                return File(arquivoMarcado, "application/octet-stream");
+                return Ok(new ApiResponse<byte[]>(200, "success", arquivoMarcado));
             }
 
             return BadRequest();
