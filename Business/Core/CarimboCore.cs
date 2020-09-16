@@ -27,6 +27,61 @@ namespace Business.Core
 
         #region Adição de Carimbos
 
+        public byte[] AdicionarMarcaDagua(
+            byte[] arquivo, string[] texto, int tamanhoFonte = 40, string corHexa = "ff0000", 
+            int anguloTextoGraus = 30, float opacidade = 0.1f, int repeticoes = 3
+        )
+        {
+            // validações
+            Validations.ArquivoValido(arquivo);
+
+            using (MemoryStream readingStream = new MemoryStream(arquivo))
+            using (PdfReader pdfReader = new PdfReader(readingStream))
+            using (MemoryStream writingStream = new MemoryStream())
+            using (PdfWriter pdfWriter = new PdfWriter(writingStream))
+            using (PdfDocument pdfDocument = new PdfDocument(pdfReader, pdfWriter))
+            using (Document document = new Document(pdfDocument))
+            {
+                Rectangle pageSize;
+                PdfCanvas canvas;
+                int n = pdfDocument.GetNumberOfPages();
+                float angleRads = (anguloTextoGraus * (float)Math.PI) / 180;
+                for (int pageCounter = 1; pageCounter <= n; pageCounter++)
+                {
+                    PdfPage page = pdfDocument.GetPage(pageCounter);
+                    pageSize = page.GetPageSize();
+                    canvas = new PdfCanvas(page);
+
+                    int k = 1;
+                    for (int repetitionCounter = 0; repetitionCounter < repeticoes; repetitionCounter++)
+                    { 
+                        for (int textCounter = 0; textCounter < texto.Length; textCounter++)
+                        {
+                            // Desenhar Marca D'dágua
+                            Paragraph p = new Paragraph(texto[textCounter])
+                                .SetFontSize(tamanhoFonte)
+                                .SetFontColor(FromHexa2Rgb(corHexa));
+                            canvas.SaveState();
+                            PdfExtGState gs1 = new PdfExtGState().SetFillOpacity(opacidade);
+                            canvas.SetExtGState(gs1);
+                            document.ShowTextAligned(
+                                p,
+                                pageSize.GetWidth() / 2,
+                                (pageSize.GetHeight() / ((texto.Length * repeticoes) + 1)) * k++,
+                                pdfDocument.GetPageNumber(page),
+                                TextAlignment.CENTER, VerticalAlignment.MIDDLE,
+                                angleRads
+                            );
+                        }
+                    }
+                    canvas.RestoreState();
+                }
+                pdfDocument.Close();
+
+                return writingStream.ToArray();
+            }
+        }
+
         public byte[] Documento(byte[] arquivo, string registro, int natureza, int valorLegal, DateTime dataHora)
         {
             // validações
@@ -336,6 +391,19 @@ namespace Business.Core
         #endregion
 
         #region Auxiliares
+
+        private DeviceRgb FromHexa2Rgb(string corHexa)
+        {
+            if (corHexa.Length == 6)
+            {
+                int red = Convert.ToInt32(corHexa.Substring(0, 2), 16);
+                int green = Convert.ToInt32(corHexa.Substring(2, 2), 16);
+                int blue = Convert.ToInt32(corHexa.Substring(4, 2), 16);
+                return new DeviceRgb(red, green, blue);
+            }
+            else
+                throw new Exception("Informe todos os 6 caracteres do código hexadecimal");
+        }
 
         private Paragraph ValorLegalParagrafo(string protocolo, string valorLegal, string dataHora, int paginaInicial, int paginaFinal)
         {

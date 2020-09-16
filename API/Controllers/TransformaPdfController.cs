@@ -90,7 +90,6 @@ namespace API.Controllers
             return BadRequest();
         }
 
-
         #region Outros
 
         [HttpPost]
