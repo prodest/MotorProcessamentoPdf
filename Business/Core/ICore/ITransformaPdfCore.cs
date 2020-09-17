@@ -16,5 +16,6 @@ namespace Business.Core.ICore
         void VerificarAssinaturaDigital(byte[] file);
         byte[] MetaPDFA(byte[] file);
         ApiResponse<string> ValidarRestricoesLeituraOuAltaretacao(byte[] file);
+        ApiResponse<PdfInfo> PdfInfo(byte[] arquivoByteArray);
     }
 }

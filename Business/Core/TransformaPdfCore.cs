@@ -205,6 +205,24 @@ namespace Business.Core
             }
         }
 
+        public ApiResponse<PdfInfo> PdfInfo(byte[] file)
+        {
+            Validations.ArquivoValido(file);
+
+            using (MemoryStream readingStream = new MemoryStream(file))
+            using (PdfReader pdfReader = new PdfReader(readingStream))
+            using (PdfDocument pdfDocument = new PdfDocument(pdfReader))
+            {
+                var fileInfo = new PdfInfo()
+                {
+                    NumberOfPages = pdfDocument.GetNumberOfPages(),
+                    FileLength = pdfReader.GetFileLength()
+                };
+
+                return new ApiResponse<PdfInfo>(200, "success", fileInfo);
+            }
+        }
+
         //public byte[] OCR(byte[] file)
         //{
         //    var tesseractReader = new Tesseract4LibOcrEngine(tesseract4OcrEngineProperties);

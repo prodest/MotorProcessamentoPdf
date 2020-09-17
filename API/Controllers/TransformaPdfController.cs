@@ -82,6 +82,19 @@ namespace API.Controllers
             return BadRequest();
         }
 
+        [HttpPost]
+        public async Task<IActionResult> PdfInfo(IFormFile arquivo)
+        {
+            if (arquivo.Length > 0)
+            {
+                var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
+                var response = TransformaPdfCore.PdfInfo(arquivoByteArray);
+                return Ok(response);
+            }
+
+            return BadRequest();
+        }
+
         #endregion
 
         #region Outros
