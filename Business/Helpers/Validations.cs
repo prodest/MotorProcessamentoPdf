@@ -23,6 +23,7 @@ namespace Business.Helpers
                 using (var reader = new PdfReader(readStream))
                 {
                     // ok, o arquivo é um documento pdf
+                    return;
                 }
             }
             catch (Exception)

@@ -1,16 +1,12 @@
 ﻿using Business.Core.ICore;
 using Business.Helpers;
+using Business.Shared.Models;
 using Infrastructure.Repositories.IRepositories;
 using iText.Html2pdf;
-using iText.Kernel.Colors;
-using iText.Kernel.Geom;
+using iText.IO;
+using iText.Kernel.Crypto;
 using iText.Kernel.Pdf;
-using iText.Kernel.Pdf.Canvas;
-using iText.Kernel.Pdf.Extgstate;
 using iText.Kernel.Utils;
-using iText.Layout;
-using iText.Layout.Element;
-using iText.Layout.Properties;
 using iText.Pdfa;
 using iText.Signatures;
 using System;
@@ -127,50 +123,6 @@ namespace Business.Core
                 return writingMemoryStream.ToArray();
             }
         }
-        public byte[] AdicionarMarcaDagua(byte[] file, string text, int angleDegrees = 30, int quantity = 5, float opacity = 0.1f)
-        {
-            // validações
-            Validations.ArquivoValido(file);
-
-            using (MemoryStream readingStream = new MemoryStream(file))
-            using (PdfReader pdfReader = new PdfReader(readingStream))
-            using (MemoryStream writingStream = new MemoryStream())
-            using (PdfWriter pdfWriter = new PdfWriter(writingStream))
-            using (PdfDocument pdfDocument = new PdfDocument(pdfReader, pdfWriter))
-            using (Document document = new Document(pdfDocument))
-            {
-                Rectangle pageSize;
-                PdfCanvas canvas;
-                int n = pdfDocument.GetNumberOfPages();
-                float angleRads = (angleDegrees * (float)Math.PI) / 180;
-                for (int i = 1; i <= n; i++)
-                {
-                    PdfPage page = pdfDocument.GetPage(i);
-                    pageSize = page.GetPageSize();
-                    canvas = new PdfCanvas(page);
-                    // Desenhar Marca D'dágua
-                    Paragraph p = new Paragraph(text).SetFontSize(60).SetFontColor(ColorConstants.RED);
-                    canvas.SaveState();
-                    PdfExtGState gs1 = new PdfExtGState().SetFillOpacity(opacity);
-                    canvas.SetExtGState(gs1);
-                    for (int j = 1; j <= quantity; j++)
-                    {
-                        document.ShowTextAligned(
-                            p,
-                            pageSize.GetWidth() / 2,
-                            (pageSize.GetHeight() / (quantity + 1)) * j,
-                            pdfDocument.GetPageNumber(page),
-                            TextAlignment.CENTER, VerticalAlignment.MIDDLE,
-                            angleRads
-                        );
-                    }
-                    canvas.RestoreState();
-                }
-                pdfDocument.Close();
-
-                return writingStream.ToArray();
-            }
-        }
 
         public byte[] HtmlPdf(byte[] file)
         {
@@ -224,6 +176,33 @@ namespace Business.Core
             outputDocument.Close();
 
             return outputStream.ToArray();
+        }
+
+        public ApiResponse<string> ValidarRestricoesLeituraOuAltaretacao(byte[] file)
+        {
+            using (MemoryStream readingStream = new MemoryStream(file))
+            {
+                try
+                {
+                    using (PdfReader pdfReader = new PdfReader(readingStream))
+                    using (PdfDocument pdfDocument = new PdfDocument(pdfReader))
+                    {
+                        return new ApiResponse<string>(200, "success", null);
+                    }
+                }
+                catch (iText.IO.IOException e)
+                {
+                    return new ApiResponse<string>(200, "error", "Não é possível ler este documento pois ele não é um arquivo PDF válido.");
+                }
+                catch (BadPasswordException e)
+                {
+                    return new ApiResponse<string>(200, "error", "Não é possível ler este documento pois ele está protegido por senha.");
+                }
+                catch (Exception e)
+                {
+                    return new ApiResponse<string>(200, "error", "Não é possível ler este documento pois ele possui restrições de acesso ao seu conteúdo.");
+                }
+            }
         }
 
         //public byte[] OCR(byte[] file)

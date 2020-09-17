@@ -1,5 +1,6 @@
 ﻿using API.Tools;
 using Business.Core.ICore;
+using Business.Shared.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
@@ -33,7 +34,7 @@ namespace API.Controllers
                 var arquivoBytes = await PdfTools.ObterArquivo(arquivo);
                 TransformaPdfCore.IsPdf(arquivoBytes);
 
-                return Ok();
+                return Ok(new ApiResponse<string>(200, "success", null));
             }
 
             return BadRequest();
@@ -68,27 +69,20 @@ namespace API.Controllers
             return BadRequest();
         }
 
-        #endregion
-
         [HttpPost]
-        public async Task<IActionResult> AdicionarMarcaDagua(IFormFile arquivo, [FromForm]string texto, [FromForm]int anguloGraus = 30, [FromForm]int quantidade = 5, [FromForm]string opacidade = "0.1")
+        public async Task<IActionResult> ValidarRestricoesLeituraOuAltaretacao(IFormFile arquivo)
         {
             if (arquivo.Length > 0)
             {
                 var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
-                var arquivoMarcado = TransformaPdfCore.AdicionarMarcaDagua(
-                    arquivoByteArray,
-                    texto,
-                    anguloGraus,
-                    quantidade,
-                    float.Parse(opacidade)
-                );
-
-                return File(arquivoMarcado, "application/octet-stream");
+                var response = TransformaPdfCore.ValidarRestricoesLeituraOuAltaretacao(arquivoByteArray);
+                return Ok(response);
             }
 
             return BadRequest();
         }
+
+        #endregion
 
         #region Outros
 
