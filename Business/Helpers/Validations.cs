@@ -56,7 +56,7 @@ namespace Business.Helpers
             if (string.IsNullOrWhiteSpace(protocolo))
                 throw new Exception("O protocolo informado está vazio.");
 
-            if (!Regex.IsMatch(protocolo, "^[0-9]{4}-[A-Z0-9]{5}"))
+            if (!Regex.IsMatch(protocolo, "20[0-9]{2}-[0-9B-DF-HJ-NP-TV-Z]{5}"))
                 throw new Exception("O protocolo informado está fora do padrão.");
         }
 
@@ -65,7 +65,7 @@ namespace Business.Helpers
             if (string.IsNullOrWhiteSpace(registro))
                 throw new Exception("O registro informado está vazio.");
 
-            if (!Regex.IsMatch(registro, "^[0-9]{4}-[A-Z0-9]{6}"))
+            if (!Regex.IsMatch(registro, "20[0-9]{2}-[0-9B-DF-HJ-NP-TV-Z]{6}"))
                 throw new Exception("O registro informado está fora do padrão.");
         }
 

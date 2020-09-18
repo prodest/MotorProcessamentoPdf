@@ -27,61 +27,6 @@ namespace Business.Core
 
         #region Adição de Carimbos
 
-        public byte[] AdicionarMarcaDagua(
-            byte[] arquivo, string[] texto, int tamanhoFonte = 40, string corHexa = "ff0000", 
-            int anguloTextoGraus = 30, float opacidade = 0.1f, int repeticoes = 3
-        )
-        {
-            // validações
-            Validations.ArquivoValido(arquivo);
-
-            using (MemoryStream readingStream = new MemoryStream(arquivo))
-            using (PdfReader pdfReader = new PdfReader(readingStream))
-            using (MemoryStream writingStream = new MemoryStream())
-            using (PdfWriter pdfWriter = new PdfWriter(writingStream))
-            using (PdfDocument pdfDocument = new PdfDocument(pdfReader, pdfWriter))
-            using (Document document = new Document(pdfDocument))
-            {
-                Rectangle pageSize;
-                PdfCanvas canvas;
-                int n = pdfDocument.GetNumberOfPages();
-                float angleRads = (anguloTextoGraus * (float)Math.PI) / 180;
-                for (int pageCounter = 1; pageCounter <= n; pageCounter++)
-                {
-                    PdfPage page = pdfDocument.GetPage(pageCounter);
-                    pageSize = page.GetPageSize();
-                    canvas = new PdfCanvas(page);
-
-                    int k = 1;
-                    for (int repetitionCounter = 0; repetitionCounter < repeticoes; repetitionCounter++)
-                    { 
-                        for (int textCounter = 0; textCounter < texto.Length; textCounter++)
-                        {
-                            // Desenhar Marca D'dágua
-                            Paragraph p = new Paragraph(texto[textCounter])
-                                .SetFontSize(tamanhoFonte)
-                                .SetFontColor(FromHexa2Rgb(corHexa));
-                            canvas.SaveState();
-                            PdfExtGState gs1 = new PdfExtGState().SetFillOpacity(opacidade);
-                            canvas.SetExtGState(gs1);
-                            document.ShowTextAligned(
-                                p,
-                                pageSize.GetWidth() / 2,
-                                (pageSize.GetHeight() / ((texto.Length * repeticoes) + 1)) * k++,
-                                pdfDocument.GetPageNumber(page),
-                                TextAlignment.CENTER, VerticalAlignment.MIDDLE,
-                                angleRads
-                            );
-                        }
-                    }
-                    canvas.RestoreState();
-                }
-                pdfDocument.Close();
-
-                return writingStream.ToArray();
-            }
-        }
-
         public byte[] Documento(byte[] arquivo, string registro, int natureza, int valorLegal, DateTime dataHora)
         {
             // validações
@@ -175,6 +120,61 @@ namespace Business.Core
                 pdfDocument.Close();
 
                 return outputStream.ToArray();
+            }
+        }
+
+        public byte[] AdicionarMarcaDagua(
+            byte[] arquivo, string[] texto, int tamanhoFonte = 40, string corHexa = "ff0000",
+            int anguloTextoGraus = 30, float opacidade = 0.1f, int repeticoes = 3
+        )
+        {
+            // validações
+            Validations.ArquivoValido(arquivo);
+
+            using (MemoryStream readingStream = new MemoryStream(arquivo))
+            using (PdfReader pdfReader = new PdfReader(readingStream))
+            using (MemoryStream writingStream = new MemoryStream())
+            using (PdfWriter pdfWriter = new PdfWriter(writingStream))
+            using (PdfDocument pdfDocument = new PdfDocument(pdfReader, pdfWriter))
+            using (Document document = new Document(pdfDocument))
+            {
+                Rectangle pageSize;
+                PdfCanvas canvas;
+                int n = pdfDocument.GetNumberOfPages();
+                float angleRads = (anguloTextoGraus * (float)Math.PI) / 180;
+                for (int pageCounter = 1; pageCounter <= n; pageCounter++)
+                {
+                    PdfPage page = pdfDocument.GetPage(pageCounter);
+                    pageSize = page.GetPageSize();
+                    canvas = new PdfCanvas(page);
+
+                    int k = 1;
+                    for (int repetitionCounter = 0; repetitionCounter < repeticoes; repetitionCounter++)
+                    {
+                        for (int textCounter = 0; textCounter < texto.Length; textCounter++)
+                        {
+                            // Desenhar Marca D'dágua
+                            Paragraph p = new Paragraph(texto[textCounter])
+                                .SetFontSize(tamanhoFonte)
+                                .SetFontColor(FromHexa2Rgb(corHexa));
+                            canvas.SaveState();
+                            PdfExtGState gs1 = new PdfExtGState().SetFillOpacity(opacidade);
+                            canvas.SetExtGState(gs1);
+                            document.ShowTextAligned(
+                                p,
+                                pageSize.GetWidth() / 2,
+                                (pageSize.GetHeight() / ((texto.Length * repeticoes) + 1)) * k++,
+                                pdfDocument.GetPageNumber(page),
+                                TextAlignment.CENTER, VerticalAlignment.MIDDLE,
+                                angleRads
+                            );
+                        }
+                    }
+                    canvas.RestoreState();
+                }
+                pdfDocument.Close();
+
+                return writingStream.ToArray();
             }
         }
 

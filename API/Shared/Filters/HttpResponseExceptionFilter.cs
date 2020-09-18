@@ -14,11 +14,7 @@ namespace API.Shared.Filters
         {
             if (context.Exception != null)
             {
-                var response = new ApiResponse<object>(
-                    500,
-                    $"not handled server error: {context.Exception.Message}",
-                    null
-                );
+                var response = new ApiResponse<object>(500, context.Exception.Message);
                 context.Result = new ObjectResult(response){ StatusCode = 500};
                 context.ExceptionHandled = true;
             }
