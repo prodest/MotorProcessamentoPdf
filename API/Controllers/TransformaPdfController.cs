@@ -63,7 +63,7 @@ namespace API.Controllers
                 var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
                 await AssinaturaDigitalCore.SignatureValidation(arquivoByteArray);
                 
-                return Ok();
+                return Ok(new ApiResponse<object>(200, "success"));
             }
 
             return BadRequest();
