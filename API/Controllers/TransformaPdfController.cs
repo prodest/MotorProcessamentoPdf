@@ -1,4 +1,5 @@
 ﻿using API.Tools;
+using AutoMapper;
 using Business.Core.ICore;
 using Business.Shared.Models;
 using Microsoft.AspNetCore.Http;
@@ -15,11 +16,13 @@ namespace API.Controllers
     {
         private readonly ITransformaPdfCore TransformaPdfCore;
         private readonly IAssinaturaDigitalCore AssinaturaDigitalCore;
+        private readonly IMapper Mapper;
 
-        public TransformaPdfController(ITransformaPdfCore transformaPdfCore, IAssinaturaDigitalCore assinaturaDigitalCore)
+        public TransformaPdfController(ITransformaPdfCore transformaPdfCore, IAssinaturaDigitalCore assinaturaDigitalCore, IMapper mapper)
         {
             TransformaPdfCore = transformaPdfCore;
             AssinaturaDigitalCore = assinaturaDigitalCore;
+            Mapper = mapper;
         }
 
         // https://docs.microsoft.com/pt-br/aspnet/core/web-api/?view=aspnetcore-3.1#binding-source-parameter-inference
@@ -61,9 +64,9 @@ namespace API.Controllers
             if (arquivo.Length > 0)
             {
                 var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
-                await AssinaturaDigitalCore.SignatureValidation(arquivoByteArray);
-                
-                return Ok(new ApiResponse<object>(200, "success"));
+                var result = await AssinaturaDigitalCore.SignatureValidation(arquivoByteArray);
+                var certificadoDigitalDto = Mapper.Map<IEnumerable<CertificadoDigitalDto>>(result);
+                return Ok(new ApiResponse<IEnumerable<CertificadoDigitalDto>>(200, "success", certificadoDigitalDto));
             }
 
             return BadRequest();

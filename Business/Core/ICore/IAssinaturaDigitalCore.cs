@@ -1,9 +1,11 @@
-﻿using System.Threading.Tasks;
+﻿using Business.Helpers.AssinaturaDigital;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Business.Core.ICore
 {
     public interface IAssinaturaDigitalCore
     {
-        Task<object> SignatureValidation(byte[] file);
+        Task<IEnumerable<CertificadoDigital>> SignatureValidation(byte[] file);
     }
 }

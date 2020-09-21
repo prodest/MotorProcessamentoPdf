@@ -18,7 +18,7 @@ namespace Business.Core
         private string apiValidarCertificado = @"https://api.es.gov.br/certificado/api/validar-certificado";
         private string message = "\nConsidere capturar este documento como \"cópia\".";
 
-        public async Task<object> SignatureValidation(byte[] file)
+        public async Task<IEnumerable<CertificadoDigital>> SignatureValidation(byte[] file)
         {
             PdfReader reader = new PdfReader(file);
 
@@ -32,6 +32,7 @@ namespace Business.Core
 
             List<KeyValuePair<string, string>> naoAssinaramTodoDocumento = new List<KeyValuePair<string, string>>();
             List<KeyValuePair<string, string>> assinaramTodoDocumento = new List<KeyValuePair<string, string>>();
+            List<KeyValuePair<string, CertificadoDigital>> listaCertificados = new  List<KeyValuePair<string, CertificadoDigital>>();
             foreach (string signatureName in orderedSignatureNames)
             {
                 PdfPkcs7 pkcs7 = reader.AcroFields.VerifySignature(signatureName);
@@ -40,7 +41,8 @@ namespace Business.Core
                 if (!string.IsNullOrWhiteSpace(messages))
                     throw new Exception(messages);
 
-                CertificadoDigital cert = new CertificadoDigital(pkcs7.SigningCertificate.GetEncoded());
+                CertificadoDigital cert = new CertificadoDigital(pkcs7);
+                listaCertificados.Add(new KeyValuePair<string, CertificadoDigital>(signatureName, cert));
 
                 // validations
                 ValidCertificateChain(cert);
@@ -67,7 +69,11 @@ namespace Business.Core
 
             TodosAssinaramDocumentoPorInteiro(distinctNaoAssinaramTodoDocumento);
 
-            return null;
+            var distinctCert = listaCertificados
+                .Where(x => distinctSignersList.Select(y => y.Value).Contains(x.Key))
+                .Select(x => x.Value);
+            
+            return distinctCert;
         }
 
         #region Axiliares

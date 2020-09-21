@@ -23,14 +23,21 @@ namespace Business.Helpers.AssinaturaDigital
         public TipoCertificadoEnum TipoCertificado { get; private set; }
         public DateTime ValidoAPartir { get; private set; }
         public DateTime ValidoAte { get; private set; }
+        public DateTime Pkcs7SignDate { get; private set; }
         public bool IcpBrasil { get; private set; }
         public bool CadeiaValida { get; private set; }
         public bool PeriodoValido { get; private set; }
         public PessoaFisica PessoaFisica { get; private set; }
         public PessoaJuridica PessoaJuridica { get; private set; }
 
+        public CertificadoDigital(iTextSharp.text.pdf.PdfPkcs7 pkcs7) : this(new X509Certificate2(pkcs7.SigningCertificate.GetEncoded())) {
+            Pkcs7SignDate = pkcs7.SignDate;
+        }
+
         public CertificadoDigital(byte[] buffer) : this(new X509Certificate2(buffer)) { }
+        
         public CertificadoDigital(string nomeArquivo) : this(new X509Certificate2(nomeArquivo)) { }
+        
         public CertificadoDigital(X509Certificate2 certificado)
         {
             try
