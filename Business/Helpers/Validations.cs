@@ -15,20 +15,19 @@ namespace Business.Helpers
             IsPdf(arquivo);
         }
 
-        public static void IsPdf(byte[] arquivo)
+        public static bool IsPdf(byte[] arquivo)
         {
             try
             {
                 using (var readStream = new MemoryStream(arquivo))
                 using (var reader = new PdfReader(readStream))
                 {
-                    // ok, o arquivo é um documento pdf
-                    return;
+                    return true;
                 }
             }
             catch (Exception)
             {
-                throw new Exception("Este arquivo não é um documento PDF válido.");
+                return false;
             }
         }
 

@@ -1,4 +1,5 @@
 ﻿using Business.Core.ICore;
+using Business.Helpers;
 using Business.Helpers.AssinaturaDigital;
 using iTextSharp.text.pdf;
 using System;
@@ -74,6 +75,18 @@ namespace Business.Core
                 .Select(x => x.Value);
             
             return distinctCert;
+        }
+
+        public bool HasDigitalSignature(byte[] file)
+        {
+            Validations.ArquivoValido(file);
+
+            MemoryStream readingStream = new MemoryStream(file);
+            PdfReader pdfReader = new PdfReader(readingStream);
+            if (pdfReader.AcroFields.GetSignatureNames().Count >= 1)
+                return true;
+            else
+                return false;
         }
 
         #region Axiliares

@@ -3,7 +3,6 @@ using Business.Helpers;
 using Business.Shared.Models;
 using Infrastructure.Repositories.IRepositories;
 using iText.Html2pdf;
-using iText.IO;
 using iText.Kernel.Crypto;
 using iText.Kernel.Pdf;
 using iText.Kernel.Utils;
@@ -32,8 +31,8 @@ namespace Business.Core
 
         public bool IsPdf(byte[] file)
         {
-            Validations.IsPdf(file);
-            return true;
+            var isPdf = Validations.IsPdf(file);
+            return isPdf;
         }
 
         public bool IsPdfa1b(byte[] file)

@@ -35,9 +35,8 @@ namespace API.Controllers
             if (arquivo.Length > 0)
             {
                 var arquivoBytes = await PdfTools.ObterArquivo(arquivo);
-                TransformaPdfCore.IsPdf(arquivoBytes);
-
-                return Ok(new ApiResponse<string>(200, "success", null));
+                var result = TransformaPdfCore.IsPdf(arquivoBytes);
+                return Ok(new ApiResponse<bool>(200, "success", result));
             }
 
             return BadRequest();
@@ -93,6 +92,19 @@ namespace API.Controllers
                 var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
                 var response = TransformaPdfCore.PdfInfo(arquivoByteArray);
                 return Ok(response);
+            }
+
+            return BadRequest();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> HasDigitalSignature(IFormFile arquivo)
+        {
+            if (arquivo.Length > 0)
+            {
+                var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
+                var response = AssinaturaDigitalCore.HasDigitalSignature(arquivoByteArray);
+                return Ok(new ApiResponse<object>(200, "success", response));
             }
 
             return BadRequest();
