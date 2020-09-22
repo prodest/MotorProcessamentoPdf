@@ -1,7 +1,6 @@
 ﻿using Business.Core.ICore;
 using Business.Helpers;
 using Business.Shared.Models;
-using Infrastructure.Repositories.IRepositories;
 using iText.Html2pdf;
 using iText.Kernel.Crypto;
 using iText.Kernel.Pdf;
@@ -12,20 +11,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
 
 namespace Business.Core
 {
     public class TransformaPdfCore : ITransformaPdfCore
     {
         private const string Intent = "./wwwroot/resources/color/sRGB_CS_profile.icm";
-
-        private readonly IArquivoRepository ArquivoRepository;
-
-        public TransformaPdfCore(IArquivoRepository arquivoRepository)
-        {
-            ArquivoRepository = arquivoRepository;
-        }
 
         #region Validações
 
@@ -151,27 +142,6 @@ namespace Business.Core
                 document.Close();
             }
 
-            outputDocument.Close();
-
-            return outputStream.ToArray();
-        }
-
-        public async Task<byte[]> PdfConcatenationUsingMinio(IEnumerable<string> files)
-        {
-            // buscar arquivos no Minio
-            var minioFiles = new List<byte[]>();
-            foreach (var file in files)
-                minioFiles.Add(await ArquivoRepository.GetDocumentoCapturadoAsync(file));
-
-            // concatenar arquivos do Minio
-            var outputStream = new MemoryStream();
-            var outputDocument = new PdfDocument(new PdfWriter(outputStream));
-            foreach (var file in minioFiles)
-            {
-                var document = new PdfDocument(new PdfReader(new MemoryStream(file)));
-                document.CopyPagesTo(1, document.GetNumberOfPages(), outputDocument);
-                document.Close();
-            }
             outputDocument.Close();
 
             return outputStream.ToArray();

@@ -129,19 +129,6 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> ConcatenarPdfsUsingMinio([FromForm] IEnumerable<string> arquivos)
-        {
-            if (arquivos.Count() > 1)
-            {
-                var output = await TransformaPdfCore.PdfConcatenationUsingMinio(arquivos);
-
-                return File(output, "application/octet-stream");
-            }
-
-            return BadRequest();
-        }
-
-        [HttpPost]
         public async Task<IActionResult> HtmlPdf(IFormFile arquivo)
         {
             if (arquivo.Length > 0)
