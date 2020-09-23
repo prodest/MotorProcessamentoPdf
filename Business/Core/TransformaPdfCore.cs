@@ -26,15 +26,40 @@ namespace Business.Core
             return isPdf;
         }
 
+        public bool ValidarRestricoesLeituraOuAltaretacao(byte[] file)
+        {
+            using (MemoryStream readingStream = new MemoryStream(file))
+            {
+                try
+                {
+                    using (PdfReader pdfReader = new PdfReader(readingStream))
+                    using (PdfDocument pdfDocument = new PdfDocument(pdfReader))
+                    {
+                        return true;
+                    }
+                }
+                catch (iText.IO.IOException e)
+                {
+                    throw new Exception("Não é possível ler este documento pois ele não é um arquivo PDF válido.");
+                }
+                catch (BadPasswordException e)
+                {
+                    throw new Exception("Não é possível ler este documento pois ele está protegido por senha.");
+                }
+                catch (Exception e)
+                {
+                    throw new Exception("Não é possível ler este documento pois ele possui restrições de acesso ao seu conteúdo.");
+                }
+            }
+        }
+
         public bool IsPdfa1b(byte[] file)
         {
             Validations.IsPdfa1b(file);
             return true;
         }
 
-        #endregion
-
-        #region Assinatura digital
+        #region Assinatura Digital
 
         public void VerificarAssinaturaDigital(byte[] file)
         {
@@ -67,6 +92,8 @@ namespace Business.Core
             Console.WriteLine("Integrity check OK? " + pkcs7.VerifySignatureIntegrityAndAuthenticity());
             return pkcs7;
         }
+
+        #endregion
 
         #endregion
 
@@ -147,33 +174,6 @@ namespace Business.Core
             return outputStream.ToArray();
         }
 
-        public bool ValidarRestricoesLeituraOuAltaretacao(byte[] file)
-        {
-            using (MemoryStream readingStream = new MemoryStream(file))
-            {
-                try
-                {
-                    using (PdfReader pdfReader = new PdfReader(readingStream))
-                    using (PdfDocument pdfDocument = new PdfDocument(pdfReader))
-                    {
-                        return true;
-                    }
-                }
-                catch (iText.IO.IOException e)
-                {
-                    throw new Exception("Não é possível ler este documento pois ele não é um arquivo PDF válido.");
-                }
-                catch (BadPasswordException e)
-                {
-                    throw new Exception("Não é possível ler este documento pois ele está protegido por senha.");
-                }
-                catch (Exception e)
-                {
-                    throw new Exception("Não é possível ler este documento pois ele possui restrições de acesso ao seu conteúdo.");
-                }
-            }
-        }
-
         public ApiResponse<PdfInfo> PdfInfo(byte[] file)
         {
             Validations.ArquivoValido(file);
@@ -191,24 +191,6 @@ namespace Business.Core
                 return new ApiResponse<PdfInfo>(200, "success", fileInfo);
             }
         }
-
-        //public byte[] OCR(byte[] file)
-        //{
-        //    var tesseractReader = new Tesseract4LibOcrEngine(tesseract4OcrEngineProperties);
-        //    tesseract4OcrEngineProperties.SetPathToTessData(new FileInfo(TESS_DATA_FOLDER));
-
-        //    var ocrPdfCreator = new OcrPdfCreator(tesseractReader);
-        //    using (var writer = new PdfWriter(OUTPUT_PDF))
-        //    {
-        //        ocrPdfCreator.CreatePdf(LIST_IMAGES_OCR, writer).Close();
-        //    }
-        //}
-
-        //static PdfOutputIntent GetRgbPdfOutputIntent()
-        //{
-        //    Stream @is = new FileStream(DEFAULT_RGB_COLOR_PROFILE_PATH, FileMode.Open, FileAccess.Read);
-        //    return new PdfOutputIntent("", "", "", "sRGB IEC61966-2.1", @is);
-        //}
 
         #endregion
 
