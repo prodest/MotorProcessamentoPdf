@@ -14,7 +14,7 @@ namespace Business.Core.ICore
         byte[] RemoveAnnotations(byte[] file);
         void VerificarAssinaturaDigital(byte[] file);
         byte[] MetaPDFA(byte[] file);
-        ApiResponse<string> ValidarRestricoesLeituraOuAltaretacao(byte[] file);
+        bool ValidarRestricoesLeituraOuAltaretacao(byte[] file);
         ApiResponse<PdfInfo> PdfInfo(byte[] arquivoByteArray);
     }
 }

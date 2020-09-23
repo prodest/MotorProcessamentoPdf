@@ -147,7 +147,7 @@ namespace Business.Core
             return outputStream.ToArray();
         }
 
-        public ApiResponse<string> ValidarRestricoesLeituraOuAltaretacao(byte[] file)
+        public bool ValidarRestricoesLeituraOuAltaretacao(byte[] file)
         {
             using (MemoryStream readingStream = new MemoryStream(file))
             {
@@ -156,20 +156,20 @@ namespace Business.Core
                     using (PdfReader pdfReader = new PdfReader(readingStream))
                     using (PdfDocument pdfDocument = new PdfDocument(pdfReader))
                     {
-                        return new ApiResponse<string>(200, "success", null);
+                        return true;
                     }
                 }
                 catch (iText.IO.IOException e)
                 {
-                    return new ApiResponse<string>(200, "error", "Não é possível ler este documento pois ele não é um arquivo PDF válido.");
+                    throw new Exception("Não é possível ler este documento pois ele não é um arquivo PDF válido.");
                 }
                 catch (BadPasswordException e)
                 {
-                    return new ApiResponse<string>(200, "error", "Não é possível ler este documento pois ele está protegido por senha.");
+                    throw new Exception("Não é possível ler este documento pois ele está protegido por senha.");
                 }
                 catch (Exception e)
                 {
-                    return new ApiResponse<string>(200, "error", "Não é possível ler este documento pois ele possui restrições de acesso ao seu conteúdo.");
+                    throw new Exception("Não é possível ler este documento pois ele possui restrições de acesso ao seu conteúdo.");
                 }
             }
         }

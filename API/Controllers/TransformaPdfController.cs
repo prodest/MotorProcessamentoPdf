@@ -78,7 +78,7 @@ namespace API.Controllers
             {
                 var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
                 var response = TransformaPdfCore.ValidarRestricoesLeituraOuAltaretacao(arquivoByteArray);
-                return Ok(response);
+                return Ok(new ApiResponse<bool>(200, "success", response));
             }
 
             return BadRequest();
