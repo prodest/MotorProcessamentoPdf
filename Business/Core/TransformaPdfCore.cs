@@ -26,6 +26,12 @@ namespace Business.Core
             return isPdf;
         }
 
+        public bool IsPdfa1b(byte[] file)
+        {
+            Validations.IsPdfa1b(file);
+            return true;
+        }
+
         public bool ValidarRestricoesLeituraOuAltaretacao(byte[] file)
         {
             using (MemoryStream readingStream = new MemoryStream(file))
@@ -53,15 +59,11 @@ namespace Business.Core
             }
         }
 
-        public bool IsPdfa1b(byte[] file)
-        {
-            Validations.IsPdfa1b(file);
-            return true;
-        }
+        #endregion
 
-        #region Assinatura Digital
+        #region Outros
 
-        public void VerificarAssinaturaDigital(byte[] file)
+        public ApiResponse<PdfInfo> PdfInfo(byte[] file)
         {
             Validations.ArquivoValido(file);
 
@@ -69,35 +71,15 @@ namespace Business.Core
             using (PdfReader pdfReader = new PdfReader(readingStream))
             using (PdfDocument pdfDocument = new PdfDocument(pdfReader))
             {
-                SignatureUtil signUtil = new SignatureUtil(pdfDocument);
-                IList<String> names = signUtil.GetSignatureNames();
-
-                foreach (String name in names)
+                var fileInfo = new PdfInfo()
                 {
-                    Console.WriteLine("===== " + name + " =====");
-                    VerifySignature(signUtil, name);
-                }
+                    NumberOfPages = pdfDocument.GetNumberOfPages(),
+                    FileLength = pdfReader.GetFileLength()
+                };
 
-                pdfDocument.Close();
+                return new ApiResponse<PdfInfo>(200, "success", fileInfo);
             }
         }
-
-        public PdfPKCS7 VerifySignature(SignatureUtil signUtil, String name)
-        {
-            PdfPKCS7 pkcs7 = signUtil.ReadSignatureData(name);
-
-            Console.WriteLine("Signature covers whole document: " + signUtil.SignatureCoversWholeDocument(name));
-            Console.WriteLine("Document revision: " + signUtil.GetRevision(name) + " of "
-                                  + signUtil.GetTotalRevisions());
-            Console.WriteLine("Integrity check OK? " + pkcs7.VerifySignatureIntegrityAndAuthenticity());
-            return pkcs7;
-        }
-
-        #endregion
-
-        #endregion
-
-        #region Outros
 
         public byte[] RemoveAnnotations(byte[] file)
         {
@@ -172,24 +154,6 @@ namespace Business.Core
             outputDocument.Close();
 
             return outputStream.ToArray();
-        }
-
-        public ApiResponse<PdfInfo> PdfInfo(byte[] file)
-        {
-            Validations.ArquivoValido(file);
-
-            using (MemoryStream readingStream = new MemoryStream(file))
-            using (PdfReader pdfReader = new PdfReader(readingStream))
-            using (PdfDocument pdfDocument = new PdfDocument(pdfReader))
-            {
-                var fileInfo = new PdfInfo()
-                {
-                    NumberOfPages = pdfDocument.GetNumberOfPages(),
-                    FileLength = pdfReader.GetFileLength()
-                };
-
-                return new ApiResponse<PdfInfo>(200, "success", fileInfo);
-            }
         }
 
         #endregion

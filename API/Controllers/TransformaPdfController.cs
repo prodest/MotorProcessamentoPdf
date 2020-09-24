@@ -58,20 +58,6 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> ValidarAssinaturaDigital(IFormFile arquivo)
-        {
-            if (arquivo.Length > 0)
-            {
-                var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
-                var result = await AssinaturaDigitalCore.SignatureValidation(arquivoByteArray);
-                var certificadoDigitalDto = Mapper.Map<IEnumerable<CertificadoDigitalDto>>(result);
-                return Ok(new ApiResponse<IEnumerable<CertificadoDigitalDto>>(200, "success", certificadoDigitalDto));
-            }
-
-            return BadRequest();
-        }
-
-        [HttpPost]
         public async Task<IActionResult> ValidarRestricoesLeituraOuAltaretacao(IFormFile arquivo)
         {
             if (arquivo.Length > 0)
@@ -84,18 +70,7 @@ namespace API.Controllers
             return BadRequest();
         }
 
-        [HttpPost]
-        public async Task<IActionResult> PdfInfo(IFormFile arquivo)
-        {
-            if (arquivo.Length > 0)
-            {
-                var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
-                var response = TransformaPdfCore.PdfInfo(arquivoByteArray);
-                return Ok(response);
-            }
-
-            return BadRequest();
-        }
+        #region Assinatura Digital
 
         [HttpPost]
         public async Task<IActionResult> HasDigitalSignature(IFormFile arquivo)
@@ -110,9 +85,38 @@ namespace API.Controllers
             return BadRequest();
         }
 
+        [HttpPost]
+        public async Task<IActionResult> ValidarAssinaturaDigital(IFormFile arquivo)
+        {
+            if (arquivo.Length > 0)
+            {
+                var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
+                var result = await AssinaturaDigitalCore.SignatureValidation(arquivoByteArray);
+                var certificadoDigitalDto = Mapper.Map<IEnumerable<CertificadoDigitalDto>>(result);
+                return Ok(new ApiResponse<IEnumerable<CertificadoDigitalDto>>(200, "success", certificadoDigitalDto));
+            }
+
+            return BadRequest();
+        }
+
+        #endregion
+
         #endregion
 
         #region Outros
+
+        [HttpPost]
+        public async Task<IActionResult> PdfInfo(IFormFile arquivo)
+        {
+            if (arquivo.Length > 0)
+            {
+                var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
+                var response = TransformaPdfCore.PdfInfo(arquivoByteArray);
+                return Ok(response);
+            }
+
+            return BadRequest();
+        }
 
         [HttpPost]
         public async Task<IActionResult> ConcatenarPdfs(IFormFileCollection arquivos)

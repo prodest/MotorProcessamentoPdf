@@ -4,6 +4,7 @@ using Business.Shared.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace API.Controllers
@@ -107,13 +108,13 @@ namespace API.Controllers
         #region Validações
 
         [HttpPost]
-        public async Task<IActionResult> ValidarDocumentoDuplicado(IFormFile arquivo)
+        public async Task<IActionResult> ValidarDocumentoDuplicado(IFormFile arquivo, [FromForm] IEnumerable<string> regex)
         {
             if (arquivo.Length > 0)
             {
                 var arquivoBytes = await PdfTools.ObterArquivo(arquivo);
-                var result = CarimboCore.ValidarDocumentoDuplicado(arquivoBytes);
-                return Ok(result);
+                var response = CarimboCore.ValidarDocumentoDuplicado(arquivoBytes, regex);
+                return Ok(new ApiResponse<string>(200, "success", response));
             }
 
             return BadRequest();
