@@ -1,6 +1,5 @@
 ﻿using Business.Core.ICore;
 using Business.Helpers;
-using Business.Shared.Models;
 using iText.IO.Font.Constants;
 using iText.Kernel.Colors;
 using iText.Kernel.Font;
@@ -14,9 +13,9 @@ using iText.Layout;
 using iText.Layout.Element;
 using iText.Layout.Properties;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -225,27 +224,30 @@ namespace Business.Core
 
         #region Validações
 
-        public string ValidarDocumentoDuplicado(byte[] arquivo, IEnumerable<string> regex)
+        public string ValidarDocumentoDuplicado(byte[] arquivo, IEnumerable<string> regex, IEnumerable<int> paginas)
         {
-            var carimbo = BuscarRegex(arquivo, regex);
+            var carimbo = BuscarRegex(arquivo, regex, paginas);
             return carimbo;
         }
 
-        private string BuscarRegex(byte[] arquivo, IEnumerable<string> regex)
+        private string BuscarRegex(byte[] arquivo, IEnumerable<string> regex, IEnumerable<int> paginas)
         {
             // validações
             Validations.ArquivoValido(arquivo);
-
+            
             using (MemoryStream readingStream = new MemoryStream(arquivo))
             using (PdfReader pdfReader = new PdfReader(readingStream))
             using (PdfDocument pdfDocument = new PdfDocument(pdfReader))
             {
                 int n = pdfDocument.GetNumberOfPages();
 
-                for (int i = 1; i <= n; i++)
+                if (paginas?.Count() == 0)
+                    paginas = new List<int>(Enumerable.Range(1, n));
+
+                foreach (var pagina in paginas)
                 {
                     string pageText = PdfTextExtractor.GetTextFromPage(
-                        pdfDocument.GetPage(i),
+                        pdfDocument.GetPage(pagina),
                         new SimpleTextExtractionStrategy()
                     );
 
@@ -254,10 +256,6 @@ namespace Business.Core
                         var registro = Regex.Match(pageText, regexItem);
                         if (registro.Success)
                             return registro.Value;
-
-                        var protocolo = Regex.Match(pageText, regexItem);
-                        if (protocolo.Success)
-                            return protocolo.Value;
                     }
                 }
 

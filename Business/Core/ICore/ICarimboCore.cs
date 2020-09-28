@@ -1,5 +1,4 @@
-﻿using Business.Shared.Models;
-using System;
+﻿using System;
 using System.Collections.Generic;
 
 namespace Business.Core.ICore
@@ -10,6 +9,6 @@ namespace Business.Core.ICore
         byte[] CopiaProcesso(byte[] arquivo, string protocolo, string geradoPor, DateTime dataHora, int totalPaginas, int paginaInicial = 1);
         byte[] Documento(byte[] arquivo, string registro, int natureza, int valorLegal, DateTime dataHora);
         byte[] AdicionarTokenEdocs(byte[] arquivo, string registro);
-        string ValidarDocumentoDuplicado(byte[] arquivo, IEnumerable<string> regex);
+        string ValidarDocumentoDuplicado(byte[] arquivo, IEnumerable<string> regex, IEnumerable<int> paginas);
     }
 }
