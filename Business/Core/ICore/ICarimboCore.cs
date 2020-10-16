@@ -9,7 +9,6 @@ namespace Business.Core.ICore
         byte[] CopiaProcesso(byte[] arquivo, string protocolo, string geradoPor, DateTime dataHora, int totalPaginas, int paginaInicial = 1);
         byte[] Documento(byte[] arquivo, string registro, int natureza, int valorLegal, DateTime dataHora);
         byte[] AdicionarTokenEdocs(byte[] arquivo, string registro);
-        string ValidarDocumentoDuplicado(byte[] arquivo, IEnumerable<string> regex, IEnumerable<int> paginas);
-        string ValidarOcorrenciaExpressaoRegular(byte[] arquivo, IEnumerable<string> regex, IEnumerable<int> paginas);
+        string BuscarExpressoesRegulares(byte[] arquivo, IEnumerable<string> expressoesRegulares, IEnumerable<int> paginas);
     }
 }

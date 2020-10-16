@@ -108,25 +108,12 @@ namespace API.Controllers
         #region Validações
 
         [HttpPost]
-        public async Task<IActionResult> ValidarDocumentoDuplicado(IFormFile arquivo, [FromForm] IEnumerable<string> regex, [FromForm] IEnumerable<int> paginas)
-        {
-            if (arquivo.Length > 0)
-            {
-                var arquivoBytes = await PdfTools.ObterArquivo(arquivo);
-                var response = CarimboCore.ValidarDocumentoDuplicado(arquivoBytes, regex, paginas);
-                return Ok(new ApiResponse<string>(200, "success", response));
-            }
-
-            return BadRequest();
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> ValidarOcorrenciaExpressaoRegular(IFormFile arquivo, [FromForm] IEnumerable<string> expressoesRegulares, [FromForm] IEnumerable<int> paginas)
+        public async Task<IActionResult> BuscarExpressoesRegulares(IFormFile arquivo, [FromForm] IEnumerable<string> expressoesRegulares, [FromForm] IEnumerable<int> paginas)
         {
             if (arquivo.Length > 0) // analisar de tirar essa validacao aqui e jogar para dentro de obter arquivo
             {
                 var arquivoBytes = await PdfTools.ObterArquivo(arquivo);
-                var response = CarimboCore.ValidarOcorrenciaExpressaoRegular(arquivoBytes, expressoesRegulares, paginas);
+                var response = CarimboCore.BuscarExpressoesRegulares(arquivoBytes, expressoesRegulares, paginas);
                 return Ok(new ApiResponse<string>(200, "success", response));
             }
 

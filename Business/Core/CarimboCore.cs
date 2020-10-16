@@ -224,13 +224,7 @@ namespace Business.Core
 
         #region Validações
 
-        public string ValidarDocumentoDuplicado(byte[] arquivo, IEnumerable<string> regex, IEnumerable<int> paginas)
-        {
-            var carimbo = ValidarOcorrenciaExpressaoRegular(arquivo, regex, paginas);
-            return carimbo;
-        }
-
-        public string ValidarOcorrenciaExpressaoRegular(byte[] arquivo, IEnumerable<string> expressoesRegulares, IEnumerable<int> paginas)
+        public string BuscarExpressoesRegulares(byte[] arquivo, IEnumerable<string> expressoesRegulares, IEnumerable<int> paginas)
         {
             // validações
             Validations.ArquivoValido(arquivo);
