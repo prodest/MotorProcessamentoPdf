@@ -120,6 +120,19 @@ namespace API.Controllers
             return BadRequest();
         }
 
+        [HttpPost]
+        public async Task<IActionResult> ValidarOcorrenciaExpressaoRegular(IFormFile arquivo, [FromForm] IEnumerable<string> expressoesRegulares, [FromForm] IEnumerable<int> paginas)
+        {
+            if (arquivo.Length > 0) // analisar de tirar essa validacao aqui e jogar para dentro de obter arquivo
+            {
+                var arquivoBytes = await PdfTools.ObterArquivo(arquivo);
+                var response = CarimboCore.ValidarOcorrenciaExpressaoRegular(arquivoBytes, expressoesRegulares, paginas);
+                return Ok(new ApiResponse<string>(200, "success", response));
+            }
+
+            return BadRequest();
+        }
+
         #endregion
     }
 }

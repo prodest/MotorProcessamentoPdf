@@ -10,5 +10,6 @@ namespace Business.Core.ICore
         byte[] Documento(byte[] arquivo, string registro, int natureza, int valorLegal, DateTime dataHora);
         byte[] AdicionarTokenEdocs(byte[] arquivo, string registro);
         string ValidarDocumentoDuplicado(byte[] arquivo, IEnumerable<string> regex, IEnumerable<int> paginas);
+        string ValidarOcorrenciaExpressaoRegular(byte[] arquivo, IEnumerable<string> regex, IEnumerable<int> paginas);
     }
 }

@@ -226,11 +226,11 @@ namespace Business.Core
 
         public string ValidarDocumentoDuplicado(byte[] arquivo, IEnumerable<string> regex, IEnumerable<int> paginas)
         {
-            var carimbo = BuscarRegex(arquivo, regex, paginas);
+            var carimbo = ValidarOcorrenciaExpressaoRegular(arquivo, regex, paginas);
             return carimbo;
         }
 
-        private string BuscarRegex(byte[] arquivo, IEnumerable<string> regex, IEnumerable<int> paginas)
+        public string ValidarOcorrenciaExpressaoRegular(byte[] arquivo, IEnumerable<string> expressoesRegulares, IEnumerable<int> paginas)
         {
             // validações
             Validations.ArquivoValido(arquivo);
@@ -239,10 +239,8 @@ namespace Business.Core
             using (PdfReader pdfReader = new PdfReader(readingStream))
             using (PdfDocument pdfDocument = new PdfDocument(pdfReader))
             {
-                int n = pdfDocument.GetNumberOfPages();
-
-                if (paginas?.Count() == 0)
-                    paginas = new List<int>(Enumerable.Range(1, n));
+                if (paginas == null || paginas.Count() == 0)
+                    paginas = new List<int>(Enumerable.Range(1, pdfDocument.GetNumberOfPages()));
 
                 foreach (var pagina in paginas)
                 {
@@ -251,9 +249,10 @@ namespace Business.Core
                         new SimpleTextExtractionStrategy()
                     );
 
-                    foreach (var regexItem in regex)
+                    foreach (var regexItem in expressoesRegulares)
                     {
                         var registro = Regex.Match(pageText, regexItem);
+
                         if (registro.Success)
                             return registro.Value;
                     }

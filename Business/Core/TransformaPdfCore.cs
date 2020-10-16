@@ -6,7 +6,6 @@ using iText.Kernel.Crypto;
 using iText.Kernel.Pdf;
 using iText.Kernel.Utils;
 using iText.Pdfa;
-using iText.Signatures;
 using System;
 using System.Collections.Generic;
 using System.IO;
