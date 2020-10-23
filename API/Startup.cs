@@ -34,6 +34,8 @@ namespace API
             services.AddTransient<ICarimboCore, CarimboCore>();
             services.AddTransient<ITransformaPdfCore, TransformaPdfCore>();
             services.AddTransient<IAssinaturaDigitalCore, AssinaturaDigitalCore>();
+            services.AddTransient<IExtracaoCore, ExtracaoCore>();
+
             services.AddControllers(options =>
                 options.Filters.Add(new HttpResponseExceptionFilter())
             );
