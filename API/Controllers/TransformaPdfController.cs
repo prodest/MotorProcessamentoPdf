@@ -119,6 +119,13 @@ namespace API.Controllers
         }
 
         [HttpPost]
+        public async Task<IActionResult> PdfInfoUrl(string url)
+        {
+            var response = await TransformaPdfCore.PdfInfo(url);
+            return Ok(response);
+        }
+
+        [HttpPost]
         public async Task<IActionResult> ConcatenarPdfs(IFormFileCollection arquivos)
         {
             if (arquivos.Count() > 1)

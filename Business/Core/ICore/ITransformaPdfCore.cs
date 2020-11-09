@@ -1,5 +1,6 @@
 ﻿using Business.Shared.Models;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Business.Core.ICore
 {
@@ -13,6 +14,7 @@ namespace Business.Core.ICore
         byte[] RemoveAnnotations(byte[] file);
         byte[] MetaPDFA(byte[] file);
         bool ValidarRestricoesLeituraOuAltaretacao(byte[] file);
-        ApiResponse<PdfInfo> PdfInfo(byte[] arquivoByteArray);
+        ApiResponse<PdfInfo> PdfInfo(byte[] file);
+        Task<ApiResponse<PdfInfo>> PdfInfo(string url);
     }
 }

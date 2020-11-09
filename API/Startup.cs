@@ -12,6 +12,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Prodest.HealthCheck;
 using Elastic.Apm.AspNetCore;
+using Business.Shared;
 
 namespace API
 {
@@ -35,7 +36,10 @@ namespace API
             services.AddTransient<ITransformaPdfCore, TransformaPdfCore>();
             services.AddTransient<IAssinaturaDigitalCore, AssinaturaDigitalCore>();
             services.AddTransient<IExtracaoCore, ExtracaoCore>();
+            services.AddTransient<JsonData>();
 
+            // configurando o HttpClientFactory
+            services.AddHttpClient();
             services.AddControllers(options =>
                 options.Filters.Add(new HttpResponseExceptionFilter())
             );

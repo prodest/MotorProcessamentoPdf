@@ -1,5 +1,6 @@
 ﻿using Business.Core.ICore;
 using Business.Helpers;
+using Business.Shared;
 using Business.Shared.Models;
 using iText.Html2pdf;
 using iText.Kernel.Crypto;
@@ -10,12 +11,19 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Business.Core
 {
     public class TransformaPdfCore : ITransformaPdfCore
     {
         private const string Intent = "./wwwroot/resources/color/sRGB_CS_profile.icm";
+        private readonly JsonData JsonData;
+
+        public TransformaPdfCore(JsonData jsonData)
+        {
+            JsonData = jsonData;
+        }
 
         #region Validações
 
@@ -61,6 +69,13 @@ namespace Business.Core
         #endregion
 
         #region Outros
+
+        public async Task<ApiResponse<PdfInfo>> PdfInfo(string url)
+        {
+            byte[] arquivo = await JsonData.GetAndDownloadAsync(url);
+            var resposta = PdfInfo(arquivo);
+            return resposta;
+        }
 
         public ApiResponse<PdfInfo> PdfInfo(byte[] file)
         {
