@@ -1,5 +1,6 @@
 ﻿using Business.Core.ICore;
 using Business.Helpers;
+using Business.Shared;
 using iText.IO.Font.Constants;
 using iText.Kernel.Colors;
 using iText.Kernel.Font;
@@ -18,6 +19,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace Business.Core
 {
@@ -25,6 +27,12 @@ namespace Business.Core
     {
         private readonly string dateFormat = "dd/MM/yyyy hh:mm";
         private readonly string identificadorEdocs = "<edocs>registro</edocs>";
+        private readonly JsonData JsonData;
+
+        public CarimboCore(JsonData jsonData)
+        {
+            JsonData = jsonData;
+        }
 
         #region Adição de Carimbos
 
@@ -224,9 +232,15 @@ namespace Business.Core
 
         #region Validações
 
+        public async Task<string> BuscarExpressoesRegulares(string url, IEnumerable<string> expressoesRegulares, IEnumerable<int> paginas)
+        {
+            var arquivo = await JsonData.GetAndDownloadAsync(url);
+            string response = BuscarExpressoesRegulares(arquivo, expressoesRegulares, paginas);
+            return response;
+        }
+
         public string BuscarExpressoesRegulares(byte[] arquivo, IEnumerable<string> expressoesRegulares, IEnumerable<int> paginas)
         {
-            // validações
             Validations.ArquivoValido(arquivo);
             
             using (MemoryStream readingStream = new MemoryStream(arquivo))

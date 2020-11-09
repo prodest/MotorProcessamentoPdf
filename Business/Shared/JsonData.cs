@@ -20,7 +20,6 @@ namespace Business.Shared
 
             if (!result.IsSuccessStatusCode)
                 throw new Exception(await result.Content.ReadAsStringAsync());
-
             byte[] bytes = await result.Content.ReadAsByteArrayAsync();
 
             return bytes;

@@ -86,6 +86,13 @@ namespace API.Controllers
         }
 
         [HttpPost]
+        public async Task<IActionResult> HasDigitalSignatureByUrl(string url)
+        {
+            var response = AssinaturaDigitalCore.HasDigitalSignature(url);
+            return Ok(new ApiResponse<object>(200, "success", response));
+        }
+
+        [HttpPost]
         public async Task<IActionResult> ValidarAssinaturaDigital(IFormFile arquivo)
         {
             if (arquivo.Length > 0)

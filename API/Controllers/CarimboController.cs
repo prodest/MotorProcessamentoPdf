@@ -108,6 +108,13 @@ namespace API.Controllers
         #region Validações
 
         [HttpPost]
+        public async Task<IActionResult> BuscarExpressoesRegularesByUrl([FromForm] string url, [FromForm] IEnumerable<string> expressoesRegulares, [FromForm] IEnumerable<int> paginas)
+        {
+            var response = await CarimboCore.BuscarExpressoesRegulares(url, expressoesRegulares, paginas);
+            return Ok(new ApiResponse<string>(200, "success", response));
+        }
+
+        [HttpPost]
         public async Task<IActionResult> BuscarExpressoesRegulares(IFormFile arquivo, [FromForm] IEnumerable<string> expressoesRegulares, [FromForm] IEnumerable<int> paginas)
         {
             if (arquivo.Length > 0) // analisar de tirar essa validacao aqui e jogar para dentro de obter arquivo

@@ -1,6 +1,7 @@
 ﻿using Business.Core.ICore;
 using Business.Helpers;
 using Business.Helpers.AssinaturaDigital;
+using Business.Shared;
 using iTextSharp.text.pdf;
 using System;
 using System.Collections;
@@ -18,6 +19,12 @@ namespace Business.Core
     {
         private string apiValidarCertificado = @"https://api.es.gov.br/certificado/api/validar-certificado";
         private string message = "\nConsidere capturar este documento como \"cópia\".";
+        private readonly JsonData JsonData;
+
+        public AssinaturaDigitalCore(JsonData jsonData)
+        {
+            JsonData = jsonData;
+        }
 
         public async Task<IEnumerable<CertificadoDigital>> SignatureValidation(byte[] file)
         {
@@ -75,6 +82,13 @@ namespace Business.Core
                 .Select(x => x.Value);
             
             return distinctCert;
+        }
+
+        public async Task<bool> HasDigitalSignature(string url)
+        {
+            byte[] arquivo = await JsonData.GetAndDownloadAsync(url);
+            var response = HasDigitalSignature(arquivo);
+            return response;
         }
 
         public bool HasDigitalSignature(byte[] file)
