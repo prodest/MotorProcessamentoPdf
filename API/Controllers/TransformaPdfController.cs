@@ -150,7 +150,7 @@ namespace API.Controllers
         public IActionResult HtmlPdf([FromForm]string html)
         {
             var output = TransformaPdfCore.HtmlPdf(html);
-            return File(output, "application/octet-stream");
+            return Ok(new ApiResponse<byte[]>(200, "success", output));
         }
 
         [HttpPost]
@@ -160,7 +160,6 @@ namespace API.Controllers
             {
                 var arquivoBytes = await PdfTools.ObterArquivo(arquivo);
                 var output = TransformaPdfCore.HtmlPdf(arquivoBytes);
-
                 return File(output, "application/octet-stream");
             }
 
