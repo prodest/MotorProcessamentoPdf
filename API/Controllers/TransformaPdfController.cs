@@ -147,7 +147,14 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> HtmlPdf(IFormFile arquivo)
+        public IActionResult HtmlPdf([FromForm]string html)
+        {
+            var output = TransformaPdfCore.HtmlPdf(html);
+            return File(output, "application/octet-stream");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> HtmlPdfByFile(IFormFile arquivo)
         {
             if (arquivo.Length > 0)
             {

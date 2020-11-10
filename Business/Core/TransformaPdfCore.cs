@@ -145,6 +145,13 @@ namespace Business.Core
             return output.ToArray();
         }
 
+        public byte[] HtmlPdf(string html)
+        {
+            var output = new MemoryStream();
+            HtmlConverter.ConvertToPdf(html, output);
+            return output.ToArray();
+        }
+
         public byte[] PdfPagination(byte[] file, int itemsByPage, int page)
         {
             PdfDocument pdfDocument = new PdfDocument(new PdfReader(new MemoryStream(file)));
