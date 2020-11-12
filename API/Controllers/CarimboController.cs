@@ -25,7 +25,7 @@ namespace API.Controllers
         [HttpPost]
         public async Task<IActionResult> AdicionarMarcaDagua(
             IFormFile arquivo, [FromForm] string[] texto, [FromForm] int tamanhoFonte = 40, [FromForm] string corHexa = "ff0000",
-             [FromForm] int anguloTextoGraus = 30, [FromForm] float opacidade = 0.1f,  [FromForm] int repeticoes = 3
+            [FromForm] int anguloTextoGraus = 30, [FromForm] float opacidade = 0.1f, [FromForm] int repeticoes = 3
         )
         {
             if (arquivo.Length > 0)
@@ -42,6 +42,31 @@ namespace API.Controllers
                 );
 
                 return Ok(new ApiResponse<byte[]>(200, "success", arquivoMarcado));
+            }
+
+            return BadRequest();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> AdicionarMarcaDaguaByFile(
+            IFormFile arquivo, [FromForm] string[] texto, [FromForm] int tamanhoFonte = 40, [FromForm] string corHexa = "ff0000",
+             [FromForm] int anguloTextoGraus = 30, [FromForm] float opacidade = 0.1f,  [FromForm] int repeticoes = 3
+        )
+        {
+            if (arquivo.Length > 0)
+            {
+                var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
+                var arquivoMarcado = CarimboCore.AdicionarMarcaDagua(
+                    arquivoByteArray,
+                    texto,
+                    tamanhoFonte,
+                    corHexa,
+                    anguloTextoGraus,
+                    opacidade,
+                    repeticoes
+                );
+
+                return File(arquivoMarcado, "application/pdf");
             }
 
             return BadRequest();
@@ -106,6 +131,28 @@ namespace API.Controllers
                 );
 
                 return Ok(new ApiResponse<byte[]>(200, "success", arquivoCarimbado));
+            }
+            else
+                return BadRequest();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CopiaProcessoByFile(IFormFile arquivo, [FromForm] string protocolo, [FromForm] string geradoPor, [FromForm] DateTime dataHora, [FromForm] int totalPaginas, [FromForm] int paginaInicial)
+        {
+            if (arquivo.Length > 0)
+            {
+                var arquivoBytes = await PdfTools.ObterArquivo(arquivo);
+
+                var arquivoCarimbado = CarimboCore.CopiaProcesso(
+                    arquivoBytes,
+                    protocolo,
+                    geradoPor,
+                    dataHora,
+                    totalPaginas,
+                    paginaInicial
+                );
+
+                return File(arquivoCarimbado, "application/pdf");
             }
             else
                 return BadRequest();

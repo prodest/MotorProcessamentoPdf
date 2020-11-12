@@ -160,6 +160,24 @@ namespace Business.Core
             return output.ElementAt(page);
         }
 
+        public async Task<byte[]> PdfConcatenation(IEnumerable<string> urls)
+        {
+            List<byte[]> arquivos = new List<byte[]>();
+            try
+            {
+                foreach (var url in urls)
+                    arquivos.Add(await JsonData.GetAndDownloadAsync(url));
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Erro ao obter os arquivos através das urls.\n{ex.Message}");
+            }
+
+            var arquivoFinal = PdfConcatenation(arquivos);
+
+            return arquivoFinal;
+        }
+
         public byte[] PdfConcatenation(IEnumerable<byte[]> files)
         {
             var outputStream = new MemoryStream();
@@ -176,6 +194,21 @@ namespace Business.Core
 
             return outputStream.ToArray();
         }
+
+        //public async Task<byte[]> Merge(IEnumerable<MergeItem> items)
+        //{
+        //    byte[] arquivos = null;
+        //    if (items?.Count() > 0)
+        //    {
+        //        foreach (var item in items)
+        //            if(!string.IsNullOrWhiteSpace(item.Url) && item.Arquivo?.Length == 0)
+        //                item.Arquivo = await JsonData.GetAndDownloadAsync(item.Url);
+
+        //        arquivos = PdfConcatenation(items.OrderBy(x => x.Ordem).Select(x => x.Arquivo));
+        //    }
+
+        //    return arquivos;
+        //}
 
         #endregion
 
