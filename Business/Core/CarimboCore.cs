@@ -252,26 +252,25 @@ namespace Business.Core
 
                 foreach (var pagina in paginas)
                 {
-                    string pageText = null;
                     try
                     {
-                        pageText = PdfTextExtractor.GetTextFromPage(
+                        string pageText = PdfTextExtractor.GetTextFromPage(
                             pdfDocument.GetPage(pagina),
                             new SimpleTextExtractionStrategy()
                         );
+
+                        foreach (var regexItem in expressoesRegulares)
+                        {
+                            var registro = Regex.Match(pageText, regexItem);
+
+                            if (registro.Success)
+                                return registro.Value;
+                        }
                     }
                     catch(ArgumentException ex)
                     {
                         if (!ex.Message.Contains("is not a supported encoding name"))
                             throw;
-                    }
-
-                    foreach (var regexItem in expressoesRegulares)
-                    {
-                        var registro = Regex.Match(pageText, regexItem);
-
-                        if (registro.Success)
-                            return registro.Value;
                     }
                 }
 
