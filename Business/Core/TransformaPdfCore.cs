@@ -39,6 +39,46 @@ namespace Business.Core
             return true;
         }
 
+        public async Task<bool> ValidarRestricoesLeituraOuAltaretacao(string url)
+        {
+            byte[] file;
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(url)) 
+                    file = await JsonData.GetAndDownloadAsync(url);
+                else
+                    throw new Exception("Não é possível ler este documento pois ele não é um arquivo PDF válido.");
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+
+            using (MemoryStream readingStream = new MemoryStream(file))
+            {
+                try
+                {
+                    using (PdfReader pdfReader = new PdfReader(readingStream))
+                    using (PdfDocument pdfDocument = new PdfDocument(pdfReader))
+                    {
+                        return true;
+                    }
+                }
+                catch (iText.IO.IOException e)
+                {
+                    throw new Exception("Não é possível ler este documento pois ele não é um arquivo PDF válido.");
+                }
+                catch (BadPasswordException e)
+                {
+                    throw new Exception("Não é possível ler este documento pois ele está protegido por senha.");
+                }
+                catch (Exception e)
+                {
+                    throw new Exception("Não é possível ler este documento pois ele possui restrições de acesso ao seu conteúdo.");
+                }
+            }
+        }
+
         public bool ValidarRestricoesLeituraOuAltaretacao(byte[] file)
         {
             using (MemoryStream readingStream = new MemoryStream(file))

@@ -1,7 +1,6 @@
 ﻿using API.Tools;
 using AutoMapper;
 using Business.Core.ICore;
-using Business.Shared;
 using Business.Shared.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -56,6 +55,13 @@ namespace API.Controllers
             }
 
             return BadRequest();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ValidarRestricoesLeituraOuAlteracaoByUrl([FromForm] string url)
+        {
+            var response = await TransformaPdfCore.ValidarRestricoesLeituraOuAltaretacao(url);
+            return Ok(new ApiResponse<bool>(200, "success", response));
         }
 
         [HttpPost]
@@ -153,15 +159,6 @@ namespace API.Controllers
             var output = await TransformaPdfCore.PdfConcatenation(urls);
             return File(output, "application/octet-stream");
         }
-
-        //[HttpPost]
-        //public async Task<IActionResult> Merge(IEnumerable<MergePdfItem> items)
-        //{
-        //    //var response = await TransformaPdfCore.Merge(items);
-        //    //return Ok(new ApiResponse<object>(200, "success", response));
-            
-        //    return Ok(new ApiResponse<object>(200, "success", null));
-        //}
 
         [HttpPost]
         public IActionResult HtmlPdf([FromForm]string html)

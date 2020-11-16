@@ -18,6 +18,7 @@ namespace Business.Core.ICore
         byte[] RemoveAnnotations(byte[] file);
         byte[] MetaPDFA(byte[] file);
         bool ValidarRestricoesLeituraOuAltaretacao(byte[] file);
+        Task<bool> ValidarRestricoesLeituraOuAltaretacao(string url);
         ApiResponse<PdfInfo> PdfInfo(byte[] file);
         Task<ApiResponse<PdfInfo>> PdfInfo(string url);
     }
