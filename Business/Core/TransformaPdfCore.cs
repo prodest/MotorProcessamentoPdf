@@ -237,7 +237,7 @@ namespace Business.Core
             return arquivoFinal;
         }
 
-        public async Task<byte[]> PdfConcatenation(string url, byte[] documentoMetadados)
+        public async Task<byte[]> ConcatenarUrlEFile(string url, byte[] documentoMetadados)
         {
             byte[] documentoFromUrl;
             try
