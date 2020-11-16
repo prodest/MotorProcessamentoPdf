@@ -26,24 +26,7 @@ namespace Business.Core
             JsonData = jsonData;
         }
 
-        public async Task<IEnumerable<CertificadoDigital>> SignatureValidation(string url)
-        {
-            UrlIsNotNullOrEmpty(url);
-
-            byte[] file = null;
-            try
-            {
-                file = await JsonData.GetAndDownloadAsync(url);
-            }
-            catch (Exception)
-            {
-                throw new Exception("Documento indisponível");
-            }
-
-            var certificado = await SignatureValidation(file);
-
-            return certificado;
-        }
+        #region Signature Validation
 
         public async Task<IEnumerable<CertificadoDigital>> SignatureValidation(byte[] file)
         {
@@ -103,12 +86,28 @@ namespace Business.Core
             return distinctCert;
         }
 
-        public async Task<bool> HasDigitalSignature(string url)
+        public async Task<IEnumerable<CertificadoDigital>> SignatureValidation(string url)
         {
-            byte[] arquivo = await JsonData.GetAndDownloadAsync(url);
-            var response = HasDigitalSignature(arquivo);
-            return response;
+            UrlIsNotNullOrEmpty(url);
+
+            byte[] file = null;
+            try
+            {
+                file = await JsonData.GetAndDownloadAsync(url);
+            }
+            catch (Exception)
+            {
+                throw new Exception("Documento indisponível");
+            }
+
+            var certificado = await SignatureValidation(file);
+
+            return certificado;
         }
+
+        #endregion
+
+        #region Has Digital Signature
 
         public bool HasDigitalSignature(byte[] file)
         {
@@ -121,6 +120,15 @@ namespace Business.Core
             else
                 return false;
         }
+
+        public async Task<bool> HasDigitalSignature(string url)
+        {
+            byte[] arquivo = await JsonData.GetAndDownloadAsync(url);
+            var response = HasDigitalSignature(arquivo);
+            return response;
+        }
+
+        #endregion
 
         #region Axiliares
 

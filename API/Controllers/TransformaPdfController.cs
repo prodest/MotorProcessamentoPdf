@@ -203,12 +203,12 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> ConcatenarDocumentoEMetadados([FromForm] string urlDocumento, IFormFile documentoMetadados)
+        public async Task<IActionResult> ConcatenarDocumentoEMetadados([FromForm] string url, IFormFile documento)
         {
-            if (documentoMetadados.Length > 0)
+            if (documento.Length > 0)
             {
-                byte[] documentoMetadadosBytes = await PdfTools.ObterArquivo(documentoMetadados);
-                var output =  await TransformaPdfCore.PdfConcatenation(urlDocumento, documentoMetadadosBytes);
+                byte[] documentoBytes = await PdfTools.ObterArquivo(documento);
+                var output =  await TransformaPdfCore.PdfConcatenation(url, documentoBytes);
                 return File(output, "application/octet-stream");
             }
 

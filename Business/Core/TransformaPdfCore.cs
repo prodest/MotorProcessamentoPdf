@@ -237,12 +237,12 @@ namespace Business.Core
             return arquivoFinal;
         }
 
-        public async Task<byte[]> PdfConcatenation(string urlDocumento, byte[] documentoMetadados)
+        public async Task<byte[]> PdfConcatenation(string url, byte[] documentoMetadados)
         {
-            byte[] documento;
+            byte[] documentoFromUrl;
             try
             {
-                documento = await JsonData.GetAndDownloadAsync(urlDocumento);
+                documentoFromUrl = await JsonData.GetAndDownloadAsync(url);
             }
             catch (Exception)
             {
@@ -252,12 +252,12 @@ namespace Business.Core
             using (var outputStream = new MemoryStream())
             using (var outputDocument = new PdfDocument(new PdfWriter(outputStream)))
             {
-                var documentoPdfDoc = new PdfDocument(new PdfReader(new MemoryStream(documento)));
+                var documentoPdfDoc = new PdfDocument(new PdfReader(new MemoryStream(documentoFromUrl)));
                 documentoPdfDoc.CopyPagesTo(1, documentoPdfDoc.GetNumberOfPages(), outputDocument);
                 documentoPdfDoc.Close();
 
-                var documentoMetadadosPdfDoc = new PdfDocument(new PdfReader(new MemoryStream(documentoMetadados)));
-                documentoMetadadosPdfDoc.CopyPagesTo(1, documentoMetadadosPdfDoc.GetNumberOfPages(), outputDocument);
+                var documentoFromUrlPdfDoc = new PdfDocument(new PdfReader(new MemoryStream(documentoMetadados)));
+                documentoFromUrlPdfDoc.CopyPagesTo(1, documentoFromUrlPdfDoc.GetNumberOfPages(), outputDocument);
                 documentoPdfDoc.Close();
 
                 outputDocument.Close();
@@ -267,21 +267,6 @@ namespace Business.Core
         }
 
         #endregion
-
-        //public async Task<byte[]> Merge(IEnumerable<MergeItem> items)
-        //{
-        //    byte[] arquivos = null;
-        //    if (items?.Count() > 0)
-        //    {
-        //        foreach (var item in items)
-        //            if(!string.IsNullOrWhiteSpace(item.Url) && item.Arquivo?.Length == 0)
-        //                item.Arquivo = await JsonData.GetAndDownloadAsync(item.Url);
-
-        //        arquivos = PdfConcatenation(items.OrderBy(x => x.Ordem).Select(x => x.Arquivo));
-        //    }
-
-        //    return arquivos;
-        //}
 
         #endregion
 
