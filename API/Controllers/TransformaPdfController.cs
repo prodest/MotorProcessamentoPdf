@@ -57,25 +57,7 @@ namespace API.Controllers
             return BadRequest();
         }
 
-        #region Possui Restricoes by Url
-
-        [HttpPost]
-        public async Task<IActionResult> PossuiRestricoesByUrl([FromForm] string url)
-        {
-            var response = await TransformaPdfCore.PossuiRestricoes(url);
-            return Ok(new ApiResponse<bool>(200, "success", response));
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> ValidarRestricoesLeituraOuAlteracaoByUrl([FromForm] string url)
-        {
-            var response = await TransformaPdfCore.PossuiRestricoes(url);
-            return Ok(new ApiResponse<bool>(200, "success", response));
-        }
-
-        #endregion
-
-        #region Possui Restricoes
+        #region Validar Restricoes Leitura Ou Alteracao
 
         [HttpPost]
         public async Task<IActionResult> ValidarRestricoesLeituraOuAltaretacao(IFormFile arquivo)
@@ -91,6 +73,17 @@ namespace API.Controllers
         }
 
         [HttpPost]
+        public async Task<IActionResult> ValidarRestricoesLeituraOuAlteracaoByUrl([FromForm] string url)
+        {
+            var response = await TransformaPdfCore.PossuiRestricoes(url);
+            return Ok(new ApiResponse<bool>(200, "success", response));
+        }
+
+        #endregion
+
+        #region Possui Restricoes
+
+        [HttpPost]
         public async Task<IActionResult> PossuiRestricoes(IFormFile arquivo)
         {
             if (arquivo.Length > 0)
@@ -103,9 +96,16 @@ namespace API.Controllers
             return BadRequest();
         }
 
+        [HttpPost]
+        public async Task<IActionResult> PossuiRestricoesByUrl([FromForm] string url)
+        {
+            var response = await TransformaPdfCore.PossuiRestricoes(url);
+            return Ok(new ApiResponse<bool>(200, "success", response));
+        }
+
         #endregion
 
-        #region Assinatura Digital
+        #region Has Digital Signature
 
         [HttpPost]
         public async Task<IActionResult> HasDigitalSignature(IFormFile arquivo)
@@ -127,13 +127,9 @@ namespace API.Controllers
             return Ok(new ApiResponse<object>(200, "success", response));
         }
 
-        [HttpPost]
-        public async Task<IActionResult> ValidarAssinaturaDigitalByUrl(string url)
-        {
-            var result = await AssinaturaDigitalCore.SignatureValidation(url);
-            var certificadoDigitalDto = Mapper.Map<IEnumerable<CertificadoDigitalDto>>(result);
-            return Ok(new ApiResponse<IEnumerable<CertificadoDigitalDto>>(200, "success", certificadoDigitalDto));
-        }
+        #endregion
+
+        #region Validar Assinatura Digital
 
         [HttpPost]
         public async Task<IActionResult> ValidarAssinaturaDigital(IFormFile arquivo)
@@ -147,6 +143,14 @@ namespace API.Controllers
             }
 
             return BadRequest();
+        }
+        
+        [HttpPost]
+        public async Task<IActionResult> ValidarAssinaturaDigitalByUrl([FromForm] string url)
+        {
+            var result = await AssinaturaDigitalCore.SignatureValidation(url);
+            var certificadoDigitalDto = Mapper.Map<IEnumerable<CertificadoDigitalDto>>(result);
+            return Ok(new ApiResponse<IEnumerable<CertificadoDigitalDto>>(200, "success", certificadoDigitalDto));
         }
 
         #endregion
@@ -169,11 +173,13 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> PdfInfoUrl(string url)
+        public async Task<IActionResult> PdfInfoUrl([FromForm] string url)
         {
             var response = await TransformaPdfCore.PdfInfo(url);
             return Ok(response);
         }
+
+        #region Concatenar Pdfs
 
         [HttpPost]
         public async Task<IActionResult> ConcatenarPdfs(IFormFileCollection arquivos)
@@ -195,6 +201,21 @@ namespace API.Controllers
             var output = await TransformaPdfCore.PdfConcatenation(urls);
             return File(output, "application/octet-stream");
         }
+
+        [HttpPost]
+        public async Task<IActionResult> ConcatenarDocumentoEMetadados([FromForm] string urlDocumento, IFormFile documentoMetadados)
+        {
+            if (documentoMetadados.Length > 0)
+            {
+                byte[] documentoMetadadosBytes = await PdfTools.ObterArquivo(documentoMetadados);
+                var output =  await TransformaPdfCore.PdfConcatenation(urlDocumento, documentoMetadadosBytes);
+                return File(output, "application/octet-stream");
+            }
+
+            return BadRequest();
+        }
+
+        #endregion
 
         [HttpPost]
         public IActionResult HtmlPdf([FromForm]string html)

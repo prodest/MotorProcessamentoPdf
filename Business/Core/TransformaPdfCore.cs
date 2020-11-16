@@ -200,23 +200,7 @@ namespace Business.Core
             return output.ElementAt(page);
         }
 
-        public async Task<byte[]> PdfConcatenation(IEnumerable<string> urls)
-        {
-            List<byte[]> arquivos = new List<byte[]>();
-            try
-            {
-                foreach (var url in urls)
-                    arquivos.Add(await JsonData.GetAndDownloadAsync(url));
-            }
-            catch (Exception ex)
-            {
-                throw new Exception($"Erro ao obter os arquivos através das urls.\n{ex.Message}");
-            }
-
-            var arquivoFinal = PdfConcatenation(arquivos);
-
-            return arquivoFinal;
-        }
+        #region PdfConcatenation
 
         public byte[] PdfConcatenation(IEnumerable<byte[]> files)
         {
@@ -234,6 +218,55 @@ namespace Business.Core
 
             return outputStream.ToArray();
         }
+
+        public async Task<byte[]> PdfConcatenation(IEnumerable<string> urls)
+        {
+            List<byte[]> arquivos = new List<byte[]>();
+            try
+            {
+                foreach (var url in urls)
+                    arquivos.Add(await JsonData.GetAndDownloadAsync(url));
+            }
+            catch (Exception)
+            {
+                throw new Exception($"Não foi possível obter o documento.");
+            }
+
+            var arquivoFinal = PdfConcatenation(arquivos);
+
+            return arquivoFinal;
+        }
+
+        public async Task<byte[]> PdfConcatenation(string urlDocumento, byte[] documentoMetadados)
+        {
+            byte[] documento;
+            try
+            {
+                documento = await JsonData.GetAndDownloadAsync(urlDocumento);
+            }
+            catch (Exception)
+            {
+                throw new Exception($"Não foi possível obter o documento.");
+            }
+
+            using (var outputStream = new MemoryStream())
+            using (var outputDocument = new PdfDocument(new PdfWriter(outputStream)))
+            {
+                var documentoPdfDoc = new PdfDocument(new PdfReader(new MemoryStream(documento)));
+                documentoPdfDoc.CopyPagesTo(1, documentoPdfDoc.GetNumberOfPages(), outputDocument);
+                documentoPdfDoc.Close();
+
+                var documentoMetadadosPdfDoc = new PdfDocument(new PdfReader(new MemoryStream(documentoMetadados)));
+                documentoMetadadosPdfDoc.CopyPagesTo(1, documentoMetadadosPdfDoc.GetNumberOfPages(), outputDocument);
+                documentoPdfDoc.Close();
+
+                outputDocument.Close();
+
+                return outputStream.ToArray();
+            }
+        }
+
+        #endregion
 
         //public async Task<byte[]> Merge(IEnumerable<MergeItem> items)
         //{
