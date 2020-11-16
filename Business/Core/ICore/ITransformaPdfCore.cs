@@ -17,8 +17,8 @@ namespace Business.Core.ICore
         bool IsPdfa1b(byte[] file);
         byte[] RemoveAnnotations(byte[] file);
         byte[] MetaPDFA(byte[] file);
-        bool ValidarRestricoesLeituraOuAlteracao(byte[] file);
-        Task<bool> ValidarRestricoesLeituraOuAlteracao(string url);
+        bool PossuiRestricoes(byte[] file);
+        Task<bool> PossuiRestricoes(string url);
         ApiResponse<PdfInfo> PdfInfo(byte[] file);
         Task<ApiResponse<PdfInfo>> PdfInfo(string url);
     }

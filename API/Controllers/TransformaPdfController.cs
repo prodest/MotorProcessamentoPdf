@@ -57,25 +57,53 @@ namespace API.Controllers
             return BadRequest();
         }
 
+        #region Possui Restricoes by Url
+
         [HttpPost]
-        public async Task<IActionResult> ValidarRestricoesLeituraOuAlteracaoByUrl([FromForm] string url)
+        public async Task<IActionResult> PossuiRestricoesByUrl([FromForm] string url)
         {
-            var response = await TransformaPdfCore.ValidarRestricoesLeituraOuAlteracao(url);
+            var response = await TransformaPdfCore.PossuiRestricoes(url);
             return Ok(new ApiResponse<bool>(200, "success", response));
         }
 
         [HttpPost]
-        public async Task<IActionResult> ValidarRestricoesLeituraOuAlteracao(IFormFile arquivo)
+        public async Task<IActionResult> ValidarRestricoesLeituraOuAlteracaoByUrl([FromForm] string url)
+        {
+            var response = await TransformaPdfCore.PossuiRestricoes(url);
+            return Ok(new ApiResponse<bool>(200, "success", response));
+        }
+
+        #endregion
+
+        #region Possui Restricoes
+
+        [HttpPost]
+        public async Task<IActionResult> ValidarRestricoesLeituraOuAltaretacao(IFormFile arquivo)
         {
             if (arquivo.Length > 0)
             {
                 var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
-                var response = TransformaPdfCore.ValidarRestricoesLeituraOuAlteracao(arquivoByteArray);
+                var response = TransformaPdfCore.PossuiRestricoes(arquivoByteArray);
                 return Ok(new ApiResponse<bool>(200, "success", response));
             }
 
             return BadRequest();
         }
+
+        [HttpPost]
+        public async Task<IActionResult> PossuiRestricoes(IFormFile arquivo)
+        {
+            if (arquivo.Length > 0)
+            {
+                var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
+                var response = TransformaPdfCore.PossuiRestricoes(arquivoByteArray);
+                return Ok(new ApiResponse<bool>(200, "success", response));
+            }
+
+            return BadRequest();
+        }
+
+        #endregion
 
         #region Assinatura Digital
 
@@ -97,6 +125,14 @@ namespace API.Controllers
         {
             var response = await AssinaturaDigitalCore.HasDigitalSignature(url);
             return Ok(new ApiResponse<object>(200, "success", response));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ValidarAssinaturaDigitalByUrl(string url)
+        {
+            var result = await AssinaturaDigitalCore.SignatureValidation(url);
+            var certificadoDigitalDto = Mapper.Map<IEnumerable<CertificadoDigitalDto>>(result);
+            return Ok(new ApiResponse<IEnumerable<CertificadoDigitalDto>>(200, "success", certificadoDigitalDto));
         }
 
         [HttpPost]

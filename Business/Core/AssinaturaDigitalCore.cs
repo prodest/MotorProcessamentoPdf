@@ -26,6 +26,25 @@ namespace Business.Core
             JsonData = jsonData;
         }
 
+        public async Task<IEnumerable<CertificadoDigital>> SignatureValidation(string url)
+        {
+            UrlIsNotNullOrEmpty(url);
+
+            byte[] file = null;
+            try
+            {
+                file = await JsonData.GetAndDownloadAsync(url);
+            }
+            catch (Exception)
+            {
+                throw new Exception("Documento indisponível");
+            }
+
+            var certificado = await SignatureValidation(file);
+
+            return certificado;
+        }
+
         public async Task<IEnumerable<CertificadoDigital>> SignatureValidation(byte[] file)
         {
             PdfReader reader = new PdfReader(file);
@@ -176,6 +195,12 @@ namespace Business.Core
         #endregion
 
         #region Validações
+
+        private void UrlIsNotNullOrEmpty(string url)
+        {
+            if (url is null)
+                throw new ArgumentNullException(nameof(url));
+        }
 
         private void TodosAssinaramDocumentoPorInteiro(Dictionary<string, string> naoAssinaramTodoDocumento)
         {
