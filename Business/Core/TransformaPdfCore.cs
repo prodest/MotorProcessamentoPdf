@@ -39,7 +39,7 @@ namespace Business.Core
             return true;
         }
 
-        public async Task<bool> ValidarRestricoesLeituraOuAltaretacao(string url)
+        public async Task<bool> ValidarRestricoesLeituraOuAlteracao(string url)
         {
             byte[] file;
             try
@@ -79,7 +79,7 @@ namespace Business.Core
             }
         }
 
-        public bool ValidarRestricoesLeituraOuAltaretacao(byte[] file)
+        public bool ValidarRestricoesLeituraOuAlteracao(byte[] file)
         {
             using (MemoryStream readingStream = new MemoryStream(file))
             {

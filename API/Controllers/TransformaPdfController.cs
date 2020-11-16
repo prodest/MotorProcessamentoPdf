@@ -60,17 +60,17 @@ namespace API.Controllers
         [HttpPost]
         public async Task<IActionResult> ValidarRestricoesLeituraOuAlteracaoByUrl([FromForm] string url)
         {
-            var response = await TransformaPdfCore.ValidarRestricoesLeituraOuAltaretacao(url);
+            var response = await TransformaPdfCore.ValidarRestricoesLeituraOuAlteracao(url);
             return Ok(new ApiResponse<bool>(200, "success", response));
         }
 
         [HttpPost]
-        public async Task<IActionResult> ValidarRestricoesLeituraOuAltaretacao(IFormFile arquivo)
+        public async Task<IActionResult> ValidarRestricoesLeituraOuAlteracao(IFormFile arquivo)
         {
             if (arquivo.Length > 0)
             {
                 var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
-                var response = TransformaPdfCore.ValidarRestricoesLeituraOuAltaretacao(arquivoByteArray);
+                var response = TransformaPdfCore.ValidarRestricoesLeituraOuAlteracao(arquivoByteArray);
                 return Ok(new ApiResponse<bool>(200, "success", response));
             }
 
