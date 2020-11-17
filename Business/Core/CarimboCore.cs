@@ -272,6 +272,14 @@ namespace Business.Core
                         if (!ex.Message.Contains("is not a supported encoding name"))
                             throw;
                     }
+                    catch (Exception ex)
+                    {
+                        if (ex.Message.Contains("Error at file pointer"))
+                            throw new Exception("Documento corrompido: Erro ao validar a presença de carimbo no documento.");
+                        else
+                            throw;
+                    }
+
                 }
 
                 return null;
