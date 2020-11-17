@@ -203,12 +203,12 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> ConcatenarUrlEFile([FromForm] string url, IFormFile documento)
+        public async Task<IActionResult> ConcatenarUrlEArquivo([FromForm] string url, IFormFile arquivo)
         {
-            if (documento.Length > 0)
+            if (arquivo.Length > 0)
             {
-                byte[] documentoBytes = await PdfTools.ObterArquivo(documento);
-                var output =  await TransformaPdfCore.ConcatenarUrlEFile(url, documentoBytes);
+                byte[] documentoBytes = await PdfTools.ObterArquivo(arquivo);
+                var output =  await TransformaPdfCore.ConcatenarUrlEArquivo(url, documentoBytes);
                 return File(output, "application/octet-stream");
             }
 
