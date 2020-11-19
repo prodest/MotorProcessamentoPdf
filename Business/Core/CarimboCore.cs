@@ -52,7 +52,9 @@ namespace Business.Core
                 for (int i = 1; i <= pdfDocument.GetNumberOfPages(); i++)
                 {
                     PdfPage page = pdfDocument.GetPage(i);
-                    Rectangle rectangle = new Rectangle(0, 0, 10, page.GetPageSize().GetHeight());
+                    page.SetIgnorePageRotationForContent(true);
+                    Rectangle pageSize = pdfDocument.GetPage(i).GetPageSizeWithRotation();
+                    Rectangle rectangle = new Rectangle(0, 0, 10, pageSize.GetHeight());
                     using (Canvas canvas = new Canvas(page, rectangle))
                     {
                         var paragraph = ValorLegalParagrafo(
@@ -63,7 +65,6 @@ namespace Business.Core
                             pdfDocument.GetNumberOfPages()
                         );
 
-                        Rectangle pageSize = pdfDocument.GetPage(i).GetPageSize();
                         canvas.ShowTextAligned(
                             paragraph,
                             pageSize.GetWidth(),
