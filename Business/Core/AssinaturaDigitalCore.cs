@@ -29,6 +29,9 @@ namespace Business.Core
 
         public async Task<IEnumerable<CertificadoDigital>> SignatureValidation(byte[] file)
         {
+            // validações
+            ValidationHelper.ArquivoValido(file);
+
             PdfReader reader = new PdfReader(file);
 
             var orderedSignatureNames = GetOrderedSignatureNames(reader);
@@ -114,8 +117,7 @@ namespace Business.Core
         {
             ValidationHelper.ArquivoValido(file);
 
-            MemoryStream readingStream = new MemoryStream(file);
-            PdfReader pdfReader = new PdfReader(readingStream);
+            PdfReader pdfReader = new PdfReader(file);
             if (pdfReader.AcroFields.GetSignatureNames().Count >= 1)
                 return true;
             else
@@ -124,9 +126,12 @@ namespace Business.Core
 
         public async Task<bool> HasDigitalSignature(string url)
         {
-            // todo(marcelo): adicionar validacoes
+            ValidationHelper.UrlIsNotNullOrEmpty(url);
+
             byte[] arquivo = await JsonData.GetAndDownloadAsync(url);
+
             var response = HasDigitalSignature(arquivo);
+
             return response;
         }
 
