@@ -1,5 +1,5 @@
 ﻿using Business.Core.ICore;
-using Business.Helpers;
+using Business.Shared;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas.Parser;
 using iText.Kernel.Pdf.Canvas.Parser.Listener;
@@ -15,7 +15,8 @@ namespace Business.Core
         public string ExtrairTextoConcatenado(byte[] arquivoBytes, IEnumerable<int> paginas)
         {
             // validações
-            Validations.ArquivoValido(arquivoBytes);
+            ValidationHelper.ArquivoValido(arquivoBytes);
+            // todo(marcelo): validar paginas
 
             using (MemoryStream readingStream = new MemoryStream(arquivoBytes))
             using (PdfReader pdfReader = new PdfReader(readingStream))
@@ -41,7 +42,8 @@ namespace Business.Core
         public List<KeyValuePair<int, string>> ExtrairTextoPorPaginas(byte[] arquivoBytes, IEnumerable<int> paginas)
         {
             // validações
-            Validations.ArquivoValido(arquivoBytes);
+            ValidationHelper.ArquivoValido(arquivoBytes);
+            // todo(marcelo): validar paginas
 
             using (MemoryStream readingStream = new MemoryStream(arquivoBytes))
             using (PdfReader pdfReader = new PdfReader(readingStream))

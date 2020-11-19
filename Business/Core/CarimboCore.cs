@@ -39,9 +39,9 @@ namespace Business.Core
         public byte[] Documento(byte[] arquivo, string registro, int natureza, int valorLegal, DateTime dataHora)
         {
             // validações
-            Validations.ArquivoValido(arquivo);
-            Validations.RegistroValido(registro);
-            Validations.dataHoraValida(dataHora);
+            ValidationHelper.ArquivoValido(arquivo);
+            ValidationHelper.RegistroValido(registro);
+            ValidationHelper.DataHoraValida(dataHora);
 
             using (MemoryStream readingStream = new MemoryStream(arquivo))
             using (PdfReader pdfReader = new PdfReader(readingStream))
@@ -86,10 +86,10 @@ namespace Business.Core
         public byte[] CopiaProcesso(byte[] arquivo, string protocolo, string geradoPor, DateTime dataHora, int totalPaginas, int paginaInicial = 1)
         {
             // validações
-            Validations.ArquivoValido(arquivo);
-            Validations.ProtocoloValido(protocolo);
+            ValidationHelper.ArquivoValido(arquivo);
+            ValidationHelper.ProtocoloValido(protocolo);
             GeradoPorValido(geradoPor);
-            Validations.dataHoraValida(dataHora);
+            ValidationHelper.DataHoraValida(dataHora);
             TotalPaginasValido(totalPaginas);
             PaginaInicialValida(paginaInicial, totalPaginas);
 
@@ -138,7 +138,7 @@ namespace Business.Core
         )
         {
             // validações
-            Validations.ArquivoValido(arquivo);
+            ValidationHelper.ArquivoValido(arquivo);
 
             using (MemoryStream readingStream = new MemoryStream(arquivo))
             using (PdfReader pdfReader = new PdfReader(readingStream))
@@ -190,7 +190,7 @@ namespace Business.Core
         public byte[] AdicionarTokenEdocs(byte[] arquivo, string registro)
         {
             // validações
-            Validations.ArquivoValido(arquivo);
+            ValidationHelper.ArquivoValido(arquivo);
 
             using (MemoryStream readingStream = new MemoryStream(arquivo))
             using (PdfReader pdfReader = new PdfReader(readingStream))
@@ -241,8 +241,8 @@ namespace Business.Core
 
         public string BuscarExpressoesRegulares(byte[] arquivo, IEnumerable<string> expressoesRegulares, IEnumerable<int> paginas)
         {
-            Validations.ArquivoValido(arquivo);
-            
+            ValidationHelper.ArquivoValido(arquivo);
+
             using (MemoryStream readingStream = new MemoryStream(arquivo))
             using (PdfReader pdfReader = new PdfReader(readingStream))
             using (PdfDocument pdfDocument = new PdfDocument(pdfReader))
@@ -286,6 +286,10 @@ namespace Business.Core
             }
         }
 
+        #endregion
+
+        #region Auxiliares
+
         private void PaginaInicialValida(int paginaInicial, int totalPaginas)
         {
             if (paginaInicial <= 0)
@@ -305,10 +309,6 @@ namespace Business.Core
             if (string.IsNullOrWhiteSpace(geradoPor))
                 throw new Exception("O nome do solicitante da cópia de processo está vazio.");
         }
-
-        #endregion
-
-        #region Auxiliares
 
         private DeviceRgb FromHexa2Rgb(string corHexa)
         {
@@ -366,7 +366,7 @@ namespace Business.Core
         private string ValidarMetadadosEdocs(byte[] arquivo)
         {
             // validações
-            Validations.ArquivoValido(arquivo);
+            ValidationHelper.ArquivoValido(arquivo);
 
             using (MemoryStream readingStream = new MemoryStream(arquivo))
             using (PdfReader pdfReader = new PdfReader(readingStream))
@@ -391,7 +391,7 @@ namespace Business.Core
         private string BuscarCarimboDocumento(byte[] arquivo)
         {
             // validações
-            Validations.ArquivoValido(arquivo);
+            ValidationHelper.ArquivoValido(arquivo);
 
             int paginaValidada = 1;
 
@@ -422,7 +422,7 @@ namespace Business.Core
         private string BuscarCarimboCopiaProcesso(byte[] arquivo)
         {
             // validações
-            Validations.ArquivoValido(arquivo);
+            ValidationHelper.ArquivoValido(arquivo);
 
             int paginaValidada = 1;
 

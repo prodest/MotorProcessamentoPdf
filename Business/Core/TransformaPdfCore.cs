@@ -1,5 +1,4 @@
 ﻿using Business.Core.ICore;
-using Business.Helpers;
 using Business.Shared;
 using Business.Shared.Models;
 using iText.Html2pdf;
@@ -29,31 +28,22 @@ namespace Business.Core
 
         public bool IsPdf(byte[] file)
         {
-            var isPdf = Validations.IsPdf(file);
+            var isPdf = ValidationHelper.IsPdf(file);
             return isPdf;
         }
 
         public bool IsPdfa1b(byte[] file)
         {
-            Validations.IsPdfa1b(file);
+            ValidationHelper.IsPdfa1b(file);
             return true;
         }
 
         public async Task<bool> PossuiRestricoes(string url)
         {
-            byte[] file;
-            try
-            {
-                if (!string.IsNullOrWhiteSpace(url)) 
-                    file = await JsonData.GetAndDownloadAsync(url);
-                else
-                    throw new Exception("Não é possível ler este documento pois ele não é um arquivo PDF válido.");
-            }
-            catch (Exception)
-            {
-                throw;
-            }
+            // todo(marcelo): adicionar validacoes
 
+            var file = await JsonData.GetAndDownloadAsync(url);
+            
             using (MemoryStream readingStream = new MemoryStream(file))
             {
                 try
@@ -81,6 +71,8 @@ namespace Business.Core
 
         public bool PossuiRestricoes(byte[] file)
         {
+            // todo(marcelo): validar o file
+
             using (MemoryStream readingStream = new MemoryStream(file))
             {
                 try
@@ -112,6 +104,8 @@ namespace Business.Core
 
         public async Task<ApiResponse<PdfInfo>> PdfInfo(string url)
         {
+            // todo(marcelo): validar o url
+
             byte[] arquivo = await JsonData.GetAndDownloadAsync(url);
             var resposta = PdfInfo(arquivo);
             return resposta;
@@ -119,7 +113,7 @@ namespace Business.Core
 
         public ApiResponse<PdfInfo> PdfInfo(byte[] file)
         {
-            Validations.ArquivoValido(file);
+            ValidationHelper.ArquivoValido(file);
 
             using (MemoryStream readingStream = new MemoryStream(file))
             using (PdfReader pdfReader = new PdfReader(readingStream))
@@ -137,6 +131,8 @@ namespace Business.Core
 
         public byte[] RemoveAnnotations(byte[] file)
         {
+            // todo(marcelo): validar o file
+
             if (!IsPdf(file))
                 throw new Exception("Este arquivo não é um documento PDF.");
 
@@ -154,6 +150,8 @@ namespace Business.Core
 
         public byte[] MetaPDFA(byte[] file)
         {
+            // todo(marcelo): validar o file
+
             using (MemoryStream readingMemoryStream = new MemoryStream(file))
             using (PdfReader pdfReader = new PdfReader(readingMemoryStream))
             using (PdfDocument readingPdfDocument = new PdfDocument(pdfReader))
@@ -179,6 +177,9 @@ namespace Business.Core
 
         public byte[] HtmlPdf(byte[] file)
         {
+            // todo(marcelo): validar o file
+
+
             var html = new MemoryStream(file);
             var output = new MemoryStream();
             HtmlConverter.ConvertToPdf(html, output);
@@ -187,6 +188,8 @@ namespace Business.Core
 
         public byte[] HtmlPdf(string html)
         {
+            // todo(marcelo): validar o html
+
             var output = new MemoryStream();
             HtmlConverter.ConvertToPdf(html, output);
             return output.ToArray();
@@ -194,6 +197,8 @@ namespace Business.Core
 
         public byte[] PdfPagination(byte[] file, int itemsByPage, int page)
         {
+            // todo(marcelo): fazer as validações
+
             PdfDocument pdfDocument = new PdfDocument(new PdfReader(new MemoryStream(file)));
             ICollection<byte[]> output = new CustomPdfSplitter(pdfDocument).SplitByPageCount(itemsByPage);
             pdfDocument.Close();
@@ -204,6 +209,8 @@ namespace Business.Core
 
         public byte[] PdfConcatenation(IEnumerable<byte[]> files)
         {
+            // todo(marcelo): fazer as validações
+
             var outputStream = new MemoryStream();
             var outputDocument = new PdfDocument(new PdfWriter(outputStream));
 
@@ -221,6 +228,8 @@ namespace Business.Core
 
         public async Task<byte[]> PdfConcatenation(IEnumerable<string> urls)
         {
+            // todo(marcelo): validar o url
+
             List<byte[]> arquivos = new List<byte[]>();
             try
             {
@@ -239,6 +248,8 @@ namespace Business.Core
 
         public async Task<byte[]> ConcatenarUrlEArquivo(string url, byte[] documentoMetadados)
         {
+            // todo(marcelo): fazer as validacoes
+
             byte[] documentoFromUrl;
             try
             {

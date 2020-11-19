@@ -1,5 +1,4 @@
 ﻿using Business.Core.ICore;
-using Business.Helpers;
 using Business.Helpers.AssinaturaDigital;
 using Business.Shared;
 using iTextSharp.text.pdf;
@@ -88,20 +87,11 @@ namespace Business.Core
 
         public async Task<IEnumerable<CertificadoDigital>> SignatureValidation(string url)
         {
-            UrlIsNotNullOrEmpty(url);
+            ValidationHelper.UrlIsNotNullOrEmpty(url);
 
-            byte[] file = null;
-            try
-            {
-                file = await JsonData.GetAndDownloadAsync(url);
-            }
-            catch (Exception)
-            {
-                throw new Exception("Documento indisponível");
-            }
-
+            byte[] file = await JsonData.GetAndDownloadAsync(url);
             var certificado = await SignatureValidation(file);
-
+            
             return certificado;
         }
 
@@ -111,7 +101,7 @@ namespace Business.Core
 
         public bool HasDigitalSignature(byte[] file)
         {
-            Validations.ArquivoValido(file);
+            ValidationHelper.ArquivoValido(file);
 
             MemoryStream readingStream = new MemoryStream(file);
             PdfReader pdfReader = new PdfReader(readingStream);
@@ -123,6 +113,7 @@ namespace Business.Core
 
         public async Task<bool> HasDigitalSignature(string url)
         {
+            // todo(marcelo): adicionar validacoes
             byte[] arquivo = await JsonData.GetAndDownloadAsync(url);
             var response = HasDigitalSignature(arquivo);
             return response;
@@ -203,12 +194,6 @@ namespace Business.Core
         #endregion
 
         #region Validações
-
-        private void UrlIsNotNullOrEmpty(string url)
-        {
-            if (url is null)
-                throw new ArgumentNullException(nameof(url));
-        }
 
         private void TodosAssinaramDocumentoPorInteiro(Dictionary<string, string> naoAssinaramTodoDocumento)
         {

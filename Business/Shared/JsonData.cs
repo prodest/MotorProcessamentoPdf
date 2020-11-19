@@ -10,19 +10,30 @@ namespace Business.Shared
 
         public JsonData(IHttpClientFactory httpClientFactory)
         {
-            this.HttpClientFactory = httpClientFactory;
+            HttpClientFactory = httpClientFactory;
         }
 
         public async Task<byte[]> GetAndDownloadAsync(string url)
         {
-            HttpClient _httpClient = HttpClientFactory.CreateClient();
-            var result = await _httpClient.GetAsync(url);
+            HttpClient httpClient = HttpClientFactory.CreateClient();
 
-            if (!result.IsSuccessStatusCode)
-                throw new Exception(await result.Content.ReadAsStringAsync());
-            byte[] bytes = await result.Content.ReadAsByteArrayAsync();
+            HttpResponseMessage result;
+            try
+            {
+                result = await httpClient.GetAsync(url);
+            }
+            catch (Exception)
+            {
+                throw new Exception($"Não foi possível obter o documento.");
+            }
 
-            return bytes;
+            byte[] resultBytes;
+            if (result.IsSuccessStatusCode)
+                resultBytes = await result.Content.ReadAsByteArrayAsync();
+            else
+                throw new Exception($"Não foi possível obter o documento.");
+
+            return resultBytes;
         }
     }
 }

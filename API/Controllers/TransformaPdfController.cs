@@ -56,7 +56,7 @@ namespace API.Controllers
 
             return BadRequest();
         }
-
+        
         #region Validar Restricoes Leitura Ou Alteracao
 
         [HttpPost]

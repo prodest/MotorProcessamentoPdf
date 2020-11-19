@@ -3,13 +3,19 @@ using System;
 using System.IO;
 using System.Text.RegularExpressions;
 
-namespace Business.Helpers
+namespace Business.Shared
 {
-    static class Validations
+    public static class ValidationHelper
     {
+        public static void UrlIsNotNullOrEmpty(string url)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+                throw new Exception("A url informada não pode estar vazia.");
+        }
+
         public static void ArquivoValido(byte[] arquivo)
         {
-            if (arquivo.Length <= 0)
+            if (arquivo is null || arquivo.Length <= 0)
                 throw new Exception("Arquivo vazio ou corrompido.");
 
             IsPdf(arquivo);
@@ -40,7 +46,7 @@ namespace Business.Helpers
                 using (PdfDocument pdfDocument = new PdfDocument(reader))
                 {
                     var conformanceLevel = reader.GetPdfAConformanceLevel();
-                    if(conformanceLevel == null || (conformanceLevel.GetPart() != "1" || conformanceLevel.GetConformance() != "B"))
+                    if (conformanceLevel == null || (conformanceLevel.GetPart() != "1" || conformanceLevel.GetConformance() != "B"))
                         throw new Exception("Este arquivo não é um documento PDF/A-1B válido.");
                 }
             }
@@ -68,14 +74,13 @@ namespace Business.Helpers
                 throw new Exception("O registro informado está fora do padrão.");
         }
 
-        internal static void dataHoraValida(DateTime dataHora)
+        internal static void DataHoraValida(DateTime dataHora)
         {
-            if(dataHora == null)
+            if (dataHora == null)
                 throw new Exception("O conjunto de data e hora informado está vazio.");
-            
+
             if (dataHora == default(DateTime))
                 throw new Exception("O conjunto de data e hora informado é inválido.");
         }
-
     }
 }
