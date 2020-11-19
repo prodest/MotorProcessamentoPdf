@@ -36,15 +36,16 @@ namespace Business.Core
 
         #region Adição de Carimbos
 
-        public byte[] Documento(byte[] arquivo, string registro, int natureza, int valorLegal, DateTime dataHora)
+        public byte[] Documento(MemoryStream arquivo, string registro, int natureza, int valorLegal, DateTime dataHora)
         {
             // validações
             ValidationHelper.ArquivoValido(arquivo);
             ValidationHelper.RegistroValido(registro);
             ValidationHelper.DataHoraValida(dataHora);
 
-            using (MemoryStream readingStream = new MemoryStream(arquivo))
-            using (PdfReader pdfReader = new PdfReader(readingStream))
+            arquivo.Seek(0, SeekOrigin.Begin);
+
+            using (PdfReader pdfReader = new PdfReader(arquivo))
             using (MemoryStream writingStream = new MemoryStream())
             using (PdfWriter pdfWriter = new PdfWriter(writingStream))
             using (PdfDocument pdfDocument = new PdfDocument(pdfReader, pdfWriter))

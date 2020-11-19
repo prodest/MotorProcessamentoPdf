@@ -13,12 +13,37 @@ namespace Business.Shared
                 throw new Exception("A url informada não pode estar vazia.");
         }
 
+        public static void ArquivoValido(MemoryStream arquivo)
+        {
+            if (arquivo is null || arquivo.Length <= 0)
+                throw new Exception("Arquivo vazio ou corrompido.");
+
+            IsPdf(arquivo);
+        }
+
         public static void ArquivoValido(byte[] arquivo)
         {
             if (arquivo is null || arquivo.Length <= 0)
                 throw new Exception("Arquivo vazio ou corrompido.");
 
             IsPdf(arquivo);
+        }
+
+        public static bool IsPdf(MemoryStream arquivo)
+        {
+            arquivo.Seek(0, SeekOrigin.Begin);
+
+            try
+            {
+                using (var reader = new PdfReader(arquivo))
+                {
+                    return true;
+                }
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
         public static bool IsPdf(byte[] arquivo)

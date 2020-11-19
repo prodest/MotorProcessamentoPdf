@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace API.Controllers
@@ -75,12 +76,13 @@ namespace API.Controllers
         [HttpPost]
         public async Task<IActionResult> Documento(IFormFile arquivo, [FromForm] string registro, [FromForm] int natureza, [FromForm] int valorLegal, [FromForm] DateTime dataHora)
         {
-            if (arquivo.Length > 0)
+            using (var memoryStream = new MemoryStream())
             {
-                var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
+                if(arquivo != null)
+                    await arquivo.CopyToAsync(memoryStream);
 
                 var arquivoCarimbado = CarimboCore.Documento(
-                    arquivoByteArray,
+                    memoryStream,
                     registro,
                     natureza,
                     valorLegal,
@@ -89,19 +91,18 @@ namespace API.Controllers
 
                 return Ok(new ApiResponse<byte[]>(200, "success", arquivoCarimbado));
             }
-            else
-                return BadRequest();
         }
 
         [HttpPost]
         public async Task<IActionResult> DocumentoByFile(IFormFile arquivo, [FromForm] string registro, [FromForm] int natureza, [FromForm] int valorLegal, [FromForm] DateTime dataHora)
         {
-            if (arquivo.Length > 0)
+            using (var memoryStream = new MemoryStream())
             {
-                var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
+                if (arquivo != null)
+                    await arquivo.CopyToAsync(memoryStream);
 
                 var arquivoCarimbado = CarimboCore.Documento(
-                    arquivoByteArray,
+                    memoryStream,
                     registro,
                     natureza,
                     valorLegal,
@@ -110,8 +111,6 @@ namespace API.Controllers
 
                 return File(arquivoCarimbado, "application/pdf");
             }
-            else
-                return BadRequest();
         }
 
         [HttpPost]
