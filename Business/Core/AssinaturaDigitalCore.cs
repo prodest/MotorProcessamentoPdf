@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
@@ -16,7 +17,7 @@ namespace Business.Core
 {
     public class AssinaturaDigitalCore : IAssinaturaDigitalCore
     {
-        private string apiValidarCertificado = @"https://api.es.gov.br/certificado/api/validar-certificado";
+        private string ApiValidarCertificado = @"https://api.es.gov.br/certificado/api/validar-certificado";
         private string message = "\nConsidere capturar este documento como \"cópia\".";
         private readonly JsonData JsonData;
 
@@ -194,19 +195,6 @@ namespace Business.Core
             return orderedSignatures;
         }
 
-        public async Task<HttpResponseMessage> Upload(string url, byte[] pdf)
-        {
-            using (var client = new HttpClient())
-            using (var stream = new MemoryStream(pdf))
-            {
-                var multipartContent = new MultipartFormDataContent()
-                {
-                    { new StreamContent(stream), "certificateFile", "sadfsdafsdafsda" }
-                };
-                return await client.PostAsync(url, multipartContent);
-            }
-        }
-
         #endregion
 
         #region Validações
@@ -290,13 +278,22 @@ namespace Business.Core
 
         private async Task<string> OnlineChainValidation(byte[] certificate)
         {
-            HttpResponseMessage result = await Upload(apiValidarCertificado, certificate);
+            using (MemoryStream memoryStream = new MemoryStream(certificate))
+            using (StreamContent streamContent = new StreamContent(memoryStream))
+            using (MultipartFormDataContent multipartFormDataContent = new MultipartFormDataContent())
+            {
+                streamContent.Headers.ContentType = MediaTypeHeaderValue.Parse("application/octet-stream");
+                streamContent.Headers.ContentDisposition = new ContentDispositionHeaderValue("form-data")
+                {
+                    Name = "certificateFile",
+                    FileName = "certificateFile"
+                };
 
-            if (result.StatusCode == System.Net.HttpStatusCode.OK)
-                return string.Empty;
+                multipartFormDataContent.Add(streamContent, "certificateFile", "certificateFile");
 
-            var messageArray = result.Content.ReadAsStringAsync().Result;
-            return messageArray;
+                var result = await JsonData.PostAndReadStreamContentAsync(ApiValidarCertificado, multipartFormDataContent);
+                return result;
+            }
         }
 
         #endregion

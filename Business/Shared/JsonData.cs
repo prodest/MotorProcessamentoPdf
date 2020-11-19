@@ -24,7 +24,7 @@ namespace Business.Shared
             }
             catch (Exception)
             {
-                throw new Exception($"Não foi possível obter o documento.");
+                throw new Exception("Erro ao executar requisição HTTP.");
             }
 
             byte[] resultBytes;
@@ -34,6 +34,29 @@ namespace Business.Shared
                 throw new Exception($"Não foi possível obter o documento.");
 
             return resultBytes;
+        }
+
+        public async Task<string> PostAndReadStreamContentAsync(string url, HttpContent content)
+        {
+            var httpClient = HttpClientFactory.CreateClient("multipart/form-data");
+
+            HttpResponseMessage result;
+            try
+            {
+                result = await httpClient.PostAsync(url, content);
+            }
+            catch (Exception)
+            {
+                throw new Exception("Erro ao executar requisição HTTP.");
+            }
+
+            string resultString;
+            if (result.IsSuccessStatusCode)
+                resultString =  await result.Content.ReadAsStringAsync();
+            else
+                throw new Exception(await result.Content.ReadAsStringAsync());
+
+            return resultString;
         }
     }
 }
