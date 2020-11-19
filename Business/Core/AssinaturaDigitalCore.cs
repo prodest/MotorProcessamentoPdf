@@ -37,7 +37,18 @@ namespace Business.Core
             List<int> XrefByteOffsetOrdered = reader.XrefByteOffset.Cast<int>().ToList();
             XrefByteOffsetOrdered.Sort();
 
-            var assinaramTodoDocumentoSN = reader.SignaturesCoverWholeDocument().Cast<string>().ToList();
+            List<string> assinaramTodoDocumentoSN = null;
+            try
+            {
+                assinaramTodoDocumentoSN = reader.SignaturesCoverWholeDocument().Cast<string>().ToList();
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("No signatures found"))
+                    throw new Exception("Nenhuma assinatura foi encontrada.");
+                else
+                    throw;
+            }
 
             List<KeyValuePair<string, string>> naoAssinaramTodoDocumento = new List<KeyValuePair<string, string>>();
             List<KeyValuePair<string, string>> assinaramTodoDocumento = new List<KeyValuePair<string, string>>();
@@ -66,7 +77,7 @@ namespace Business.Core
                 if (cert.PessoaJuridica != null)
                     pessoa += $" ({cert.PessoaJuridica.RazaoSocial.ToUpper()})";
 
-                if (!assinaramTodoDocumentoSN.Contains(signatureName))
+                if (assinaramTodoDocumentoSN == null || !assinaramTodoDocumentoSN.Contains(signatureName))
                     naoAssinaramTodoDocumento.Add(new KeyValuePair<string, string>(pessoa, signatureName));
                 else
                     assinaramTodoDocumento.Add(new KeyValuePair<string, string>(pessoa, signatureName));
