@@ -2,9 +2,11 @@
 using AutoMapper;
 using Business.Core.ICore;
 using Business.Shared.Models;
+using BusinessItextSharp;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -15,14 +17,16 @@ namespace API.Controllers
     public class TransformaPdfController : ControllerBase
     {
         private readonly ITransformaPdfCore TransformaPdfCore;
-        private readonly IAssinaturaDigitalCore AssinaturaDigitalCore;
+        private readonly IValidarAssinaturaDigitalCore ValidarAssinaturaDigitalCore;
         private readonly IMapper Mapper;
+        private readonly IAssinaturaDigitalCore AssinaturaDigitalCore;
 
-        public TransformaPdfController(ITransformaPdfCore transformaPdfCore, IAssinaturaDigitalCore assinaturaDigitalCore, IMapper mapper)
+        public TransformaPdfController(ITransformaPdfCore transformaPdfCore, IValidarAssinaturaDigitalCore validarAssinaturaDigitalCore, IMapper mapper, IAssinaturaDigitalCore assinaturaDigitalCore)
         {
             TransformaPdfCore = transformaPdfCore;
-            AssinaturaDigitalCore = assinaturaDigitalCore;
+            ValidarAssinaturaDigitalCore = validarAssinaturaDigitalCore;
             Mapper = mapper;
+            AssinaturaDigitalCore = assinaturaDigitalCore;
         }
 
         // https://docs.microsoft.com/pt-br/aspnet/core/web-api/?view=aspnetcore-3.1#binding-source-parameter-inference
@@ -113,7 +117,7 @@ namespace API.Controllers
             if (arquivo.Length > 0)
             {
                 var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
-                var response = AssinaturaDigitalCore.HasDigitalSignature(arquivoByteArray);
+                var response = ValidarAssinaturaDigitalCore.HasDigitalSignature(arquivoByteArray);
                 return Ok(new ApiResponse<object>(200, "success", response));
             }
 
@@ -123,7 +127,7 @@ namespace API.Controllers
         [HttpPost]
         public async Task<IActionResult> HasDigitalSignatureByUrl([FromForm] string url)
         {
-            var response = await AssinaturaDigitalCore.HasDigitalSignature(url);
+            var response = await ValidarAssinaturaDigitalCore.HasDigitalSignature(url);
             return Ok(new ApiResponse<object>(200, "success", response));
         }
 
@@ -137,7 +141,7 @@ namespace API.Controllers
             if (arquivo.Length > 0)
             {
                 var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
-                var result = await AssinaturaDigitalCore.SignatureValidation(arquivoByteArray);
+                var result = await ValidarAssinaturaDigitalCore.SignatureValidation(arquivoByteArray);
                 var certificadoDigitalDto = Mapper.Map<IEnumerable<CertificadoDigitalDto>>(result);
                 return Ok(new ApiResponse<IEnumerable<CertificadoDigitalDto>>(200, "success", certificadoDigitalDto));
             }
@@ -148,9 +152,25 @@ namespace API.Controllers
         [HttpPost]
         public async Task<IActionResult> ValidarAssinaturaDigitalByUrl([FromForm] string url)
         {
-            var result = await AssinaturaDigitalCore.SignatureValidation(url);
+            var result = await ValidarAssinaturaDigitalCore.SignatureValidation(url);
             var certificadoDigitalDto = Mapper.Map<IEnumerable<CertificadoDigitalDto>>(result);
             return Ok(new ApiResponse<IEnumerable<CertificadoDigitalDto>>(200, "success", certificadoDigitalDto));
+        }
+
+        #endregion
+
+        #region Teste
+
+        [HttpPost]
+        public IActionResult AssinarDocumento(IFormFile arquivo)
+        {
+            using (MemoryStream inputStream = new MemoryStream())
+            {
+                if (arquivo != null)
+                    arquivo.CopyTo(inputStream);
+                var arquivoAssinado = AssinaturaDigitalCore.Assinar(inputStream).ToArray();
+                return File(arquivoAssinado, "application/octet-stream");
+            }
         }
 
         #endregion

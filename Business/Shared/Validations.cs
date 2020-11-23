@@ -3,7 +3,7 @@ using System;
 using System.IO;
 using System.Text.RegularExpressions;
 
-namespace Business.Helpers
+namespace Business.Shared
 {
     static class Validations
     {
@@ -40,7 +40,7 @@ namespace Business.Helpers
                 using (PdfDocument pdfDocument = new PdfDocument(reader))
                 {
                     var conformanceLevel = reader.GetPdfAConformanceLevel();
-                    if(conformanceLevel == null || (conformanceLevel.GetPart() != "1" || conformanceLevel.GetConformance() != "B"))
+                    if (conformanceLevel == null || (conformanceLevel.GetPart() != "1" || conformanceLevel.GetConformance() != "B"))
                         throw new Exception("Este arquivo não é um documento PDF/A-1B válido.");
                 }
             }
@@ -70,9 +70,9 @@ namespace Business.Helpers
 
         internal static void dataHoraValida(DateTime dataHora)
         {
-            if(dataHora == null)
+            if (dataHora == null)
                 throw new Exception("O conjunto de data e hora informado está vazio.");
-            
+
             if (dataHora == default(DateTime))
                 throw new Exception("O conjunto de data e hora informado é inválido.");
         }

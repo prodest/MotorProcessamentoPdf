@@ -1,7 +1,7 @@
 ﻿using Business.Helpers.AssinaturaDigital;
 using System;
 
-namespace Business.Shared.Models
+namespace BusinessItextSharp
 {
     public class CertificadoDigitalDto
     {

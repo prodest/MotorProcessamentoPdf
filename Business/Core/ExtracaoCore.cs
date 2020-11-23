@@ -1,5 +1,5 @@
 ﻿using Business.Core.ICore;
-using Business.Helpers;
+using Business.Shared;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas.Parser;
 using iText.Kernel.Pdf.Canvas.Parser.Listener;

@@ -1,7 +1,7 @@
 ﻿using Business.Core.ICore;
-using Business.Helpers;
 using Business.Shared;
 using Business.Shared.Models;
+using Infrastructure;
 using iText.Html2pdf;
 using iText.Kernel.Crypto;
 using iText.Kernel.Pdf;
@@ -64,15 +64,21 @@ namespace Business.Core
                         return true;
                     }
                 }
+#pragma warning disable CS0168 // The variable 'e' is declared but never used
                 catch (iText.IO.IOException e)
+#pragma warning restore CS0168 // The variable 'e' is declared but never used
                 {
                     throw new Exception("Não é possível ler este documento pois ele não é um arquivo PDF válido.");
                 }
+#pragma warning disable CS0168 // The variable 'e' is declared but never used
                 catch (BadPasswordException e)
+#pragma warning restore CS0168 // The variable 'e' is declared but never used
                 {
                     throw new Exception("Não é possível ler este documento pois ele está protegido por senha.");
                 }
+#pragma warning disable CS0168 // The variable 'e' is declared but never used
                 catch (Exception e)
+#pragma warning restore CS0168 // The variable 'e' is declared but never used
                 {
                     throw new Exception("Não é possível ler este documento pois ele possui restrições de acesso ao seu conteúdo.");
                 }
@@ -91,15 +97,21 @@ namespace Business.Core
                         return true;
                     }
                 }
+#pragma warning disable CS0168 // The variable 'e' is declared but never used
                 catch (iText.IO.IOException e)
+#pragma warning restore CS0168 // The variable 'e' is declared but never used
                 {
                     throw new Exception("Não é possível ler este documento pois ele não é um arquivo PDF válido.");
                 }
+#pragma warning disable CS0168 // The variable 'e' is declared but never used
                 catch (BadPasswordException e)
+#pragma warning restore CS0168 // The variable 'e' is declared but never used
                 {
                     throw new Exception("Não é possível ler este documento pois ele está protegido por senha.");
                 }
+#pragma warning disable CS0168 // The variable 'e' is declared but never used
                 catch (Exception e)
+#pragma warning restore CS0168 // The variable 'e' is declared but never used
                 {
                     throw new Exception("Não é possível ler este documento pois ele possui restrições de acesso ao seu conteúdo.");
                 }
@@ -288,7 +300,9 @@ namespace Business.Core
                 return new PdfWriter(Destination[DestionationIndex++]);
             }
 
+#pragma warning disable CS0114 // 'TransformaPdfCore.CustomPdfSplitter.SplitByPageCount(int)' hides inherited member 'PdfSplitter.SplitByPageCount(int)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword.
             public ICollection<byte[]> SplitByPageCount(int pageNumber)
+#pragma warning restore CS0114 // 'TransformaPdfCore.CustomPdfSplitter.SplitByPageCount(int)' hides inherited member 'PdfSplitter.SplitByPageCount(int)'. To make the current member override that implementation, add the override keyword. Otherwise add the new keyword.
             {
                 ICollection<byte[]> output = new List<byte[]>();
 

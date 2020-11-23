@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Linq;
 
-namespace Business.Helpers
+namespace Business.Shared
 {
     public static class CarimboDocumentoHelper
     {
@@ -21,7 +21,7 @@ namespace Business.Helpers
 
         public static string CarimboDocumento(int natureza, int valorLegal)
         {
-            if (!Enum.GetValues(typeof(DocumentoNatureza)).Cast<int>(). ToList().Contains(natureza))
+            if (!Enum.GetValues(typeof(DocumentoNatureza)).Cast<int>().ToList().Contains(natureza))
                 throw new Exception("A natureza do documento informado não existe.");
 
             if (!Enum.GetValues(typeof(DocumentoValorLegal)).Cast<int>().ToList().Contains(valorLegal))
