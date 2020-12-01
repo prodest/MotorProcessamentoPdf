@@ -19,10 +19,14 @@ namespace Business.Helpers
         {
             try
             {
-                using (var readStream = new MemoryStream(arquivo))
-                using (var reader = new PdfReader(readStream))
+                using (var memoryStream = new MemoryStream(arquivo))
+                using (var pdfReader = new PdfReader(memoryStream))
+                using (var pdfDocument = new PdfDocument(pdfReader))
                 {
-                    return true;
+                    if (pdfDocument.GetNumberOfPages() <= 0)
+                        return false;
+                    else
+                        return true;
                 }
             }
             catch (Exception)
