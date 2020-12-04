@@ -18,6 +18,8 @@ namespace API.Shared.Filters
                 context.Result = new ObjectResult(response){ StatusCode = 500};
                 context.ExceptionHandled = true;
             }
+            if (context.Result == null)
+                throw new System.Exception("Result value is null");
         }
     }
 }
