@@ -268,19 +268,11 @@ namespace Business.Core
                                 return registro.Value;
                         }
                     }
-                    catch(ArgumentException ex)
+                    catch(Exception)
                     {
-                        if (!ex.Message.Contains("is not a supported encoding name"))
-                            throw;
+                        // Foi decidido que mesmo que o pdf apresente erros, o processo de leitura deve seguir adiante.
+                        // Portanto, assumiu-se o risco de que pode haver algum texto que atenda a expressão regular, mas que este pode ser ignorado.
                     }
-                    catch (Exception ex)
-                    {
-                        if (ex.Message.Contains("Error at file pointer"))
-                            throw new Exception("Documento corrompido: Erro ao validar a presença de carimbo no documento.");
-                        else
-                            throw;
-                    }
-
                 }
 
                 return null;
