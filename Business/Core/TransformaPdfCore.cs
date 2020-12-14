@@ -204,19 +204,32 @@ namespace Business.Core
 
         public byte[] PdfConcatenation(IEnumerable<byte[]> files)
         {
-            var outputStream = new MemoryStream();
-            var outputDocument = new PdfDocument(new PdfWriter(outputStream));
-
-            foreach (var file in files)
+            using (var outputMemoryStream = new MemoryStream())
+            using (var outputPdfWriter = new PdfWriter(outputMemoryStream))
+            using (var outputPdfDocument = new PdfDocument(outputPdfWriter))
             {
-                var document = new PdfDocument(new PdfReader(new MemoryStream(file)));
-                document.CopyPagesTo(1, document.GetNumberOfPages(), outputDocument);
-                document.Close();
+                foreach (var file in files)
+                {
+                    using (var fileMemoryStream = new MemoryStream(file))
+                    using (var filePdfReader = new PdfReader(fileMemoryStream))
+                    {
+                        filePdfReader.SetUnethicalReading(true);
+                        using (var filePdfDocument = new PdfDocument(filePdfReader))
+                        {
+                            filePdfDocument.CopyPagesTo(1, filePdfDocument.GetNumberOfPages(), outputPdfDocument);
+                            filePdfDocument.Close();
+                        }
+                        filePdfReader.Close();
+                        fileMemoryStream.Close();
+                    }
+                }
+
+                outputPdfDocument.Close();
+                outputPdfWriter.Close();
+                outputMemoryStream.Close();
+
+                return outputMemoryStream.ToArray();
             }
-
-            outputDocument.Close();
-
-            return outputStream.ToArray();
         }
 
         public async Task<byte[]> PdfConcatenation(IEnumerable<string> urls)
@@ -249,21 +262,9 @@ namespace Business.Core
                 throw new Exception($"Não foi possível obter o documento.");
             }
 
-            using (var outputStream = new MemoryStream())
-            using (var outputDocument = new PdfDocument(new PdfWriter(outputStream)))
-            {
-                var documentoPdfDoc = new PdfDocument(new PdfReader(new MemoryStream(documentoFromUrl)));
-                documentoPdfDoc.CopyPagesTo(1, documentoPdfDoc.GetNumberOfPages(), outputDocument);
-                documentoPdfDoc.Close();
+            var arquivoFinal = PdfConcatenation(new List<byte[]>() { documentoFromUrl, documentoMetadados });
 
-                var documentoFromUrlPdfDoc = new PdfDocument(new PdfReader(new MemoryStream(documentoMetadados)));
-                documentoFromUrlPdfDoc.CopyPagesTo(1, documentoFromUrlPdfDoc.GetNumberOfPages(), outputDocument);
-                documentoPdfDoc.Close();
-
-                outputDocument.Close();
-
-                return outputStream.ToArray();
-            }
+            return arquivoFinal;
         }
 
         #endregion
