@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using ITextIOException = iText.IO.IOException;
 
 namespace Business.Core
 {
@@ -81,28 +82,30 @@ namespace Business.Core
 
         public bool PossuiRestricoes(byte[] file)
         {
-            using (MemoryStream readingStream = new MemoryStream(file))
+            try
             {
-                try
+                using (MemoryStream fileMemoryStream = new MemoryStream(file))
+                using (PdfReader filePdfReader = new PdfReader(fileMemoryStream))
+                using (PdfDocument filePdfDocument = new PdfDocument(filePdfReader))
                 {
-                    using (PdfReader pdfReader = new PdfReader(readingStream))
-                    using (PdfDocument pdfDocument = new PdfDocument(pdfReader))
-                    {
-                        return true;
-                    }
+                    filePdfDocument.Close();
+                    filePdfReader.Close();
+                    fileMemoryStream.Close();
+
+                    return true;
                 }
-                catch (iText.IO.IOException e)
-                {
-                    throw new Exception("Não é possível ler este documento pois ele não é um arquivo PDF válido.");
-                }
-                catch (BadPasswordException e)
-                {
-                    throw new Exception("Não é possível ler este documento pois ele está protegido por senha.");
-                }
-                catch (Exception e)
-                {
-                    throw new Exception("Não é possível ler este documento pois ele possui restrições de acesso ao seu conteúdo.");
-                }
+            }
+            catch (ITextIOException)
+            {
+                throw new Exception("Não é possível ler este documento pois ele não é um arquivo PDF válido.");
+            }
+            catch (BadPasswordException)
+            {
+                throw new Exception("Não é possível ler este documento pois ele está protegido por senha.");
+            }
+            catch (Exception)
+            {
+                throw new Exception("Não é possível ler este documento pois ele possui restrições de acesso ao seu conteúdo.");
             }
         }
 
@@ -213,6 +216,8 @@ namespace Business.Core
                     using (var fileMemoryStream = new MemoryStream(file))
                     using (var filePdfReader = new PdfReader(fileMemoryStream))
                     {
+                        // ignorando as restrições de segurança do documento
+                        // https://kb.itextpdf.com/home/it7kb/faq/how-to-read-pdfs-created-with-an-unknown-random-owner-password
                         filePdfReader.SetUnethicalReading(true);
                         using (var filePdfDocument = new PdfDocument(filePdfReader))
                         {
