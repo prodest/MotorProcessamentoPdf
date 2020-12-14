@@ -10,19 +10,21 @@ namespace Business.Shared
 
         public JsonData(IHttpClientFactory httpClientFactory)
         {
-            this.HttpClientFactory = httpClientFactory;
+            HttpClientFactory = httpClientFactory;
         }
 
         public async Task<byte[]> GetAndDownloadAsync(string url)
         {
-            HttpClient _httpClient = HttpClientFactory.CreateClient();
-            var result = await _httpClient.GetAsync(url);
+            using (HttpClient _httpClient = HttpClientFactory.CreateClient())
+            {
+                var result = await _httpClient.GetAsync(url);
+                if (!result.IsSuccessStatusCode)
+                    throw new Exception(await result.Content.ReadAsStringAsync());
 
-            if (!result.IsSuccessStatusCode)
-                throw new Exception(await result.Content.ReadAsStringAsync());
-            byte[] bytes = await result.Content.ReadAsByteArrayAsync();
+                byte[] bytes = await result.Content.ReadAsByteArrayAsync();
 
-            return bytes;
+                return bytes;
+            }
         }
     }
 }
