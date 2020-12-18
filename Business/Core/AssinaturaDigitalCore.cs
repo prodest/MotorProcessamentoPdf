@@ -113,12 +113,16 @@ namespace Business.Core
         {
             Validations.ArquivoValido(file);
 
-            MemoryStream readingStream = new MemoryStream(file);
-            PdfReader pdfReader = new PdfReader(readingStream);
-            if (pdfReader.AcroFields.GetSignatureNames().Count >= 1)
-                return true;
-            else
-                return false;
+            using (MemoryStream memoryStream = new MemoryStream(file))
+            {
+                PdfReader pdfReader = new PdfReader(memoryStream);
+
+                var assinaturas = pdfReader.AcroFields.GetSignatureNames().Count;
+                if (assinaturas >= 1)
+                    return true;
+                else
+                    return false;
+            }
         }
 
         public async Task<bool> HasDigitalSignature(string url)

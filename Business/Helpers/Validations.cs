@@ -23,10 +23,16 @@ namespace Business.Helpers
                 using (var pdfReader = new PdfReader(memoryStream))
                 using (var pdfDocument = new PdfDocument(pdfReader))
                 {
-                    if (pdfDocument.GetNumberOfPages() <= 0)
+                    var pages = pdfDocument.GetNumberOfPages();
+
+                    pdfDocument.Close();
+                    pdfReader.Close();
+                    memoryStream.Close();
+
+                    if (pages <= 0)
                         return false;
-                    else
-                        return true;
+
+                    return true;
                 }
             }
             catch (Exception)

@@ -7,6 +7,7 @@ using iText.Kernel.Crypto;
 using iText.Kernel.Pdf;
 using iText.Kernel.Utils;
 using iText.Pdfa;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -20,18 +21,24 @@ namespace Business.Core
     {
         private const string Intent = "./wwwroot/resources/color/sRGB_CS_profile.icm";
         private readonly JsonData JsonData;
+        private readonly IAssinaturaDigitalCore AssinaturaDigitalCore;
+        private readonly ICarimboCore CarimboCore;
+        private readonly IExtracaoCore ExtracaoCore;
 
-        public TransformaPdfCore(JsonData jsonData)
+        public TransformaPdfCore(JsonData jsonData, IAssinaturaDigitalCore assinaturaDigitalCore, ICarimboCore carimboCore, IExtracaoCore extracaoCore)
         {
             JsonData = jsonData;
+            AssinaturaDigitalCore = assinaturaDigitalCore;
+            CarimboCore = carimboCore;
+            ExtracaoCore = extracaoCore;
         }
 
         #region Validações
 
-        public bool IsPdf(byte[] file)
+        public bool IsPdf(byte[] arquivo)
         {
-            var isPdf = Validations.IsPdf(file);
-            return isPdf;
+            var result = Validations.IsPdf(arquivo);
+            return result;
         }
 
         public bool IsPdfa1b(byte[] file)
@@ -135,6 +142,26 @@ namespace Business.Core
                 };
 
                 return new ApiResponse<PdfInfo>(200, "success", fileInfo);
+            }
+        }
+
+        private PdfInfo PdfInformation(byte[] file)
+        {
+            using (MemoryStream memoryStream = new MemoryStream(file))
+            using (PdfReader pdfReader = new PdfReader(memoryStream))
+            using (PdfDocument pdfDocument = new PdfDocument(pdfReader))
+            {
+                var fileInfo = new PdfInfo()
+                {
+                    NumberOfPages = pdfDocument.GetNumberOfPages(),
+                    FileLength = pdfReader.GetFileLength()
+                };
+
+                pdfDocument.Close();
+                pdfReader.Close();
+                memoryStream.Close();
+
+                return fileInfo;
             }
         }
 
@@ -270,6 +297,46 @@ namespace Business.Core
             var arquivoFinal = PdfConcatenation(new List<byte[]>() { documentoFromUrl, documentoMetadados });
 
             return arquivoFinal;
+        }
+
+        public async Task<ValidationsResult> Validacoes(string url, string validations)
+        {
+            var documentoFromUrl = await JsonData.GetAndDownloadAsync(url);
+
+            var validationsSelector = JsonConvert.DeserializeObject<ValidationsSelector>(validations);
+
+            var result = new ValidationsResult();
+
+            if (validationsSelector.IsPdf)
+                result.IsPdf = IsPdf(documentoFromUrl);
+
+            if (validationsSelector.PossuiRestricoesLeituraOuAlteracao)
+                result.PossuiRestricoesLeituraOuAlteracao = !PossuiRestricoes(documentoFromUrl);
+         
+            if (validationsSelector.PossuiAssinaturaDigital)
+                result.PossuiAssinaturaDigital = AssinaturaDigitalCore.HasDigitalSignature(documentoFromUrl);
+            
+            if (validationsSelector.PossuiCarimboEdocs)
+            {
+                // Expressões regulares para identificação de carimbos
+                string ExpressaoCarimboDocumentoCapturado = "20[0-9]{2}-[0-9B-DF-HJ-NP-TV-Z]{6} - E-DOCS .* [0-9]{2}/[0-9]{2}/20[0-9]{2} [0-9]{2}:[0-9]{2} .* PÁGINA";
+                string ExpressaoCarimboCopiaProcesso = "E-DOCS - CÓPIA DO PROCESSO 20[0-9]{2}-[0-9B-DF-HJ-NP-TV-Z]{5} GERADO POR .* [0-9]{2}/[0-9]{2}/20[0-9]{2} [0-9]{2}:[0-9]{2} PÁGINA";
+
+                var saida = CarimboCore.BuscarExpressoesRegulares(
+                    documentoFromUrl,
+                    new List<string>() { ExpressaoCarimboDocumentoCapturado, ExpressaoCarimboCopiaProcesso },
+                    null);
+
+                if (!string.IsNullOrWhiteSpace(saida))
+                    result.PossuiCarimboEdocs = true;
+                else
+                    result.PossuiCarimboEdocs = false;
+            }
+
+            if (validationsSelector.PdfInfo)
+                result.PdfInfo = PdfInformation(documentoFromUrl);
+
+            return result;
         }
 
         #endregion

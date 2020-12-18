@@ -1,5 +1,4 @@
-﻿using Business.Shared;
-using Business.Shared.Models;
+﻿using Business.Shared.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -21,5 +20,6 @@ namespace Business.Core.ICore
         Task<bool> PossuiRestricoes(string url);
         ApiResponse<PdfInfo> PdfInfo(byte[] file);
         Task<ApiResponse<PdfInfo>> PdfInfo(string url);
+        Task<ValidationsResult> Validacoes(string url, string validations);
     }
 }

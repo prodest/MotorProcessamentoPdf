@@ -30,6 +30,13 @@ namespace API.Controllers
         #region Validações
 
         [HttpPost]
+        public async Task<IActionResult> Validacoes([FromForm] string url, [FromForm] string validacoes)
+        {
+            var result = await TransformaPdfCore.Validacoes(url, validacoes);
+            return Ok(new ApiResponse<ValidationsResult>(200, "success", result));
+        }
+
+        [HttpPost]
         public async Task<IActionResult> IsPdf(IFormFile arquivo)
         {
             if (arquivo.Length > 0)
