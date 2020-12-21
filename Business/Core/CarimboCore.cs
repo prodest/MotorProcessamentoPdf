@@ -242,10 +242,8 @@ namespace Business.Core
 
         public string BuscarExpressoesRegulares(byte[] arquivo, IEnumerable<string> expressoesRegulares, IEnumerable<int> paginas)
         {
-            Validations.ArquivoValido(arquivo);
-            
-            using (MemoryStream readingStream = new MemoryStream(arquivo))
-            using (PdfReader pdfReader = new PdfReader(readingStream))
+            using (MemoryStream memoryStream = new MemoryStream(arquivo))
+            using (PdfReader pdfReader = new PdfReader(memoryStream))
             using (PdfDocument pdfDocument = new PdfDocument(pdfReader))
             {
                 if (paginas == null || paginas.Count() == 0)
@@ -274,6 +272,10 @@ namespace Business.Core
                         // Portanto, assumiu-se o risco de que pode haver algum texto que atenda a expressão regular, mas que este pode ser ignorado.
                     }
                 }
+
+                pdfDocument.Close();
+                pdfReader.Close();
+                memoryStream.Close();
 
                 return null;
             }

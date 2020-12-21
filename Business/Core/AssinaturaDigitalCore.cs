@@ -1,5 +1,4 @@
 ﻿using Business.Core.ICore;
-using Business.Helpers;
 using Business.Helpers.AssinaturaDigital;
 using Business.Shared;
 using iTextSharp.text.pdf;
@@ -111,8 +110,6 @@ namespace Business.Core
 
         public bool HasDigitalSignature(byte[] file)
         {
-            Validations.ArquivoValido(file);
-
             using (MemoryStream memoryStream = new MemoryStream(file))
             {
                 PdfReader pdfReader = new PdfReader(memoryStream);

@@ -5,6 +5,8 @@ using Business.Shared.Models;
 using iText.Html2pdf;
 using iText.Kernel.Crypto;
 using iText.Kernel.Pdf;
+using iText.Kernel.Pdf.Canvas.Parser;
+using iText.Kernel.Pdf.Canvas.Parser.Listener;
 using iText.Kernel.Utils;
 using iText.Pdfa;
 using Newtonsoft.Json;
@@ -12,8 +14,10 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using ITextIOException = iText.IO.IOException;
+using ItextSharp = iTextSharp.text.pdf;
 
 namespace Business.Core
 {
@@ -307,34 +311,103 @@ namespace Business.Core
 
             var result = new ValidationsResult();
 
-            if (validationsSelector.IsPdf)
-                result.IsPdf = IsPdf(documentoFromUrl);
-
-            if (validationsSelector.PossuiRestricoesLeituraOuAlteracao)
-                result.PossuiRestricoesLeituraOuAlteracao = !PossuiRestricoes(documentoFromUrl);
-         
-            if (validationsSelector.PossuiAssinaturaDigital)
-                result.PossuiAssinaturaDigital = AssinaturaDigitalCore.HasDigitalSignature(documentoFromUrl);
-            
-            if (validationsSelector.PossuiCarimboEdocs)
+            try
             {
-                // Expressões regulares para identificação de carimbos
-                string ExpressaoCarimboDocumentoCapturado = "20[0-9]{2}-[0-9B-DF-HJ-NP-TV-Z]{6} - E-DOCS .* [0-9]{2}/[0-9]{2}/20[0-9]{2} [0-9]{2}:[0-9]{2} .* PÁGINA";
-                string ExpressaoCarimboCopiaProcesso = "E-DOCS - CÓPIA DO PROCESSO 20[0-9]{2}-[0-9B-DF-HJ-NP-TV-Z]{5} GERADO POR .* [0-9]{2}/[0-9]{2}/20[0-9]{2} [0-9]{2}:[0-9]{2} PÁGINA";
+                using (var memoryStream = new MemoryStream(documentoFromUrl))
+                using (var pdfReader = new PdfReader(memoryStream))
+                using (var pdfDocument = new PdfDocument(pdfReader))
+                {
+                    result.IsPdf = true;
+                    result.PossuiRestricoesLeituraOuAlteracao = false;
 
-                var saida = CarimboCore.BuscarExpressoesRegulares(
-                    documentoFromUrl,
-                    new List<string>() { ExpressaoCarimboDocumentoCapturado, ExpressaoCarimboCopiaProcesso },
-                    null);
+                    #region Possui assinatura digital
+                    if (validationsSelector.PossuiAssinaturaDigital)
+                    {
+                        try
+                        {
+                            ItextSharp.PdfReader pdfReaderSignature = new ItextSharp.PdfReader(memoryStream);
+                            var assinaturas = pdfReaderSignature.AcroFields.GetSignatureNames().Count;
+                            if (assinaturas >= 1)
+                                result.PossuiAssinaturaDigital = true;
+                            else
+                                result.PossuiAssinaturaDigital = false;
+                        }
+                        catch (Exception)
+                        {
+                            result.PossuiAssinaturaDigital = false;
+                        }
+                    }
+                    #endregion
 
-                if (!string.IsNullOrWhiteSpace(saida))
-                    result.PossuiCarimboEdocs = true;
-                else
-                    result.PossuiCarimboEdocs = false;
+                    #region Possui carimbo edocs
+                    if (validationsSelector.RegularExpressionsParameters != null)
+                    {
+                        result.RegexResult = "";
+
+                        if (validationsSelector.RegularExpressionsParameters.Paginas == null || validationsSelector.RegularExpressionsParameters.Paginas.Count() == 0)
+                            validationsSelector.RegularExpressionsParameters.Paginas = new List<int>(Enumerable.Range(1, pdfDocument.GetNumberOfPages()));
+
+                        foreach (var pagina in validationsSelector.RegularExpressionsParameters.Paginas)
+                        {
+                            try
+                            {
+                                string pageText = PdfTextExtractor.GetTextFromPage(
+                                    pdfDocument.GetPage(pagina),
+                                    new SimpleTextExtractionStrategy()
+                                );
+
+                                foreach (var regexItem in validationsSelector.RegularExpressionsParameters.ExpressoesRegulares)
+                                {
+                                    var registro = Regex.Match(pageText, regexItem);
+                                    if (registro.Success)
+                                    {
+                                        result.RegexResult = registro.Value;
+                                        break;
+                                    }
+                                }
+                            }
+                            catch (Exception)
+                            {
+                                // Foi decidido que mesmo que o pdf apresente erros, o processo de leitura deve seguir adiante.
+                                // Portanto, assumiu-se o risco de que pode haver algum texto que atenda a expressão regular, mas que este pode ser ignorado.
+                            }
+                        }
+                    }
+                    #endregion
+
+                    #region PDF Info
+                    if (validationsSelector.PdfInfo)
+                    {
+                        var fileInfo = new PdfInfo()
+                        {
+                            NumberOfPages = pdfDocument.GetNumberOfPages(),
+                            FileLength = pdfReader.GetFileLength()
+                        };
+
+                        result.PdfInfo = fileInfo;
+                    }
+                    #endregion
+
+                    pdfDocument.Close();
+                    pdfReader.Close();
+                    memoryStream.Close();
+                }
             }
-
-            if (validationsSelector.PdfInfo)
-                result.PdfInfo = PdfInformation(documentoFromUrl);
+            catch (ITextIOException)
+            {
+                result.PossuiRestricoesLeituraOuAlteracao = true;
+            }
+            catch (BadPasswordException)
+            {
+                result.PossuiRestricoesLeituraOuAlteracao = true;
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message.Contains("PDF header not found."))
+                    result.IsPdf = false;
+                else
+                    result.PossuiRestricoesLeituraOuAlteracao = true;
+            }
 
             return result;
         }
