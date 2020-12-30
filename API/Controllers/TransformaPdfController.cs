@@ -112,7 +112,9 @@ namespace API.Controllers
 
         #endregion
 
-        #region Has Digital Signature
+        #region Assinatura Digital
+
+        #region Possui Assinatura Digital
 
         [HttpPost]
         public async Task<IActionResult> HasDigitalSignature(IFormFile arquivo)
@@ -159,6 +161,19 @@ namespace API.Controllers
             var certificadoDigitalDto = Mapper.Map<IEnumerable<CertificadoDigitalDto>>(result);
             return Ok(new ApiResponse<IEnumerable<CertificadoDigitalDto>>(200, "success", certificadoDigitalDto));
         }
+
+        #endregion
+
+        #region Adicionar Assinatura Digital
+
+        [HttpPost]
+        public async Task<IActionResult> AdicionarAssinaturaDigital([FromForm]string url)
+        {
+            var documentoAssinado = await AssinaturaDigitalCore.AdicionarAssinaturaDigital(url);
+            return Ok(documentoAssinado);
+        }
+        
+        #endregion
 
         #endregion
 

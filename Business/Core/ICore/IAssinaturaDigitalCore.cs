@@ -10,5 +10,6 @@ namespace Business.Core.ICore
         Task<IEnumerable<CertificadoDigital>> SignatureValidation(byte[] file);
         bool HasDigitalSignature(byte[] file);
         Task<bool> HasDigitalSignature(string url);
+        Task<byte[]> AdicionarAssinaturaDigital(string url);
     }
 }
