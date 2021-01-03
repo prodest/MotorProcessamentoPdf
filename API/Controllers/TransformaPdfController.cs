@@ -10,9 +10,7 @@ using System.Threading.Tasks;
 
 namespace API.Controllers
 {
-    [Route("api/[controller]/[action]")]
-    [ApiController]
-    public class TransformaPdfController : ControllerBase
+    public class TransformaPdfController : BaseApiController
     {
         private readonly ITransformaPdfCore TransformaPdfCore;
         private readonly IAssinaturaDigitalCore AssinaturaDigitalCore;
@@ -24,8 +22,6 @@ namespace API.Controllers
             AssinaturaDigitalCore = assinaturaDigitalCore;
             Mapper = mapper;
         }
-
-        // https://docs.microsoft.com/pt-br/aspnet/core/web-api/?view=aspnetcore-3.1#binding-source-parameter-inference
 
         #region Validações
 
@@ -172,7 +168,7 @@ namespace API.Controllers
             var documentoAssinado = await AssinaturaDigitalCore.AdicionarAssinaturaDigital(url);
             return Ok(documentoAssinado);
         }
-        
+
         #endregion
 
         #endregion
@@ -182,22 +178,9 @@ namespace API.Controllers
         #region Outros
 
         [HttpPost]
-        public async Task<IActionResult> PdfInfo(IFormFile arquivo)
+        public async Task<IActionResult> PdfInfo([FromForm]InputFile inputFile)
         {
-            if (arquivo.Length > 0)
-            {
-                var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
-                var response = TransformaPdfCore.PdfInfo(arquivoByteArray);
-                return Ok(response);
-            }
-
-            return BadRequest();
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> PdfInfoUrl([FromForm] string url)
-        {
-            var response = await TransformaPdfCore.PdfInfo(url);
+            var response = await TransformaPdfCore.PdfInfo(inputFile);
             return Ok(response);
         }
 

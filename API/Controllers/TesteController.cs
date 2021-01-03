@@ -3,9 +3,7 @@ using System.Threading;
 
 namespace API.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class TesteController : ControllerBase
+    public class TesteController : BaseApiController
     {
         [HttpGet("{time}/[action]")]
         public void Sleep(int time)

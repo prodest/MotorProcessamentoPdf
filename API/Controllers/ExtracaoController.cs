@@ -7,10 +7,8 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace API.Controllers
-{
-    [Route("api/[controller]/[action]")]
-    [ApiController]
-    public class ExtracaoController : ControllerBase
+{   
+    public class ExtracaoController : BaseApiController
     {
         private readonly IExtracaoCore ExtracaoCore;
 

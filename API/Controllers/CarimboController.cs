@@ -9,9 +9,7 @@ using System.Threading.Tasks;
 
 namespace API.Controllers
 {
-    [Route("api/[controller]/[action]")]
-    [ApiController]
-    public class CarimboController : ControllerBase
+    public class CarimboController : BaseApiController
     {
         private readonly ICarimboCore CarimboCore;
 

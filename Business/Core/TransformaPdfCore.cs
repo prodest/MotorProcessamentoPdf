@@ -124,6 +124,18 @@ namespace Business.Core
 
         #region Outros
 
+        public async Task<ApiResponse<PdfInfo>> PdfInfo(InputFile inputFile)
+        {
+            await inputFile.IsValidAsync();
+
+            ApiResponse<PdfInfo> result = null; 
+            if (!string.IsNullOrWhiteSpace(inputFile.FileUrl))
+                result = await PdfInfo(inputFile.FileUrl);
+            else
+                result = PdfInfo(await inputFile.GetByteArray());
+            return result;
+        }
+
         public async Task<ApiResponse<PdfInfo>> PdfInfo(string url)
         {
             byte[] arquivo = await JsonData.GetAndDownloadAsync(url);
@@ -133,29 +145,11 @@ namespace Business.Core
 
         public ApiResponse<PdfInfo> PdfInfo(byte[] file)
         {
-            Validations.ArquivoValido(file);
-
-            using (MemoryStream readingStream = new MemoryStream(file))
-            using (PdfReader pdfReader = new PdfReader(readingStream))
-            using (PdfDocument pdfDocument = new PdfDocument(pdfReader))
-            {
-                var fileInfo = new PdfInfo()
-                {
-                    NumberOfPages = pdfDocument.GetNumberOfPages(),
-                    FileLength = pdfReader.GetFileLength()
-                };
-
-                return new ApiResponse<PdfInfo>(200, "success", fileInfo);
-            }
-        }
-
-        private PdfInfo PdfInformation(byte[] file)
-        {
             using (MemoryStream memoryStream = new MemoryStream(file))
             using (PdfReader pdfReader = new PdfReader(memoryStream))
             using (PdfDocument pdfDocument = new PdfDocument(pdfReader))
             {
-                var fileInfo = new PdfInfo()
+                var pdfInfo = new PdfInfo()
                 {
                     NumberOfPages = pdfDocument.GetNumberOfPages(),
                     FileLength = pdfReader.GetFileLength()
@@ -165,7 +159,7 @@ namespace Business.Core
                 pdfReader.Close();
                 memoryStream.Close();
 
-                return fileInfo;
+                return new ApiResponse<PdfInfo>(200, "success", pdfInfo);
             }
         }
 
