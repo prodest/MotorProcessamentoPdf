@@ -177,10 +177,30 @@ namespace API.Controllers
 
         #region Outros
 
+        //[HttpPost]
+        //public async Task<IActionResult> PdfInfo([FromForm]InputFile inputFile)
+        //{
+        //    var response = await TransformaPdfCore.PdfInfo(inputFile);
+        //    return Ok(response);
+        //}
+
         [HttpPost]
-        public async Task<IActionResult> PdfInfo([FromForm]InputFile inputFile)
+        public async Task<IActionResult> PdfInfo(IFormFile arquivo)
         {
-            var response = await TransformaPdfCore.PdfInfo(inputFile);
+            if (arquivo.Length > 0)
+            {
+                var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
+                var response = TransformaPdfCore.PdfInfo(arquivoByteArray);
+                return Ok(response);
+            }
+
+            return BadRequest();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> PdfInfoUrl([FromForm] string url)
+        {
+            var response = await TransformaPdfCore.PdfInfo(url);
             return Ok(response);
         }
 

@@ -18,7 +18,9 @@ namespace Business.Core.ICore
         byte[] MetaPDFA(byte[] file);
         bool PossuiRestricoes(byte[] file);
         Task<bool> PossuiRestricoes(string url);
-        Task<ApiResponse<PdfInfo>> PdfInfo(InputFile inputFile);
+        //Task<ApiResponse<PdfInfo>> PdfInfo(InputFile inputFile);
+        ApiResponse<PdfInfo> PdfInfo(byte[] file);
+        Task<ApiResponse<PdfInfo>> PdfInfo(string url);
         Task<ValidationsResult> Validacoes(string url, string validations);
     }
 }

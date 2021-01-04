@@ -124,32 +124,27 @@ namespace Business.Core
 
         #region Outros
 
-        public async Task<ApiResponse<PdfInfo>> PdfInfo(InputFile inputFile)
-        {
-            await inputFile.IsValidAsync();
+        //public async Task<ApiResponse<PdfInfo>> PdfInfo(InputFile inputFile)
+        //{
+        //    await inputFile.IsValidAsync();
 
-            ApiResponse<PdfInfo> result = null; 
-            if (!string.IsNullOrWhiteSpace(inputFile.FileUrl))
-                result = await PdfInfo(inputFile.FileUrl);
-            else
-                result = PdfInfo(await inputFile.GetByteArray());
-            return result;
-        }
-
-        public async Task<ApiResponse<PdfInfo>> PdfInfo(string url)
-        {
-            byte[] arquivo = await JsonData.GetAndDownloadAsync(url);
-            var resposta = PdfInfo(arquivo);
-            return resposta;
-        }
+        //    ApiResponse<PdfInfo> result = null;
+        //    if (!string.IsNullOrWhiteSpace(inputFile.FileUrl))
+        //        result = await PdfInfo(inputFile.FileUrl);
+        //    else
+        //        result = PdfInfo(await inputFile.GetByteArray());
+        //    return result;
+        //}
 
         public ApiResponse<PdfInfo> PdfInfo(byte[] file)
         {
+            Validations.ArquivoValido(file);
+
             using (MemoryStream memoryStream = new MemoryStream(file))
             using (PdfReader pdfReader = new PdfReader(memoryStream))
             using (PdfDocument pdfDocument = new PdfDocument(pdfReader))
             {
-                var pdfInfo = new PdfInfo()
+                var fileInfo = new PdfInfo()
                 {
                     NumberOfPages = pdfDocument.GetNumberOfPages(),
                     FileLength = pdfReader.GetFileLength()
@@ -159,8 +154,15 @@ namespace Business.Core
                 pdfReader.Close();
                 memoryStream.Close();
 
-                return new ApiResponse<PdfInfo>(200, "success", pdfInfo);
+                return new ApiResponse<PdfInfo>(200, "success", fileInfo);
             }
+        }
+
+        public async Task<ApiResponse<PdfInfo>> PdfInfo(string url)
+        {
+            byte[] arquivo = await JsonData.GetAndDownloadAsync(url);
+            var resposta = PdfInfo(arquivo);
+            return resposta;
         }
 
         public byte[] RemoveAnnotations(byte[] file)
