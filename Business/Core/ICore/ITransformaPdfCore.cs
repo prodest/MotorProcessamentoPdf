@@ -21,6 +21,6 @@ namespace Business.Core.ICore
         //Task<ApiResponse<PdfInfo>> PdfInfo(InputFile inputFile);
         ApiResponse<PdfInfo> PdfInfo(byte[] file);
         Task<ApiResponse<PdfInfo>> PdfInfo(string url);
-        Task<ValidationsResult> Validacoes(string url, string validations);
+        //Task<ValidationsResult> Validacoes(string url, string validations);
     }
 }

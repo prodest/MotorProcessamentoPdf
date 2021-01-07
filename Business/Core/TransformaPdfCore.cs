@@ -5,19 +5,14 @@ using Business.Shared.Models;
 using iText.Html2pdf;
 using iText.Kernel.Crypto;
 using iText.Kernel.Pdf;
-using iText.Kernel.Pdf.Canvas.Parser;
-using iText.Kernel.Pdf.Canvas.Parser.Listener;
 using iText.Kernel.Utils;
 using iText.Pdfa;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using ITextIOException = iText.IO.IOException;
-using ItextSharp = iTextSharp.text.pdf;
 
 namespace Business.Core
 {
@@ -299,114 +294,114 @@ namespace Business.Core
             return arquivoFinal;
         }
 
-        public async Task<ValidationsResult> Validacoes(string url, string validations)
-        {
-            var documentoFromUrl = await JsonData.GetAndDownloadAsync(url);
+        //public async Task<ValidationsResult> Validacoes(string url, string validations)
+        //{
+        //    var documentoFromUrl = await JsonData.GetAndDownloadAsync(url);
 
-            var validationsSelector = JsonConvert.DeserializeObject<ValidationsSelector>(validations);
+        //    var validationsSelector = JsonConvert.DeserializeObject<ValidationsSelector>(validations);
 
-            var result = new ValidationsResult();
+        //    var result = new ValidationsResult();
 
-            try
-            {
-                using (var memoryStream = new MemoryStream(documentoFromUrl))
-                using (var pdfReader = new PdfReader(memoryStream))
-                using (var pdfDocument = new PdfDocument(pdfReader))
-                {
-                    result.IsPdf = true;
-                    result.PossuiRestricoesLeituraOuAlteracao = false;
+        //    try
+        //    {
+        //        using (var memoryStream = new MemoryStream(documentoFromUrl))
+        //        using (var pdfReader = new PdfReader(memoryStream))
+        //        using (var pdfDocument = new PdfDocument(pdfReader))
+        //        {
+        //            result.IsPdf = true;
+        //            result.PossuiRestricoesLeituraOuAlteracao = false;
 
-                    #region Possui assinatura digital
-                    if (validationsSelector.PossuiAssinaturaDigital)
-                    {
-                        try
-                        {
-                            ItextSharp.PdfReader pdfReaderSignature = new ItextSharp.PdfReader(memoryStream);
-                            var assinaturas = pdfReaderSignature.AcroFields.GetSignatureNames().Count;
-                            if (assinaturas >= 1)
-                                result.PossuiAssinaturaDigital = true;
-                            else
-                                result.PossuiAssinaturaDigital = false;
-                        }
-                        catch (Exception)
-                        {
-                            result.PossuiAssinaturaDigital = false;
-                        }
-                    }
-                    #endregion
+        //            #region Possui assinatura digital
+        //            if (validationsSelector.PossuiAssinaturaDigital)
+        //            {
+        //                try
+        //                {
+        //                    ItextSharp.PdfReader pdfReaderSignature = new ItextSharp.PdfReader(memoryStream);
+        //                    var assinaturas = pdfReaderSignature.AcroFields.GetSignatureNames().Count;
+        //                    if (assinaturas >= 1)
+        //                        result.PossuiAssinaturaDigital = true;
+        //                    else
+        //                        result.PossuiAssinaturaDigital = false;
+        //                }
+        //                catch (Exception)
+        //                {
+        //                    result.PossuiAssinaturaDigital = false;
+        //                }
+        //            }
+        //            #endregion
 
-                    #region Possui carimbo edocs
-                    if (validationsSelector.RegularExpressionsParameters != null)
-                    {
-                        result.RegexResult = "";
+        //            #region Possui carimbo edocs
+        //            if (validationsSelector.RegularExpressionsParameters != null)
+        //            {
+        //                result.RegexResult = "";
 
-                        if (validationsSelector.RegularExpressionsParameters.Paginas == null || validationsSelector.RegularExpressionsParameters.Paginas.Count() == 0)
-                            validationsSelector.RegularExpressionsParameters.Paginas = new List<int>(Enumerable.Range(1, pdfDocument.GetNumberOfPages()));
+        //                if (validationsSelector.RegularExpressionsParameters.Paginas == null || validationsSelector.RegularExpressionsParameters.Paginas.Count() == 0)
+        //                    validationsSelector.RegularExpressionsParameters.Paginas = new List<int>(Enumerable.Range(1, pdfDocument.GetNumberOfPages()));
 
-                        foreach (var pagina in validationsSelector.RegularExpressionsParameters.Paginas)
-                        {
-                            try
-                            {
-                                string pageText = PdfTextExtractor.GetTextFromPage(
-                                    pdfDocument.GetPage(pagina),
-                                    new SimpleTextExtractionStrategy()
-                                );
+        //                foreach (var pagina in validationsSelector.RegularExpressionsParameters.Paginas)
+        //                {
+        //                    try
+        //                    {
+        //                        string pageText = PdfTextExtractor.GetTextFromPage(
+        //                            pdfDocument.GetPage(pagina),
+        //                            new SimpleTextExtractionStrategy()
+        //                        );
 
-                                foreach (var regexItem in validationsSelector.RegularExpressionsParameters.ExpressoesRegulares)
-                                {
-                                    var registro = Regex.Match(pageText, regexItem);
-                                    if (registro.Success)
-                                    {
-                                        result.RegexResult = registro.Value;
-                                        break;
-                                    }
-                                }
-                            }
-                            catch (Exception)
-                            {
-                                // Foi decidido que mesmo que o pdf apresente erros, o processo de leitura deve seguir adiante.
-                                // Portanto, assumiu-se o risco de que pode haver algum texto que atenda a expressão regular, mas que este pode ser ignorado.
-                            }
-                        }
-                    }
-                    #endregion
+        //                        foreach (var regexItem in validationsSelector.RegularExpressionsParameters.ExpressoesRegulares)
+        //                        {
+        //                            var registro = Regex.Match(pageText, regexItem);
+        //                            if (registro.Success)
+        //                            {
+        //                                result.RegexResult = registro.Value;
+        //                                break;
+        //                            }
+        //                        }
+        //                    }
+        //                    catch (Exception)
+        //                    {
+        //                        // Foi decidido que mesmo que o pdf apresente erros, o processo de leitura deve seguir adiante.
+        //                        // Portanto, assumiu-se o risco de que pode haver algum texto que atenda a expressão regular, mas que este pode ser ignorado.
+        //                    }
+        //                }
+        //            }
+        //            #endregion
 
-                    #region PDF Info
-                    if (validationsSelector.PdfInfo)
-                    {
-                        var fileInfo = new PdfInfo()
-                        {
-                            NumberOfPages = pdfDocument.GetNumberOfPages(),
-                            FileLength = pdfReader.GetFileLength()
-                        };
+        //            #region PDF Info
+        //            if (validationsSelector.PdfInfo)
+        //            {
+        //                var fileInfo = new PdfInfo()
+        //                {
+        //                    NumberOfPages = pdfDocument.GetNumberOfPages(),
+        //                    FileLength = pdfReader.GetFileLength()
+        //                };
 
-                        result.PdfInfo = fileInfo;
-                    }
-                    #endregion
+        //                result.PdfInfo = fileInfo;
+        //            }
+        //            #endregion
 
-                    pdfDocument.Close();
-                    pdfReader.Close();
-                    memoryStream.Close();
-                }
-            }
-            catch (ITextIOException)
-            {
-                result.PossuiRestricoesLeituraOuAlteracao = true;
-            }
-            catch (BadPasswordException)
-            {
-                result.PossuiRestricoesLeituraOuAlteracao = true;
-            }
-            catch (Exception ex)
-            {
-                if (ex.Message.Contains("PDF header not found."))
-                    result.IsPdf = false;
-                else
-                    result.PossuiRestricoesLeituraOuAlteracao = true;
-            }
+        //            pdfDocument.Close();
+        //            pdfReader.Close();
+        //            memoryStream.Close();
+        //        }
+        //    }
+        //    catch (ITextIOException)
+        //    {
+        //        result.PossuiRestricoesLeituraOuAlteracao = true;
+        //    }
+        //    catch (BadPasswordException)
+        //    {
+        //        result.PossuiRestricoesLeituraOuAlteracao = true;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        if (ex.Message.Contains("PDF header not found."))
+        //            result.IsPdf = false;
+        //        else
+        //            result.PossuiRestricoesLeituraOuAlteracao = true;
+        //    }
 
-            return result;
-        }
+        //    return result;
+        //}
 
         #endregion
 

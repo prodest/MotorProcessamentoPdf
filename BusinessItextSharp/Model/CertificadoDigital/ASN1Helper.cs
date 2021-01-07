@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Text;
 
-namespace Business.Helpers.AssinaturaDigital
+namespace BusinessItextSharp.Model.CertificadoDigital
 {
     class ASN1Helper
     {

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Runtime.Serialization;
 
-namespace Business.Helpers.AssinaturaDigital
+namespace BusinessItextSharp.Model.CertificadoDigital
 {
     [Serializable]
     public class CertificadoNetException : Exception

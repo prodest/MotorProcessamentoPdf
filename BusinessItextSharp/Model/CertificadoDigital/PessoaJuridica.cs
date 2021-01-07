@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Business.Helpers.AssinaturaDigital
+namespace BusinessItextSharp.Model.CertificadoDigital
 {
     public sealed class PessoaJuridica
     {

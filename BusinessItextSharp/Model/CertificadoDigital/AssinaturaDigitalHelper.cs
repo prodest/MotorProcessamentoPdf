@@ -1,4 +1,5 @@
-﻿using iTextSharp.text.pdf;
+﻿using BusinessItextSharp.Model.CertificadoDigital;
+using iTextSharp.text.pdf;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -9,7 +10,7 @@ using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Business.Helpers.AssinaturaDigital
+namespace BusinessItextSharp.Model.CertificadoDigital
 {
     public class AssinaturaDigitalHelper
     {

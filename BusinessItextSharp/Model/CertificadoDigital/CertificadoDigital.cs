@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
 
-namespace Business.Helpers.AssinaturaDigital
+namespace BusinessItextSharp.Model.CertificadoDigital
 {
     public sealed class CertificadoDigital
     {

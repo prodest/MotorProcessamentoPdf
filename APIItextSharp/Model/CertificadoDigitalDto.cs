@@ -1,9 +1,9 @@
-﻿using Business.Helpers.AssinaturaDigital;
+﻿using BusinessItextSharp.Model.CertificadoDigital;
 using System;
 
-namespace Business.Shared.Models
+namespace APIItextSharp.Model
 {
-    public class CertificadoDigitalDto
+    public class CertificadoDigitalDTO
     {
         public DateTime ValidoAPartir { get; private set; }
         public DateTime ValidoAte { get; private set; }

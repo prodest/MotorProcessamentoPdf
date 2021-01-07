@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Globalization;
 
-namespace Business.Helpers.AssinaturaDigital
+namespace BusinessItextSharp.Model.CertificadoDigital
 {
     public sealed class PessoaFisica
     {

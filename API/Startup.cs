@@ -1,9 +1,6 @@
 using API.Shared.Filters;
-using AutoMapper;
 using Business.Core;
 using Business.Core.ICore;
-using Business.Helpers.AssinaturaDigital;
-using Business.Shared.Models;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http.Features;
@@ -13,6 +10,7 @@ using Microsoft.Extensions.Hosting;
 using Prodest.HealthCheck;
 using Elastic.Apm.AspNetCore;
 using Business.Shared;
+using API.Configurations;
 
 namespace API
 {
@@ -50,14 +48,6 @@ namespace API
             {
                 ContentRootFileProvider = _env.ContentRootFileProvider
             });
-
-            // configurando automapper
-            var config = new AutoMapper.MapperConfiguration(cfg =>
-            {
-                cfg.CreateMap<CertificadoDigital, CertificadoDigitalDto>();
-            });
-            IMapper mapper = config.CreateMapper();
-            services.AddSingleton(mapper);
 
             //services.Configure<KestrelServerOptions>(options =>
             //{
