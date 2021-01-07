@@ -10,7 +10,6 @@ using Microsoft.Extensions.Hosting;
 using Prodest.HealthCheck;
 using Elastic.Apm.AspNetCore;
 using Business.Shared;
-using API.Configurations;
 
 namespace API
 {
