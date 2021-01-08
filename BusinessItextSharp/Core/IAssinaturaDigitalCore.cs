@@ -18,5 +18,7 @@ namespace BusinessItextSharp.Core
         Task<bool> HasDigitalSignature(InputFile inputFile);
         Task<bool> HasDigitalSignature(string url);
         bool HasDigitalSignature(byte[] file);
+
+        CertificadoDigital ObterInformacoesCertificadoDigital();
     }
 }

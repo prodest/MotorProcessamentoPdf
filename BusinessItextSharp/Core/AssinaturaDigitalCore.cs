@@ -2,6 +2,8 @@
 using BusinessItextSharp.Models;
 using Infrastructure;
 using iTextSharp.text.pdf;
+using Org.BouncyCastle.Crypto;
+using Org.BouncyCastle.Pkcs;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -248,6 +250,31 @@ namespace BusinessItextSharp.Core
         }
 
         #endregion
+
+        public CertificadoDigital ObterInformacoesCertificadoDigital()
+        {
+            string KEYSTORE = @"../Infrastructure/Resource/teste-e-docs.des.es.gov.br.pfx";
+            char[] PASSWORD = "kglZcWZ&yas95I$5".ToCharArray();
+
+            Pkcs12Store pk12 = new Pkcs12Store(new FileStream(KEYSTORE, FileMode.Open, FileAccess.Read), PASSWORD);
+            string alias = null;
+            foreach (var a in pk12.Aliases)
+            {
+                alias = ((string)a);
+                if (pk12.IsKeyEntry(alias))
+                    break;
+            }
+
+            ICipherParameters pk = pk12.GetKey(alias).Key;
+            X509CertificateEntry[] ce = pk12.GetCertificateChain(alias);
+            Org.BouncyCastle.X509.X509Certificate[] chain = new Org.BouncyCastle.X509.X509Certificate[ce.Length];
+            for (int k = 0; k < ce.Length; ++k)
+            {
+                chain[k] = ce[k].Certificate;
+            }
+
+            return new CertificadoDigital(new X509Certificate2(chain[0].GetEncoded()));
+        }
 
         #region Axiliares
 

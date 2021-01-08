@@ -62,13 +62,12 @@ namespace APIItextSharp.Controllers
 
         #endregion
 
-        [HttpPost]
+        [HttpGet]
         [Route("Obter-Dados-Certificado-Digital")]
-        public async Task<IActionResult> ObterDadosCertificadoDigital([FromForm]InputFileDTO inputFileDTO)//[FromForm]string adsadadada
+        public IActionResult ObterDadosCertificadoDigital()
         {
-            var inputFile = Mapper.Map<InputFile>(inputFileDTO);
-            await AssinaturaDigitalCore.ValidateDigitalSignatures(inputFile);
-            return Ok();
+            var certificado = AssinaturaDigitalCore.ObterInformacoesCertificadoDigital();
+            return Ok(certificado);
         }  
     }
 }
