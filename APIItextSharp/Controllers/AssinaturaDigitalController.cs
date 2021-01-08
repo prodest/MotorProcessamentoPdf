@@ -63,8 +63,8 @@ namespace APIItextSharp.Controllers
         #endregion
 
         [HttpGet]
-        [Route("Obter-Dados-Certificado-Digital")]
-        public IActionResult ObterDadosCertificadoDigital()
+        [Route("/api/ObterInformacoesCertificadoDigital")]
+        public IActionResult ObterInformacoesCertificadoDigital()
         {
             var certificado = AssinaturaDigitalCore.ObterInformacoesCertificadoDigital();
             return Ok(certificado);

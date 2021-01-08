@@ -14,13 +14,11 @@ namespace API.Controllers
     {
         private readonly ITransformaPdfCore TransformaPdfCore;
         private readonly IAssinaturaDigitalCore AssinaturaDigitalCore;
-        private readonly IMapper Mapper;
 
-        public TransformaPdfController(ITransformaPdfCore transformaPdfCore, IAssinaturaDigitalCore assinaturaDigitalCore, IMapper mapper)
+        public TransformaPdfController(ITransformaPdfCore transformaPdfCore, IAssinaturaDigitalCore assinaturaDigitalCore)
         {
             TransformaPdfCore = transformaPdfCore;
             AssinaturaDigitalCore = assinaturaDigitalCore;
-            Mapper = mapper;
         }
 
         #region Validações
