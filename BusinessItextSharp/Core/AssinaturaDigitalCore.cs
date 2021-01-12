@@ -156,6 +156,8 @@ namespace BusinessItextSharp.Core
         public async Task<IEnumerable<CertificadoDigital>> SignatureValidation(byte[] file)
         {
             PdfReader reader = new PdfReader(file);
+            
+            DocumentoPossuiAssinaturaDigital(reader);
 
             var orderedSignatureNames = GetOrderedSignatureNames(reader);
 
@@ -349,6 +351,13 @@ namespace BusinessItextSharp.Core
         #endregion
 
         #region Validações
+
+        private void DocumentoPossuiAssinaturaDigital(PdfReader reader)
+        {
+            var qntAssinaturas = reader.AcroFields.GetSignatureNames().Count;
+            if (qntAssinaturas <= 0)
+                throw new Exception("Este documento não possui Assinaturas Digitais");
+        }
 
         private static void TodosAssinaramDocumentoPorInteiro(Dictionary<string, string> naoAssinaramTodoDocumento)
         {

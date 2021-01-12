@@ -1,5 +1,7 @@
 ﻿using Business.Core.ICore;
 using Business.Shared;
+using iText.Kernel.Pdf;
+using iText.Signatures;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Pkcs;
 using System;
@@ -10,8 +12,6 @@ namespace Business.Core
 {
     public class AssinaturaDigitalCore : IAssinaturaDigitalCore
     {
-        private string apiValidarCertificado = @"https://api.es.gov.br/certificado/api/validar-certificado";
-        private string message = "\nConsidere capturar este documento como \"cópia\".";
         private readonly JsonData JsonData;
         public static readonly char[] PASSWORD = "kglZcWZ&yas95I$5".ToCharArray();
         public static readonly string KEYSTORE = @"C:\Users\prodest1\Desktop\e-docs.des.es.gov.br.pfx";
@@ -23,7 +23,49 @@ namespace Business.Core
             JsonData = jsonData;
         }
 
-        #region Adicionar Assinatura Digital
+        #region Has Digital Signature
+
+        public async Task<bool> HasDigitalSignature(InputFile inputFile)
+        {
+            inputFile.IsValid();
+
+            bool result;
+            if (!string.IsNullOrWhiteSpace(inputFile.FileUrl))
+                result = await HasDigitalSignature(inputFile.FileUrl);
+            else
+                result = HasDigitalSignature(inputFile.FileBytes);
+
+            return result;
+        }
+
+        public async Task<bool> HasDigitalSignature(string url)
+        {
+            byte[] arquivo = await JsonData.GetAndDownloadAsync(url);
+            var response = HasDigitalSignature(arquivo);
+            return response;
+        }
+
+        public bool HasDigitalSignature(byte[] file)
+        {
+            using (MemoryStream memoryStream = new MemoryStream(file))
+            using (PdfReader pdfReader = new PdfReader(memoryStream))
+            using (PdfDocument pdfDocument = new PdfDocument(pdfReader))
+            {
+                SignatureUtil signUtil = new SignatureUtil(pdfDocument);
+                var assinaturas = signUtil.GetSignatureNames();
+
+                pdfDocument.Close();
+                pdfReader.Close();
+                memoryStream.Close();
+
+                if (assinaturas?.Count >= 1)
+                    return true;
+                else 
+                    return false;
+            }
+        }
+
+        #endregion
 
         public async Task<byte[]> AdicionarAssinaturaDigital(string url)
         {
@@ -51,15 +93,17 @@ namespace Business.Core
             return documento;
         }
 
-        public void Sign(byte[] src, Org.BouncyCastle.X509.X509Certificate[] chain, ICipherParameters pk, 
-            String digestAlgorithm, iText.Signatures.PdfSigner.CryptoStandard subfilter, String reason, String location
-        ){
+        #region Métodos privados
+
+        private void Sign(byte[] src, Org.BouncyCastle.X509.X509Certificate[] chain, ICipherParameters pk,
+            String digestAlgorithm, iText.Signatures.PdfSigner.CryptoStandard subfilter, String reason, String location)
+        {
             using (MemoryStream outputMemoryStream = new MemoryStream())
             using (MemoryStream memoryStream = new MemoryStream(src))
             using (iText.Kernel.Pdf.PdfReader pdfReader = new iText.Kernel.Pdf.PdfReader(memoryStream))
             {
                 iText.Signatures.PdfSigner signer = new iText.Signatures.PdfSigner(
-                    pdfReader, new FileStream(DEST + Guid.NewGuid().ToString(), FileMode.Create), 
+                    pdfReader, new FileStream(DEST + Guid.NewGuid().ToString(), FileMode.Create),
                     new iText.Kernel.Pdf.StampingProperties());
 
                 // Create the signature appearance

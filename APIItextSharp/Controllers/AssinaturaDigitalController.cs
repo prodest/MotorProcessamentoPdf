@@ -44,6 +44,7 @@ namespace APIItextSharp.Controllers
         #region Validar Assinatura Digital
 
         [HttpPost]
+        [Route("/api/TransformaPdf/ValidarAssinaturaDigital")]
         public async Task<IActionResult> ValidarAssinaturaDigital(IFormFile arquivo)
         {
             var arquivoByteArray = Mapper.Map<byte[]>(arquivo);
@@ -51,8 +52,9 @@ namespace APIItextSharp.Controllers
             var certificadoDigitalDto = Mapper.Map<IEnumerable<CertificadoDigitalDTO>>(result);
             return Ok(certificadoDigitalDto);
         }
-
+        
         [HttpPost]
+        [Route("/api/TransformaPdf/ValidarAssinaturaDigitalByUrl")]
         public async Task<IActionResult> ValidarAssinaturaDigitalByUrl([FromForm] string url)
         {
             var result = await AssinaturaDigitalCore.SignatureValidation(url);

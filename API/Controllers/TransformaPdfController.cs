@@ -14,11 +14,13 @@ namespace API.Controllers
     {
         private readonly ITransformaPdfCore TransformaPdfCore;
         private readonly IAssinaturaDigitalCore AssinaturaDigitalCore;
+        private readonly IMapper Mapper;
 
-        public TransformaPdfController(ITransformaPdfCore transformaPdfCore, IAssinaturaDigitalCore assinaturaDigitalCore)
+        public TransformaPdfController(ITransformaPdfCore transformaPdfCore, IAssinaturaDigitalCore assinaturaDigitalCore, IMapper mapper)
         {
             TransformaPdfCore = transformaPdfCore;
             AssinaturaDigitalCore = assinaturaDigitalCore;
+            Mapper = mapper;
         }
 
         #region Validações
@@ -108,7 +110,50 @@ namespace API.Controllers
 
         #region Assinatura Digital
 
+        #region Possui Assinatura Digital
 
+        [HttpPost]
+        public IActionResult HasDigitalSignature(IFormFile arquivo)
+        {
+            var file = Mapper.Map<byte[]>(arquivo);
+            var response = AssinaturaDigitalCore.HasDigitalSignature(file);
+            return Ok(new ApiResponse<object>(200, "success", response));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> HasDigitalSignatureByUrl([FromForm] string url)
+        {
+            var response = await AssinaturaDigitalCore.HasDigitalSignature(url);
+            return Ok(new ApiResponse<object>(200, "success", response));
+        }
+
+        #endregion
+
+        //#region Validar Assinatura Digital
+
+        //[HttpPost]
+        //public async Task<IActionResult> ValidarAssinaturaDigital(IFormFile arquivo)
+        //{
+        //    if (arquivo.Length > 0)
+        //    {
+        //        var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
+        //        var result = await AssinaturaDigitalCore.SignatureValidation(arquivoByteArray);
+        //        var certificadoDigitalDto = AutoMapper.Mapper.Map<IEnumerable<CertificadoDigitalDto>>(result);
+        //        return Ok(new ApiResponse<IEnumerable<CertificadoDigitalDto>>(200, "success", certificadoDigitalDto));
+        //    }
+
+        //    return BadRequest();
+        //}
+
+        //[HttpPost]
+        //public async Task<IActionResult> ValidarAssinaturaDigitalByUrl([FromForm] string url)
+        //{
+        //    var result = await AssinaturaDigitalCore.SignatureValidation(url);
+        //    var certificadoDigitalDto = AutoMapper.Mapper.Map<IEnumerable<CertificadoDigitalDto>>(result);
+        //    return Ok(new ApiResponse<IEnumerable<CertificadoDigitalDto>>(200, "success", certificadoDigitalDto));
+        //}
+
+        //#endregion
 
         #region Adicionar Assinatura Digital
 

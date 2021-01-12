@@ -33,7 +33,7 @@ namespace BusinessItextSharp.Models
         private void BothFieldsFilled()
         {
             if (FileBytes != null && FileUrl != null)
-                throw new ArgumentException("Você deve enviar à API o arquivo OU o url do arquivo.");
+                throw new ArgumentException("Você deve enviar à API o arquivo OU a url do arquivo.");
         }
         
         #endregion

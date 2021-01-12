@@ -20,16 +20,10 @@ namespace Business.Core
     {
         private const string Intent = "./wwwroot/resources/color/sRGB_CS_profile.icm";
         private readonly JsonData JsonData;
-        private readonly IAssinaturaDigitalCore AssinaturaDigitalCore;
-        private readonly ICarimboCore CarimboCore;
-        private readonly IExtracaoCore ExtracaoCore;
 
         public TransformaPdfCore(JsonData jsonData, IAssinaturaDigitalCore assinaturaDigitalCore, ICarimboCore carimboCore, IExtracaoCore extracaoCore)
         {
             JsonData = jsonData;
-            AssinaturaDigitalCore = assinaturaDigitalCore;
-            CarimboCore = carimboCore;
-            ExtracaoCore = extracaoCore;
         }
 
         #region Validações

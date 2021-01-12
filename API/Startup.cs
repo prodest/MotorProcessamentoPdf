@@ -10,6 +10,7 @@ using Microsoft.Extensions.Hosting;
 using Prodest.HealthCheck;
 using Elastic.Apm.AspNetCore;
 using Business.Shared;
+using API.StartupConfigurations;
 
 namespace API
 {
@@ -34,6 +35,8 @@ namespace API
             services.AddTransient<IAssinaturaDigitalCore, AssinaturaDigitalCore>();
             services.AddTransient<IExtracaoCore, ExtracaoCore>();
             services.AddTransient<JsonData>();
+
+            services.ConfigurarAutomapper();
 
             // configurando o HttpClientFactory
             services.AddHttpClient();
