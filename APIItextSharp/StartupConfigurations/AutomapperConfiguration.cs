@@ -1,22 +1,26 @@
-﻿using APIItextSharp.Model;
+﻿using APIItextSharp.Models;
 using AutoMapper;
 using BusinessItextSharp.Model.CertificadoDigital;
 using BusinessItextSharp.Models;
+using Infrastructure.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using System.IO;
 
-namespace APIItextSharp.Configurations
+namespace APIItextSharp.StartupConfigurations
 {
-    public static class StartupConfigurationExtension
+    public static class AutomapperConfiguration
     {
         public static IServiceCollection ConfigurarAutomapper(this IServiceCollection services)
         {
             // configurar automapper
             var config = new MapperConfiguration(cfg => {
-                cfg.CreateMap<InputFileDTO, InputFile>().ConvertUsing<InputFileDTOToInputFile>();
                 cfg.CreateMap<IFormFile, byte[]>().ConvertUsing<IFormFileToByteArray>();
-                cfg.CreateMap<CertificadoDigital, CertificadoDigitalDTO>();
+                cfg.CreateMap<InputFileDto, InputFile>().ConvertUsing<InputFileDTOToInputFile>();
+                
+                cfg.CreateMap<CertificadoDigital, CertificadoDigitalDto>();
+                cfg.CreateMap<PessoaFisica, PessoaFisicaDto>();
+                cfg.CreateMap<PessoaJuridica, PessoaJuridicaDto>();
             });
 
             IMapper mapper = config.CreateMapper();
@@ -25,9 +29,9 @@ namespace APIItextSharp.Configurations
             return services;
         }
 
-        public class InputFileDTOToInputFile : ITypeConverter<InputFileDTO, InputFile>
+        public class InputFileDTOToInputFile : ITypeConverter<InputFileDto, InputFile>
         {
-            public InputFile Convert(InputFileDTO source, InputFile destination, ResolutionContext context)
+            public InputFile Convert(InputFileDto source, InputFile destination, ResolutionContext context)
             {
                 InputFile inputFile = new InputFile();
                 inputFile.FileUrl = source.FileUrl;

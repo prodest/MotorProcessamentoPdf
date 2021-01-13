@@ -1,4 +1,4 @@
-using APIItextSharp.Configurations;
+using APIItextSharp.StartupConfigurations;
 using BusinessItextSharp.Core;
 using Infrastructure;
 using Microsoft.AspNetCore.Builder;

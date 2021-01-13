@@ -1,6 +1,6 @@
 ﻿using Business.Core.ICore;
 using Business.Helpers;
-using Business.Shared;
+using Infrastructure;
 using iText.IO.Font.Constants;
 using iText.Kernel.Colors;
 using iText.Kernel.Font;
@@ -235,7 +235,7 @@ namespace Business.Core
 
         public async Task<string> BuscarExpressoesRegulares(string url, IEnumerable<string> expressoesRegulares, IEnumerable<int> paginas)
         {
-            var arquivo = await JsonData.GetAndDownloadAsync(url);
+            var arquivo = await JsonData.GetAndReadByteArrayAsync(url);
             string response = BuscarExpressoesRegulares(arquivo, expressoesRegulares, paginas);
             return response;
         }

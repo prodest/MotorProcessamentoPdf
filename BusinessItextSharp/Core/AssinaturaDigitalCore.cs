@@ -47,7 +47,7 @@ namespace BusinessItextSharp.Core
             byte[] file = null;
             try
             {
-                file = await JsonData.GetAndDownloadAsync(url);
+                file = await JsonData.GetAndReadByteArrayAsync(url);
             }
             catch (Exception)
             {
@@ -141,7 +141,7 @@ namespace BusinessItextSharp.Core
             byte[] file = null;
             try
             {
-                file = await JsonData.GetAndDownloadAsync(url);
+                file = await JsonData.GetAndReadByteArrayAsync(url);
             }
             catch (Exception)
             {
@@ -232,7 +232,7 @@ namespace BusinessItextSharp.Core
 
         public async Task<bool> HasDigitalSignature(string url)
         {
-            byte[] arquivo = await JsonData.GetAndDownloadAsync(url);
+            byte[] arquivo = await JsonData.GetAndReadByteArrayAsync(url);
             var response = HasDigitalSignature(arquivo);
             return response;
         }
@@ -255,7 +255,7 @@ namespace BusinessItextSharp.Core
 
         public CertificadoDigital ObterInformacoesCertificadoDigital()
         {
-            string KEYSTORE = @"../Infrastructure/Resource/teste-e-docs.des.es.gov.br.pfx";
+            string KEYSTORE = @"../Infrastructure/Resources/teste-e-docs.des.es.gov.br.pfx";
             char[] PASSWORD = "kglZcWZ&yas95I$5".ToCharArray();
 
             Pkcs12Store pk12 = new Pkcs12Store(new FileStream(KEYSTORE, FileMode.Open, FileAccess.Read), PASSWORD);

@@ -14,4 +14,8 @@
     <PackageReference Include="Microsoft.Extensions.Http" Version="3.1.9" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Infrastructure\Infrastructure.csproj" />
+  </ItemGroup>
+
 </Project>

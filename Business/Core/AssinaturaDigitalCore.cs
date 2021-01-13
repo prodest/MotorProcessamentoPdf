@@ -1,10 +1,13 @@
 ﻿using Business.Core.ICore;
-using Business.Shared;
+using Infrastructure;
+using Infrastructure.Models;
+using Infrastructure.Repositories;
 using iText.Kernel.Pdf;
 using iText.Signatures;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Pkcs;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -17,10 +20,11 @@ namespace Business.Core
         public static readonly string KEYSTORE = @"C:\Users\prodest1\Desktop\e-docs.des.es.gov.br.pfx";
         public static readonly string SRC = @"C:\Users\prodest1\Desktop\Olá.pdf";
         public static readonly string DEST = @"C:\Users\prodest1\Desktop\TesteAssinaturas\word\";
+        private readonly IApiRepository ApiRepository;
 
-        public AssinaturaDigitalCore(JsonData jsonData)
+        public AssinaturaDigitalCore(IApiRepository apiRepository)
         {
-            JsonData = jsonData;
+            ApiRepository = apiRepository;
         }
 
         #region Has Digital Signature
@@ -40,7 +44,7 @@ namespace Business.Core
 
         public async Task<bool> HasDigitalSignature(string url)
         {
-            byte[] arquivo = await JsonData.GetAndDownloadAsync(url);
+            byte[] arquivo = await JsonData.GetAndReadByteArrayAsync(url);
             var response = HasDigitalSignature(arquivo);
             return response;
         }
@@ -67,9 +71,25 @@ namespace Business.Core
 
         #endregion
 
+        #region Signature Validation
+
+        public async Task<ApiResponse<IEnumerable<CertificadoDigitalDto>>> SignatureValidation(string url)
+        {
+            var response = await ApiRepository.ValidarAssinaturaDigitalAsync(url);
+            return response;
+        }
+
+        public async Task<ApiResponse<IEnumerable<CertificadoDigitalDto>>> SignatureValidation(byte[] file)
+        {
+            var response = await ApiRepository.ValidarAssinaturaDigitalAsync(file);
+            return response;
+        }
+
+        #endregion
+
         public async Task<byte[]> AdicionarAssinaturaDigital(string url)
         {
-            byte[] documento = await JsonData.GetAndDownloadAsync(url);
+            byte[] documento = await JsonData.GetAndReadByteArrayAsync(url);
 
             Pkcs12Store pk12 = new Pkcs12Store(new FileStream(KEYSTORE, FileMode.Open, FileAccess.Read), PASSWORD);
             string alias = null;

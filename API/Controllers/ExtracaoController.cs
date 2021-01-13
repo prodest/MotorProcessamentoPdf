@@ -1,13 +1,13 @@
 ﻿using API.Tools;
 using Business.Core.ICore;
-using Business.Shared.Models;
+using Infrastructure.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace API.Controllers
-{   
+{
     public class ExtracaoController : BaseApiController
     {
         private readonly IExtracaoCore ExtracaoCore;

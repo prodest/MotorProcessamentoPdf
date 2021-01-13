@@ -1,4 +1,4 @@
-﻿using Business.Shared.Models;
+﻿using Infrastructure.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 

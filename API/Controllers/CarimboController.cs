@@ -1,6 +1,6 @@
 ﻿using API.Tools;
 using Business.Core.ICore;
-using Business.Shared.Models;
+using Infrastructure.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;

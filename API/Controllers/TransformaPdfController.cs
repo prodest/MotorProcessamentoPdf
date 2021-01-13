@@ -1,7 +1,7 @@
 ﻿using API.Tools;
 using AutoMapper;
 using Business.Core.ICore;
-using Business.Shared.Models;
+using Infrastructure.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
@@ -129,31 +129,24 @@ namespace API.Controllers
 
         #endregion
 
-        //#region Validar Assinatura Digital
+        #region Validar Assinatura Digital
 
-        //[HttpPost]
-        //public async Task<IActionResult> ValidarAssinaturaDigital(IFormFile arquivo)
-        //{
-        //    if (arquivo.Length > 0)
-        //    {
-        //        var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
-        //        var result = await AssinaturaDigitalCore.SignatureValidation(arquivoByteArray);
-        //        var certificadoDigitalDto = AutoMapper.Mapper.Map<IEnumerable<CertificadoDigitalDto>>(result);
-        //        return Ok(new ApiResponse<IEnumerable<CertificadoDigitalDto>>(200, "success", certificadoDigitalDto));
-        //    }
+        [HttpPost]
+        public async Task<IActionResult> ValidarAssinaturaDigital(IFormFile arquivo)
+        {
+            var arquivoBytes = Mapper.Map<byte[]>(arquivo);
+            var result = await AssinaturaDigitalCore.SignatureValidation(arquivoBytes);
+            return Ok(result);
+        }
 
-        //    return BadRequest();
-        //}
+        [HttpPost]
+        public async Task<IActionResult> ValidarAssinaturaDigitalByUrl([FromForm] string url)
+        {
+            var result = await AssinaturaDigitalCore.SignatureValidation(url);
+            return Ok(result);
+        }
 
-        //[HttpPost]
-        //public async Task<IActionResult> ValidarAssinaturaDigitalByUrl([FromForm] string url)
-        //{
-        //    var result = await AssinaturaDigitalCore.SignatureValidation(url);
-        //    var certificadoDigitalDto = AutoMapper.Mapper.Map<IEnumerable<CertificadoDigitalDto>>(result);
-        //    return Ok(new ApiResponse<IEnumerable<CertificadoDigitalDto>>(200, "success", certificadoDigitalDto));
-        //}
-
-        //#endregion
+        #endregion
 
         #region Adicionar Assinatura Digital
 

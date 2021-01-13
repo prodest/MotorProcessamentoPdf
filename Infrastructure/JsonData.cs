@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -13,16 +14,43 @@ namespace Infrastructure
             HttpClientFactory = httpClientFactory;
         }
 
-        public async Task<byte[]> GetAndDownloadAsync(string url)
+        public async Task<byte[]> GetAndReadByteArrayAsync(string url)
         {
-            HttpClient _httpClient = HttpClientFactory.CreateClient("default");
-            var result = await _httpClient.GetAsync(url);
-            if (!result.IsSuccessStatusCode)
-                throw new Exception(await result.Content.ReadAsStringAsync());
+            HttpClient httpClient = HttpClientFactory.CreateClient("default");
+            var response = await httpClient.GetAsync(url);
+            
+            if (!response.IsSuccessStatusCode)
+                throw new Exception(await response.Content.ReadAsStringAsync());
 
-            byte[] bytes = await result.Content.ReadAsByteArrayAsync();
+            var result = await response.Content.ReadAsByteArrayAsync();
 
-            return bytes;
+            return result;
+        }
+
+        public async Task<T> GetAndReadObjectAsync<T>(string url)
+        {
+            HttpClient httpClient = HttpClientFactory.CreateClient("default");
+            var response = await httpClient.GetAsync(url);
+            
+            if (!response.IsSuccessStatusCode)
+                throw new Exception(await response.Content.ReadAsStringAsync());
+
+            var result = JsonConvert.DeserializeObject<T>(await response.Content.ReadAsStringAsync());
+
+            return result;
+        }
+
+        public async Task<T> PostAndReadObjectAsync<T>(string url, HttpContent content)
+        {
+            HttpClient httpClient = HttpClientFactory.CreateClient("default");
+            var response = await httpClient.PostAsync(url, content);
+            
+            if (!response.IsSuccessStatusCode)
+                throw new Exception(await response.Content.ReadAsStringAsync());
+
+            var result = JsonConvert.DeserializeObject<T>(await response.Content.ReadAsStringAsync());
+
+            return result;
         }
     }
 }

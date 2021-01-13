@@ -1,4 +1,4 @@
-﻿namespace Business.Shared.Models
+﻿namespace Infrastructure.Models
 {
     public class ApiResponse<T>
     {

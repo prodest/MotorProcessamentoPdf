@@ -9,8 +9,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Prodest.HealthCheck;
 using Elastic.Apm.AspNetCore;
-using Business.Shared;
 using API.StartupConfigurations;
+using Infrastructure.Repositories;
+using Infrastructure;
 
 namespace API
 {
@@ -34,7 +35,8 @@ namespace API
             services.AddTransient<ITransformaPdfCore, TransformaPdfCore>();
             services.AddTransient<IAssinaturaDigitalCore, AssinaturaDigitalCore>();
             services.AddTransient<IExtracaoCore, ExtracaoCore>();
-            services.AddTransient<JsonData>();
+            services.AddTransient<IApiRepository, ApiRepository>();
+            services.AddTransient<JsonData, JsonData>();
 
             services.ConfigurarAutomapper();
 

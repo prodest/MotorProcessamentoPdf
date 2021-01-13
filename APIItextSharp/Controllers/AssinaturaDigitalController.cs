@@ -1,7 +1,6 @@
-﻿using APIItextSharp.Model;
-using AutoMapper;
+﻿using AutoMapper;
 using BusinessItextSharp.Core;
-using BusinessItextSharp.Models;
+using Infrastructure.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
@@ -25,7 +24,7 @@ namespace APIItextSharp.Controllers
         #region Possui Assinatura Digital
 
         [HttpPost]
-        public async Task<IActionResult> HasDigitalSignature(IFormFile arquivo)
+        public IActionResult HasDigitalSignature(IFormFile arquivo)
         {
             var arquivoByteArray = Mapper.Map<byte[]>(arquivo);
             var response = AssinaturaDigitalCore.HasDigitalSignature(arquivoByteArray);
@@ -49,17 +48,17 @@ namespace APIItextSharp.Controllers
         {
             var arquivoByteArray = Mapper.Map<byte[]>(arquivo);
             var result = await AssinaturaDigitalCore.SignatureValidation(arquivoByteArray);
-            var certificadoDigitalDto = Mapper.Map<IEnumerable<CertificadoDigitalDTO>>(result);
-            return Ok(certificadoDigitalDto);
+            var certificadoDigitalDto = Mapper.Map<IEnumerable<CertificadoDigitalDto>>(result);
+            return Ok(new ApiResponse<IEnumerable<CertificadoDigitalDto>>(200, "success", certificadoDigitalDto));
         }
-        
+
         [HttpPost]
         [Route("/api/TransformaPdf/ValidarAssinaturaDigitalByUrl")]
         public async Task<IActionResult> ValidarAssinaturaDigitalByUrl([FromForm] string url)
         {
             var result = await AssinaturaDigitalCore.SignatureValidation(url);
-            var certificadoDigitalDto = Mapper.Map<IEnumerable<CertificadoDigitalDTO>>(result);
-            return Ok(certificadoDigitalDto);
+            var certificadoDigitalDto = Mapper.Map<IEnumerable<CertificadoDigitalDto>>(result);
+            return Ok(new ApiResponse<IEnumerable<CertificadoDigitalDto>>(200, "success", certificadoDigitalDto));
         }
 
         #endregion

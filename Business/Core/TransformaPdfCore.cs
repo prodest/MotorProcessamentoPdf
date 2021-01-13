@@ -1,7 +1,8 @@
 ﻿using Business.Core.ICore;
 using Business.Helpers;
-using Business.Shared;
 using Business.Shared.Models;
+using Infrastructure;
+using Infrastructure.Models;
 using iText.Html2pdf;
 using iText.Kernel.Crypto;
 using iText.Kernel.Pdf;
@@ -12,7 +13,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
-using ITextIOException = iText.IO.IOException;
 
 namespace Business.Core
 {
@@ -46,7 +46,7 @@ namespace Business.Core
             try
             {
                 if (!string.IsNullOrWhiteSpace(url)) 
-                    file = await JsonData.GetAndDownloadAsync(url);
+                    file = await JsonData.GetAndReadByteArrayAsync(url);
                 else
                     throw new Exception("Não é possível ler este documento pois ele não é um arquivo PDF válido.");
             }
@@ -95,7 +95,7 @@ namespace Business.Core
                     return true;
                 }
             }
-            catch (ITextIOException)
+            catch (iText.IO.IOException)
             {
                 throw new Exception("Não é possível ler este documento pois ele não é um arquivo PDF válido.");
             }
@@ -149,7 +149,7 @@ namespace Business.Core
 
         public async Task<ApiResponse<PdfInfo>> PdfInfo(string url)
         {
-            byte[] arquivo = await JsonData.GetAndDownloadAsync(url);
+            byte[] arquivo = await JsonData.GetAndReadByteArrayAsync(url);
             var resposta = PdfInfo(arquivo);
             return resposta;
         }
@@ -259,7 +259,7 @@ namespace Business.Core
             try
             {
                 foreach (var url in urls)
-                    arquivos.Add(await JsonData.GetAndDownloadAsync(url));
+                    arquivos.Add(await JsonData.GetAndReadByteArrayAsync(url));
             }
             catch (Exception)
             {
@@ -276,7 +276,7 @@ namespace Business.Core
             byte[] documentoFromUrl;
             try
             {
-                documentoFromUrl = await JsonData.GetAndDownloadAsync(url);
+                documentoFromUrl = await JsonData.GetAndReadByteArrayAsync(url);
             }
             catch (Exception)
             {
