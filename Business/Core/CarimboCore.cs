@@ -62,7 +62,8 @@ namespace Business.Core
                             CarimboDocumentoHelper.CarimboDocumento(natureza, valorLegal),
                             dataHora.ToString(dateFormat),
                             i,
-                            pdfDocument.GetNumberOfPages()
+                            pdfDocument.GetNumberOfPages(),
+                            pageSize.GetHeight()
                         );
 
                         canvas.ShowTextAligned(
@@ -318,18 +319,62 @@ namespace Business.Core
                 throw new Exception("Informe todos os 6 caracteres do código hexadecimal");
         }
 
-        private Paragraph ValorLegalParagrafo(string protocolo, string valorLegal, string dataHora, int paginaInicial, int paginaFinal)
+        private Paragraph ValorLegalParagrafo(string protocolo, string valorLegal, string dataHora, int paginaInicial, int paginaFinal, float pageHeight)
         {
+            float A4Height = 842;
+            float A5Height = 595;
+            float A6Height = 420;
+            float A7Height = 298;
+            float A8Height = 210;
+            float A9Height = 147;
+            float A10Height = 105;
+
             var text = new Text($"{protocolo.ToUpper()} - E-DOCS - {valorLegal.ToUpper()}    {dataHora}    PÁGINA {paginaInicial} / {paginaFinal}");
 
             PdfFont font = PdfFontFactory.CreateFont(StandardFonts.HELVETICA);
 
             var style = new Style();
             style.SetFont(font);
-            style.SetFontSize(8);
             style.SetFontColor(new DeviceRgb(0, 124, 191));
 
-            style.SetPaddingBottom(8);
+            if (pageHeight >= A4Height * 0.95)
+            {
+                style.SetFontSize(8);
+                style.SetPaddingBottom(8);
+            }
+            else if (pageHeight >= 0.95 * A5Height && pageHeight < 0.95 * A4Height)
+            {
+                style.SetFontSize(7);
+                style.SetPaddingBottom(7);
+            }
+            else if (pageHeight >= 0.95 * A6Height && pageHeight < 0.95 * A5Height)
+            {
+                style.SetFontSize(6);
+                style.SetPaddingBottom(6);
+            }
+            else if (pageHeight >= 0.95 * A7Height && pageHeight < 0.95 * A6Height)
+            {
+                style.SetFontSize(4);
+                style.SetPaddingBottom(4);
+            }
+            else if (pageHeight >= 0.95 * A8Height && pageHeight < 0.95 * A7Height)
+            {
+                style.SetFontSize(3);
+                style.SetPaddingBottom(3);
+            }
+            else if (pageHeight >= 0.95 * A9Height && pageHeight < 0.95 * A8Height)
+            {
+                style.SetFontSize(2);
+                style.SetPaddingBottom(2);
+            }
+            else if (pageHeight >= 0.95 * A10Height && pageHeight < 0.95 * A9Height)
+            {
+                style.SetFontSize(1.5f);
+                style.SetPaddingBottom(1);
+            }
+            else
+                throw new Exception("O E-Docs não aceita documentos com dimensões menores que um papel A10.");
+
             text.AddStyle(style);
 
             var paragraph = new Paragraph(text);

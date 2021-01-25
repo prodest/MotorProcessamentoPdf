@@ -1,4 +1,5 @@
 ﻿using API.Tools;
+using AutoMapper;
 using Business.Core.ICore;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Http;
@@ -12,10 +13,12 @@ namespace API.Controllers
     public class CarimboController : BaseApiController
     {
         private readonly ICarimboCore CarimboCore;
+        private readonly IMapper Mapper;
 
-        public CarimboController(ICarimboCore carimboCore)
+        public CarimboController(ICarimboCore carimboCore, IMapper mapper)
         {
             CarimboCore = carimboCore;
+            Mapper = mapper;
         }
 
         #region Adição de Carimbos
@@ -73,43 +76,27 @@ namespace API.Controllers
         [HttpPost]
         public async Task<IActionResult> Documento(IFormFile arquivo, [FromForm] string registro, [FromForm] int natureza, [FromForm] int valorLegal, [FromForm] DateTime dataHora)
         {
-            if (arquivo.Length > 0)
-            {
-                var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
-
-                var arquivoCarimbado = CarimboCore.Documento(
-                    arquivoByteArray,
-                    registro,
-                    natureza,
-                    valorLegal,
-                    dataHora
-                );
-
-                return Ok(new ApiResponse<byte[]>(200, "success", arquivoCarimbado));
-            }
-            else
-                return BadRequest();
+            var arquivoBytes = Mapper.Map<byte[]>(arquivo);
+            var arquivoCarimbado = CarimboCore.Documento(
+                arquivoBytes,
+                registro,
+                natureza,
+                valorLegal,
+                dataHora);
+            return Ok(new ApiResponse<byte[]>(200, "success", arquivoCarimbado));
         }
 
         [HttpPost]
         public async Task<IActionResult> DocumentoByFile(IFormFile arquivo, [FromForm] string registro, [FromForm] int natureza, [FromForm] int valorLegal, [FromForm] DateTime dataHora)
         {
-            if (arquivo.Length > 0)
-            {
-                var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
-
-                var arquivoCarimbado = CarimboCore.Documento(
-                    arquivoByteArray,
-                    registro,
-                    natureza,
-                    valorLegal,
-                    dataHora
-                );
-
-                return File(arquivoCarimbado, "application/pdf");
-            }
-            else
-                return BadRequest();
+            var arquivoBytes = Mapper.Map<byte[]>(arquivo);
+            var arquivoCarimbado = CarimboCore.Documento(
+                arquivoBytes,
+                registro,
+                natureza,
+                valorLegal,
+                dataHora);
+            return File(arquivoCarimbado, "application/pdf");
         }
 
         [HttpPost]
