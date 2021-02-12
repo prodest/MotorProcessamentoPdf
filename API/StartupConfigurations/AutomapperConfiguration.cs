@@ -28,12 +28,16 @@ namespace API.StartupConfigurations
             {
                 InputFile inputFile = new InputFile();
                 inputFile.FileUrl = source.FileUrl;
+                
                 // TODO(Marcelo): Pesquisar a possibilidade de usar async
-                using (var memoryStream = new MemoryStream())
+                if(source.FileBytes != null)
                 {
-                    source.FileBytes.CopyTo(memoryStream);
-                    inputFile.FileBytes = memoryStream.ToArray(); 
-                    memoryStream.Close();
+                    using (var memoryStream = new MemoryStream())
+                    {
+                        source.FileBytes.CopyTo(memoryStream);
+                        inputFile.FileBytes = memoryStream.ToArray(); 
+                        memoryStream.Close();
+                    }
                 }
 
                 return inputFile;

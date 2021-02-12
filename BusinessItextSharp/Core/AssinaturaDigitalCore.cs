@@ -1,6 +1,8 @@
-﻿using BusinessItextSharp.Model.CertificadoDigital;
+﻿using AutoMapper;
+using BusinessItextSharp.Model.CertificadoDigital;
 using BusinessItextSharp.Models;
 using Infrastructure;
+using Infrastructure.Models;
 using iTextSharp.text.pdf;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Pkcs;
@@ -21,10 +23,12 @@ namespace BusinessItextSharp.Core
         private static string apiValidarCertificado = @"https://api.es.gov.br/certificado/api/validar-certificado";
         private static string message = "\nConsidere capturar este documento como \"cópia\".";
         private readonly JsonData JsonData;
+        private readonly IMapper Mapper;
 
-        public AssinaturaDigitalCore(JsonData jsonData)
+        public AssinaturaDigitalCore(JsonData jsonData, IMapper mapper)
         {
             JsonData = jsonData;
+            Mapper = mapper;
         }
 
         #region Validate Digital Signatures
@@ -253,7 +257,7 @@ namespace BusinessItextSharp.Core
 
         #endregion
 
-        public CertificadoDigital ObterInformacoesCertificadoDigital()
+        public CertificadoDigitalDto ObterInformacoesCertificadoDigital()
         {
             string KEYSTORE = @"../Infrastructure/Resources/teste-e-docs.des.es.gov.br.pfx";
             char[] PASSWORD = "kglZcWZ&yas95I$5".ToCharArray();
@@ -275,7 +279,11 @@ namespace BusinessItextSharp.Core
                 chain[k] = ce[k].Certificate;
             }
 
-            return new CertificadoDigital(new X509Certificate2(chain[0].GetEncoded()));
+            var certificado = new CertificadoDigital(new X509Certificate2(chain[0].GetEncoded()));
+
+            var certificadoDigitalDto = Mapper.Map<CertificadoDigitalDto>(certificado);
+
+            return certificadoDigitalDto;
         }
 
         #region Axiliares

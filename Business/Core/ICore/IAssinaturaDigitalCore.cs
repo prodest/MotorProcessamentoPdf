@@ -13,6 +13,6 @@ namespace Business.Core.ICore
         Task<ApiResponse<IEnumerable<CertificadoDigitalDto>>> SignatureValidation(string url);
         Task<ApiResponse<IEnumerable<CertificadoDigitalDto>>> SignatureValidation(byte[] file);
 
-        Task<byte[]> AdicionarAssinaturaDigital(string url);
+        Task<byte[]> AdicionarAssinaturaDigital(InputFile inputFile);
     }
 }

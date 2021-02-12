@@ -1,5 +1,6 @@
 ﻿using BusinessItextSharp.Model.CertificadoDigital;
 using BusinessItextSharp.Models;
+using Infrastructure.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -19,6 +20,6 @@ namespace BusinessItextSharp.Core
         Task<bool> HasDigitalSignature(string url);
         bool HasDigitalSignature(byte[] file);
 
-        CertificadoDigital ObterInformacoesCertificadoDigital();
+        CertificadoDigitalDto ObterInformacoesCertificadoDigital();
     }
 }

@@ -1,4 +1,5 @@
-﻿using API.Tools;
+﻿using API.Models;
+using API.Tools;
 using AutoMapper;
 using Business.Core.ICore;
 using Infrastructure.Models;
@@ -151,10 +152,11 @@ namespace API.Controllers
         #region Adicionar Assinatura Digital
 
         [HttpPost]
-        public async Task<IActionResult> AdicionarAssinaturaDigital([FromForm]string url)
+        public async Task<IActionResult> AdicionarAssinaturaDigital([FromForm] InputFileDto inputFileDto)
         {
-            var documentoAssinado = await AssinaturaDigitalCore.AdicionarAssinaturaDigital(url);
-            return Ok(documentoAssinado);
+            var inputFile = Mapper.Map<InputFile>(inputFileDto);
+            var documentoAssinado = await AssinaturaDigitalCore.AdicionarAssinaturaDigital(inputFile);
+            return File(documentoAssinado, "application/octet-stream"); ;
         }
 
         #endregion

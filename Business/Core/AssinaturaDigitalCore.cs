@@ -16,15 +16,12 @@ namespace Business.Core
     public class AssinaturaDigitalCore : IAssinaturaDigitalCore
     {
         private readonly JsonData JsonData;
-        public static readonly char[] PASSWORD = "kglZcWZ&yas95I$5".ToCharArray();
-        public static readonly string KEYSTORE = @"C:\Users\prodest1\Desktop\e-docs.des.es.gov.br.pfx";
-        public static readonly string SRC = @"C:\Users\prodest1\Desktop\Olá.pdf";
-        public static readonly string DEST = @"C:\Users\prodest1\Desktop\TesteAssinaturas\word\";
         private readonly IApiRepository ApiRepository;
 
-        public AssinaturaDigitalCore(IApiRepository apiRepository)
+        public AssinaturaDigitalCore(IApiRepository apiRepository, JsonData jsonData)
         {
             ApiRepository = apiRepository;
+            JsonData = jsonData;
         }
 
         #region Has Digital Signature
@@ -87,9 +84,30 @@ namespace Business.Core
 
         #endregion
 
-        public async Task<byte[]> AdicionarAssinaturaDigital(string url)
+        public async Task<byte[]> AdicionarAssinaturaDigital(InputFile inputFile)
+        {
+            inputFile.IsValid();
+
+            byte[] dococumentoAssinado = null;
+            if (inputFile.FileUrl != null)
+                dococumentoAssinado = await AdicionarAssinaturaDigital(inputFile.FileUrl);
+            else
+                dococumentoAssinado = AdicionarAssinaturaDigital(inputFile.FileBytes);
+
+            return dococumentoAssinado;
+        }
+
+        private async Task<byte[]> AdicionarAssinaturaDigital(string url)
         {
             byte[] documento = await JsonData.GetAndReadByteArrayAsync(url);
+            var documentoCarimbado = AdicionarAssinaturaDigital(documento);
+            return documentoCarimbado;
+        }
+
+        private byte[] AdicionarAssinaturaDigital(byte[] fileBytes)
+        {
+            string KEYSTORE = @"../Infrastructure/Resources/teste-e-docs.des.es.gov.br.pfx";
+            char[] PASSWORD = "kglZcWZ&yas95I$5".ToCharArray();
 
             Pkcs12Store pk12 = new Pkcs12Store(new FileStream(KEYSTORE, FileMode.Open, FileAccess.Read), PASSWORD);
             string alias = null;
@@ -108,14 +126,17 @@ namespace Business.Core
                 chain[k] = ce[k].Certificate;
             }
 
-            Sign(documento, chain, pk, iText.Signatures.DigestAlgorithms.SHA512, iText.Signatures.PdfSigner.CryptoStandard.CADES, "Motivo de teste", "Local de teste");
+            var documentoAssinado = Sign(fileBytes, chain, pk, iText.Signatures.DigestAlgorithms.SHA512, 
+                iText.Signatures.PdfSigner.CryptoStandard.CADES,
+                "Motivo de teste", 
+                "Local de teste");
 
-            return documento;
+            return documentoAssinado;
         }
 
         #region Métodos privados
 
-        private void Sign(byte[] src, Org.BouncyCastle.X509.X509Certificate[] chain, ICipherParameters pk,
+        private byte[] Sign(byte[] src, Org.BouncyCastle.X509.X509Certificate[] chain, ICipherParameters pk,
             String digestAlgorithm, iText.Signatures.PdfSigner.CryptoStandard subfilter, String reason, String location)
         {
             using (MemoryStream outputMemoryStream = new MemoryStream())
@@ -123,7 +144,7 @@ namespace Business.Core
             using (iText.Kernel.Pdf.PdfReader pdfReader = new iText.Kernel.Pdf.PdfReader(memoryStream))
             {
                 iText.Signatures.PdfSigner signer = new iText.Signatures.PdfSigner(
-                    pdfReader, new FileStream(DEST + Guid.NewGuid().ToString(), FileMode.Create),
+                    pdfReader, outputMemoryStream,
                     new iText.Kernel.Pdf.StampingProperties());
 
                 // Create the signature appearance
@@ -152,8 +173,10 @@ namespace Business.Core
 
                 pdfReader.Close();
                 memoryStream.Close();
-                src = outputMemoryStream.ToArray();
+                var documentoAssinado = outputMemoryStream.ToArray();
                 outputMemoryStream.Close();
+
+                return documentoAssinado;
             }
         }
 
