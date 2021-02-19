@@ -92,6 +92,8 @@ namespace API
 
             app.UseHttpsRedirection();
 
+            app.UseStaticFiles();
+
             app.UseRouting();
 
             app.UseCustomHealthChecks();
