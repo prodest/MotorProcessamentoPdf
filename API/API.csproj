@@ -19,5 +19,14 @@
     <Folder Include="wwwroot\resources\color\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Update="wwwroot\resources\color\sRGB_CS_profile.icm">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Update="wwwroot\teste-e-docs.des.es.gov.br.pfx">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 
 </Project>
