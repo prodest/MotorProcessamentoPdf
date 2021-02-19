@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Reflection;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using System.Threading.Tasks;
@@ -259,7 +260,7 @@ namespace BusinessItextSharp.Core
 
         public CertificadoDigitalDto ObterInformacoesCertificadoDigital()
         {
-            string KEYSTORE = @"../Infrastructure/Resources/teste-e-docs.des.es.gov.br.pfx";
+            string KEYSTORE = $@"{Path.GetDirectoryName(Assembly.GetExecutingAssembly().CodeBase)}\Resources\teste-e-docs.des.es.gov.br.pfx".Replace(@"file:\", "");
             char[] PASSWORD = "kglZcWZ&yas95I$5".ToCharArray();
 
             Pkcs12Store pk12 = new Pkcs12Store(new FileStream(KEYSTORE, FileMode.Open, FileAccess.Read), PASSWORD);

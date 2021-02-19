@@ -9,6 +9,7 @@ using Org.BouncyCastle.Pkcs;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace Business.Core
@@ -106,7 +107,7 @@ namespace Business.Core
 
         private byte[] AdicionarAssinaturaDigital(byte[] fileBytes)
         {
-            string KEYSTORE = @"../Infrastructure/Resources/teste-e-docs.des.es.gov.br.pfx";
+            string KEYSTORE = $@"{Path.GetDirectoryName(Assembly.GetExecutingAssembly().CodeBase)}\Resources\teste-e-docs.des.es.gov.br.pfx".Replace(@"file:\", "");
             char[] PASSWORD = "kglZcWZ&yas95I$5".ToCharArray();
 
             Pkcs12Store pk12 = new Pkcs12Store(new FileStream(KEYSTORE, FileMode.Open, FileAccess.Read), PASSWORD);
