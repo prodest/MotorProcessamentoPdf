@@ -14,13 +14,12 @@ namespace APIItextSharp
 {
     public class Startup
     {
-        private readonly IHostEnvironment _env;
         public IConfiguration Configuration { get; }
+        private readonly IHostEnvironment _env;
 
         public Startup(IConfiguration configuration, IHostEnvironment env)
         {
             Configuration = configuration;
-
             _env = env;
         }
 

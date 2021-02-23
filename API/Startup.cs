@@ -17,13 +17,12 @@ namespace API
 {
     public class Startup
     {
-        private readonly IHostEnvironment _env;
         public IConfiguration Configuration { get; }
+        private readonly IHostEnvironment _env;
 
         public Startup(IConfiguration configuration, IHostEnvironment env)
         {
             Configuration = configuration;
-
             _env = env;
         }
 
@@ -31,12 +30,12 @@ namespace API
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddTransient<ICarimboCore, CarimboCore>();
-            services.AddTransient<ITransformaPdfCore, TransformaPdfCore>();
-            services.AddTransient<IAssinaturaDigitalCore, AssinaturaDigitalCore>();
-            services.AddTransient<IExtracaoCore, ExtracaoCore>();
-            services.AddTransient<IApiRepository, ApiRepository>();
-            services.AddTransient<JsonData, JsonData>();
+            services.AddScoped<ICarimboCore, CarimboCore>();
+            services.AddScoped<ITransformaPdfCore, TransformaPdfCore>();
+            services.AddScoped<IAssinaturaDigitalCore, AssinaturaDigitalCore>();
+            services.AddScoped<IExtracaoCore, ExtracaoCore>();
+            services.AddScoped<IApiRepository, ApiRepository>();
+            services.AddScoped<JsonData, JsonData>();
 
             services.ConfigurarAutomapper();
 
@@ -83,7 +82,6 @@ namespace API
             {
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "Motor de Processamento de PDF - V1");
             });
-
 
             if (env.IsDevelopment())
             {

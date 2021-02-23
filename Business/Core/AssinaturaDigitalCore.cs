@@ -93,7 +93,7 @@ namespace Business.Core
             if (inputFile.FileUrl != null)
                 dococumentoAssinado = await AdicionarAssinaturaDigital(inputFile.FileUrl);
             else
-                dococumentoAssinado = await AdicionarAssinaturaDigital(inputFile.FileBytes);
+                dococumentoAssinado = AdicionarAssinaturaDigital(inputFile.FileBytes);
 
             return dococumentoAssinado;
         }
@@ -101,19 +101,17 @@ namespace Business.Core
         private async Task<byte[]> AdicionarAssinaturaDigital(string url)
         {
             byte[] documento = await JsonData.GetAndReadByteArrayAsync(url);
-            var documentoCarimbado = await AdicionarAssinaturaDigital(documento);
+            var documentoCarimbado = AdicionarAssinaturaDigital(documento);
             return documentoCarimbado;
         }
 
-        private async Task<byte[]> AdicionarAssinaturaDigital(byte[] fileBytes)
+        private byte[] AdicionarAssinaturaDigital(byte[] fileBytes)
         {
-            //byte[] certificado = await JsonData.GetAndReadByteArrayAsync("https://localhost:44311/teste-e-docs.des.es.gov.br.pfx");
-            byte[] certificado = await JsonData.GetAndReadByteArrayAsync("https://des.pdf.e-docs.bkg.es.gov.br/teste-e-docs.des.es.gov.br.pfx");
-            var certificadoMS = new MemoryStream(certificado);
+            string keystore = $@"{Path.GetDirectoryName(Assembly.GetExecutingAssembly().CodeBase)}\teste-e-docs.des.es.gov.br.pfx".Replace(@"file:\", "");
+            var certificado = new FileStream(keystore, FileMode.Open, FileAccess.Read);
+            char[] password = "kglZcWZ&yas95I$5".ToCharArray();
+            Pkcs12Store pk12 = new Pkcs12Store(certificado, password);
 
-            char[] PASSWORD = "kglZcWZ&yas95I$5".ToCharArray();
-
-            Pkcs12Store pk12 = new Pkcs12Store(certificadoMS, PASSWORD);
             string alias = null;
             foreach (var a in pk12.Aliases)
             {
