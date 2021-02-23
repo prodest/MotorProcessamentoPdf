@@ -107,8 +107,8 @@ namespace Business.Core
 
         private async Task<byte[]> AdicionarAssinaturaDigital(byte[] fileBytes)
         {
-            //byte[] certificado = await JsonData.GetAndReadByteArrayAsync("https://localhost:44311/teste-e-docs.des.es.gov.br.pfx");
-            byte[] certificado = await JsonData.GetAndReadByteArrayAsync("https://des.pdf.e-docs.bkg.es.gov.br/teste-e-docs.des.es.gov.br.pfx");
+            byte[] certificado = await JsonData.GetAndReadByteArrayAsync("https://localhost:44311/teste-e-docs.des.es.gov.br.pfx");
+            //byte[] certificado = await JsonData.GetAndReadByteArrayAsync("https://des.pdf.e-docs.bkg.es.gov.br/teste-e-docs.des.es.gov.br.pfx");
             var certificadoMS = new MemoryStream(certificado);
 
             char[] PASSWORD = "kglZcWZ&yas95I$5".ToCharArray();
@@ -126,12 +126,12 @@ namespace Business.Core
             X509CertificateEntry[] ce = pk12.GetCertificateChain(alias);
             Org.BouncyCastle.X509.X509Certificate[] chain = new Org.BouncyCastle.X509.X509Certificate[ce.Length];
             for (int k = 0; k < ce.Length; ++k)
-            {
                 chain[k] = ce[k].Certificate;
-            }
 
-            var documentoAssinado = Sign(fileBytes, chain, pk, iText.Signatures.DigestAlgorithms.SHA512, 
-                iText.Signatures.PdfSigner.CryptoStandard.CADES,
+            var documentoAssinado = Sign(
+                fileBytes, chain, pk,
+                DigestAlgorithms.SHA512,
+                PdfSigner.CryptoStandard.CADES,
                 "Motivo de teste", 
                 "Local de teste");
 
@@ -141,19 +141,19 @@ namespace Business.Core
         #region Métodos privados
 
         private byte[] Sign(byte[] src, Org.BouncyCastle.X509.X509Certificate[] chain, ICipherParameters pk,
-            String digestAlgorithm, iText.Signatures.PdfSigner.CryptoStandard subfilter, String reason, String location)
+            string digestAlgorithm, PdfSigner.CryptoStandard subfilter, string reason, string location)
         {
             using (MemoryStream outputMemoryStream = new MemoryStream())
             using (MemoryStream memoryStream = new MemoryStream(src))
-            using (iText.Kernel.Pdf.PdfReader pdfReader = new iText.Kernel.Pdf.PdfReader(memoryStream))
+            using (PdfReader pdfReader = new PdfReader(memoryStream))
             {
-                iText.Signatures.PdfSigner signer = new iText.Signatures.PdfSigner(
+                PdfSigner signer = new PdfSigner(
                     pdfReader, outputMemoryStream,
-                    new iText.Kernel.Pdf.StampingProperties());
+                    new StampingProperties());
 
                 // Create the signature appearance
                 iText.Kernel.Geom.Rectangle rect = new iText.Kernel.Geom.Rectangle(36, 648, 200, 100);
-                iText.Signatures.PdfSignatureAppearance appearance = signer.GetSignatureAppearance();
+                PdfSignatureAppearance appearance = signer.GetSignatureAppearance();
                 appearance.SetReason(reason)
                     .SetLocation(location)
                     // Specify if the appearance before field is signed will be used
@@ -163,7 +163,7 @@ namespace Business.Core
                     .SetPageNumber(1);
                 signer.SetFieldName("sig");
 
-                iText.Signatures.IExternalSignature pks = new iText.Signatures.PrivateKeySignature(pk, digestAlgorithm);
+                IExternalSignature pks = new PrivateKeySignature(pk, digestAlgorithm);
 
                 try
                 {

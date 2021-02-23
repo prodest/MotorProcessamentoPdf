@@ -1,5 +1,6 @@
 using APIItextSharp.StartupConfigurations;
 using BusinessItextSharp.Core;
+using Elastic.Apm.AspNetCore;
 using Infrastructure;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -7,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using Prodest.HealthCheck;
 
 namespace APIItextSharp
 {
@@ -38,6 +40,10 @@ namespace APIItextSharp
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            app.UseForwardedHeaders();
+            app.UseElasticApm(Configuration);
+            app.UseCors(options => options.AllowAnyHeader().AllowAnyOrigin().AllowAnyMethod());
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -48,6 +54,8 @@ namespace APIItextSharp
             app.UseHttpsRedirection();
 
             app.UseRouting();
+
+            app.UseCustomHealthChecks();
 
             app.UseAuthorization();
 
