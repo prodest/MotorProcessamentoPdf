@@ -4,6 +4,7 @@ using Infrastructure.Models;
 using Infrastructure.Repositories;
 using iText.Kernel.Pdf;
 using iText.Signatures;
+using Microsoft.Extensions.Configuration;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Pkcs;
 using System;
@@ -17,12 +18,14 @@ namespace Business.Core
     public class AssinaturaDigitalCore : IAssinaturaDigitalCore
     {
         private readonly JsonData JsonData;
+        private readonly IConfiguration Configuration;
         private readonly IApiRepository ApiRepository;
 
-        public AssinaturaDigitalCore(IApiRepository apiRepository, JsonData jsonData)
+        public AssinaturaDigitalCore(IApiRepository apiRepository, JsonData jsonData, IConfiguration configuration)
         {
             ApiRepository = apiRepository;
             JsonData = jsonData;
+            Configuration = configuration;
         }
 
         #region Has Digital Signature
@@ -107,7 +110,10 @@ namespace Business.Core
 
         private byte[] AdicionarAssinaturaDigital(byte[] fileBytes)
         {
-            string keystore = $@"{Path.GetDirectoryName(Assembly.GetExecutingAssembly().CodeBase)}\teste-e-docs.des.es.gov.br.pfx".Replace(@"file:\", "");
+            string keystoreRoot = $@"{Path.GetDirectoryName(Assembly.GetExecutingAssembly().CodeBase)}".Replace(@"file:\", "");
+            string keystorePath = Configuration.GetSection("CertificadoDigitalEdocs").Value;
+            string keystore = $@"{keystoreRoot}\{keystorePath}";
+
             var certificado = new FileStream(keystore, FileMode.Open, FileAccess.Read);
             char[] password = "kglZcWZ&yas95I$5".ToCharArray();
             Pkcs12Store pk12 = new Pkcs12Store(certificado, password);
