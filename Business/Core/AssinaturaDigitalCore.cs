@@ -107,8 +107,8 @@ namespace Business.Core
 
         private async Task<byte[]> AdicionarAssinaturaDigital(byte[] fileBytes)
         {
-            byte[] certificado = await JsonData.GetAndReadByteArrayAsync("https://localhost:44311/teste-e-docs.des.es.gov.br.pfx");
-            //byte[] certificado = await JsonData.GetAndReadByteArrayAsync("https://des.pdf.e-docs.bkg.es.gov.br/teste-e-docs.des.es.gov.br.pfx");
+            //byte[] certificado = await JsonData.GetAndReadByteArrayAsync("https://localhost:44311/teste-e-docs.des.es.gov.br.pfx");
+            byte[] certificado = await JsonData.GetAndReadByteArrayAsync("https://des.pdf.e-docs.bkg.es.gov.br/teste-e-docs.des.es.gov.br.pfx");
             var certificadoMS = new MemoryStream(certificado);
 
             char[] PASSWORD = "kglZcWZ&yas95I$5".ToCharArray();
