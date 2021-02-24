@@ -2,12 +2,12 @@
 using Business.Helpers;
 using Business.Shared.Models;
 using Infrastructure;
-using Infrastructure.Models;
 using iText.Html2pdf;
 using iText.Kernel.Crypto;
 using iText.Kernel.Pdf;
 using iText.Kernel.Utils;
 using iText.Pdfa;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -20,10 +20,14 @@ namespace Business.Core
     {
         private const string Intent = "./wwwroot/resources/color/sRGB_CS_profile.icm";
         private readonly JsonData JsonData;
+        private readonly IAssinaturaDigitalCore AssinaturaDigitalCore;
+        private readonly ICarimboCore CarimboCore;
 
-        public TransformaPdfCore(JsonData jsonData, IAssinaturaDigitalCore assinaturaDigitalCore, ICarimboCore carimboCore, IExtracaoCore extracaoCore)
+        public TransformaPdfCore(JsonData jsonData, IAssinaturaDigitalCore assinaturaDigitalCore, ICarimboCore carimboCore)
         {
             JsonData = jsonData;
+            AssinaturaDigitalCore = assinaturaDigitalCore;
+            CarimboCore = carimboCore;
         }
 
         #region Validações
@@ -113,23 +117,44 @@ namespace Business.Core
 
         #region Outros
 
-        //public async Task<ApiResponse<PdfInfo>> PdfInfo(InputFile inputFile)
-        //{
-        //    await inputFile.IsValidAsync();
+        #region PdfInfo
 
-        //    ApiResponse<PdfInfo> result = null;
-        //    if (!string.IsNullOrWhiteSpace(inputFile.FileUrl))
-        //        result = await PdfInfo(inputFile.FileUrl);
-        //    else
-        //        result = PdfInfo(await inputFile.GetByteArray());
-        //    return result;
-        //}
+        public async Task<PdfInfo> PdfInfo(InputFile inputFile)
+        {
+            inputFile.IsValid();
 
-        public ApiResponse<PdfInfo> PdfInfo(byte[] file)
+            PdfInfo result = null;
+            if (!string.IsNullOrWhiteSpace(inputFile.FileUrl))
+                result = await PdfInfo(inputFile.FileUrl);
+            else
+                result = PdfInfo(inputFile.FileBytes);
+            
+            return result;
+        }
+
+        public async Task<PdfInfo> PdfInfo(string url)
+        {
+            byte[] arquivo = await JsonData.GetAndReadByteArrayAsync(url);
+            var resposta = PdfInfo(arquivo);
+            return resposta;
+        }
+
+        public PdfInfo PdfInfo(byte[] file)
         {
             Validations.ArquivoValido(file);
 
             using (MemoryStream memoryStream = new MemoryStream(file))
+            {
+                var pdfInfo = PdfInfo(memoryStream);
+                memoryStream.Close();
+                return pdfInfo;
+            }
+        }
+
+        public PdfInfo PdfInfo(MemoryStream memoryStream)
+        {
+            memoryStream.Seek(0, SeekOrigin.Begin);
+
             using (PdfReader pdfReader = new PdfReader(memoryStream))
             using (PdfDocument pdfDocument = new PdfDocument(pdfReader))
             {
@@ -141,18 +166,12 @@ namespace Business.Core
 
                 pdfDocument.Close();
                 pdfReader.Close();
-                memoryStream.Close();
 
-                return new ApiResponse<PdfInfo>(200, "success", fileInfo);
+                return fileInfo;
             }
         }
 
-        public async Task<ApiResponse<PdfInfo>> PdfInfo(string url)
-        {
-            byte[] arquivo = await JsonData.GetAndReadByteArrayAsync(url);
-            var resposta = PdfInfo(arquivo);
-            return resposta;
-        }
+        #endregion
 
         public byte[] RemoveAnnotations(byte[] file)
         {
@@ -288,114 +307,36 @@ namespace Business.Core
             return arquivoFinal;
         }
 
-        //public async Task<ValidationsResult> Validacoes(string url, string validations)
-        //{
-        //    var documentoFromUrl = await JsonData.GetAndDownloadAsync(url);
+        public async Task<ValidationsResult> Validacoes(string url, string validations)
+        {
+            var documentoFromUrl = await JsonData.GetAndReadByteArrayAsync(url);
 
-        //    var validationsSelector = JsonConvert.DeserializeObject<ValidationsSelector>(validations);
+            var validationsSelector = JsonConvert.DeserializeObject<ValidationsSelector>(validations);
 
-        //    var result = new ValidationsResult();
+            var result = new ValidationsResult();
 
-        //    try
-        //    {
-        //        using (var memoryStream = new MemoryStream(documentoFromUrl))
-        //        using (var pdfReader = new PdfReader(memoryStream))
-        //        using (var pdfDocument = new PdfDocument(pdfReader))
-        //        {
-        //            result.IsPdf = true;
-        //            result.PossuiRestricoesLeituraOuAlteracao = false;
+            using (var memoryStream = new MemoryStream(documentoFromUrl))
+            {
+                result.IsPdf = true;
+                result.PossuiRestricoesLeituraOuAlteracao = false;
 
-        //            #region Possui assinatura digital
-        //            if (validationsSelector.PossuiAssinaturaDigital)
-        //            {
-        //                try
-        //                {
-        //                    ItextSharp.PdfReader pdfReaderSignature = new ItextSharp.PdfReader(memoryStream);
-        //                    var assinaturas = pdfReaderSignature.AcroFields.GetSignatureNames().Count;
-        //                    if (assinaturas >= 1)
-        //                        result.PossuiAssinaturaDigital = true;
-        //                    else
-        //                        result.PossuiAssinaturaDigital = false;
-        //                }
-        //                catch (Exception)
-        //                {
-        //                    result.PossuiAssinaturaDigital = false;
-        //                }
-        //            }
-        //            #endregion
+                // Possui assinatura digital
+                result.PossuiAssinaturaDigital = AssinaturaDigitalCore.HasDigitalSignature(memoryStream);
 
-        //            #region Possui carimbo edocs
-        //            if (validationsSelector.RegularExpressionsParameters != null)
-        //            {
-        //                result.RegexResult = "";
+                // Possui carimbo edocs
+                result.RegexResult = CarimboCore.BuscarExpressoesRegulares(
+                    memoryStream, 
+                    validationsSelector.RegularExpressionsParameters.ExpressoesRegulares, 
+                    validationsSelector.RegularExpressionsParameters.Paginas);
 
-        //                if (validationsSelector.RegularExpressionsParameters.Paginas == null || validationsSelector.RegularExpressionsParameters.Paginas.Count() == 0)
-        //                    validationsSelector.RegularExpressionsParameters.Paginas = new List<int>(Enumerable.Range(1, pdfDocument.GetNumberOfPages()));
+                // Obter informações sobre o pdf
+                result.PdfInfo = PdfInfo(memoryStream);
 
-        //                foreach (var pagina in validationsSelector.RegularExpressionsParameters.Paginas)
-        //                {
-        //                    try
-        //                    {
-        //                        string pageText = PdfTextExtractor.GetTextFromPage(
-        //                            pdfDocument.GetPage(pagina),
-        //                            new SimpleTextExtractionStrategy()
-        //                        );
+                memoryStream.Close();
+            }
 
-        //                        foreach (var regexItem in validationsSelector.RegularExpressionsParameters.ExpressoesRegulares)
-        //                        {
-        //                            var registro = Regex.Match(pageText, regexItem);
-        //                            if (registro.Success)
-        //                            {
-        //                                result.RegexResult = registro.Value;
-        //                                break;
-        //                            }
-        //                        }
-        //                    }
-        //                    catch (Exception)
-        //                    {
-        //                        // Foi decidido que mesmo que o pdf apresente erros, o processo de leitura deve seguir adiante.
-        //                        // Portanto, assumiu-se o risco de que pode haver algum texto que atenda a expressão regular, mas que este pode ser ignorado.
-        //                    }
-        //                }
-        //            }
-        //            #endregion
-
-        //            #region PDF Info
-        //            if (validationsSelector.PdfInfo)
-        //            {
-        //                var fileInfo = new PdfInfo()
-        //                {
-        //                    NumberOfPages = pdfDocument.GetNumberOfPages(),
-        //                    FileLength = pdfReader.GetFileLength()
-        //                };
-
-        //                result.PdfInfo = fileInfo;
-        //            }
-        //            #endregion
-
-        //            pdfDocument.Close();
-        //            pdfReader.Close();
-        //            memoryStream.Close();
-        //        }
-        //    }
-        //    catch (ITextIOException)
-        //    {
-        //        result.PossuiRestricoesLeituraOuAlteracao = true;
-        //    }
-        //    catch (BadPasswordException)
-        //    {
-        //        result.PossuiRestricoesLeituraOuAlteracao = true;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        if (ex.Message.Contains("PDF header not found."))
-        //            result.IsPdf = false;
-        //        else
-        //            result.PossuiRestricoesLeituraOuAlteracao = true;
-        //    }
-
-        //    return result;
-        //}
+            return result;
+        }
 
         #endregion
 

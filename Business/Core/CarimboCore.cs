@@ -244,6 +244,17 @@ namespace Business.Core
         public string BuscarExpressoesRegulares(byte[] arquivo, IEnumerable<string> expressoesRegulares, IEnumerable<int> paginas)
         {
             using (MemoryStream memoryStream = new MemoryStream(arquivo))
+            {
+                var result = BuscarExpressoesRegulares(memoryStream, expressoesRegulares, paginas);
+                memoryStream.Close();
+                return result;
+            }
+        }
+
+        public string BuscarExpressoesRegulares(MemoryStream memoryStream, IEnumerable<string> expressoesRegulares, IEnumerable<int> paginas)
+        {
+            memoryStream.Seek(0, SeekOrigin.Begin);
+
             using (PdfReader pdfReader = new PdfReader(memoryStream))
             using (PdfDocument pdfDocument = new PdfDocument(pdfReader))
             {
@@ -267,7 +278,7 @@ namespace Business.Core
                                 return registro.Value;
                         }
                     }
-                    catch(Exception)
+                    catch (Exception)
                     {
                         // Foi decidido que mesmo que o pdf apresente erros, o processo de leitura deve seguir adiante.
                         // Portanto, assumiu-se o risco de que pode haver algum texto que atenda a expressão regular, mas que este pode ser ignorado.
@@ -276,7 +287,6 @@ namespace Business.Core
 
                 pdfDocument.Close();
                 pdfReader.Close();
-                memoryStream.Close();
 
                 return null;
             }

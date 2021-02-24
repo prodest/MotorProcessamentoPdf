@@ -2,6 +2,7 @@
 using API.Tools;
 using AutoMapper;
 using Business.Core.ICore;
+using Business.Shared.Models;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -26,12 +27,12 @@ namespace API.Controllers
 
         #region Validações
 
-        //[HttpPost]
-        //public async Task<IActionResult> Validacoes([FromForm] string url, [FromForm] string validacoes)
-        //{
-        //    var result = await TransformaPdfCore.Validacoes(url, validacoes);
-        //    return Ok(new ApiResponse<ValidationsResult>(200, "success", result));
-        //}
+        [HttpPost]
+        public async Task<IActionResult> Validacoes([FromForm] string url, [FromForm] string validacoes)
+        {
+            var result = await TransformaPdfCore.Validacoes(url, validacoes);
+            return Ok(new ApiResponse<ValidationsResult>(200, "success", result));
+        }
 
         [HttpPost]
         public async Task<IActionResult> IsPdf(IFormFile arquivo)
@@ -167,12 +168,22 @@ namespace API.Controllers
 
         #region Outros
 
-        //[HttpPost]
-        //public async Task<IActionResult> PdfInfo([FromForm]InputFile inputFile)
-        //{
-        //    var response = await TransformaPdfCore.PdfInfo(inputFile);
-        //    return Ok(response);
-        //}
+        #region PDF Info
+
+        [HttpPost]
+        public async Task<IActionResult> PdfInfo([FromForm]InputFileDto inputFileDto)
+        {
+            InputFile inputFile = Mapper.Map<InputFile>(inputFileDto);
+            var response = await TransformaPdfCore.PdfInfo(inputFile);
+            return Ok(new ApiResponse<PdfInfo>(200, "success", response));
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> PdfInfoUrl([FromForm] string url)
+        {
+            var response = await TransformaPdfCore.PdfInfo(url);
+            return Ok(new ApiResponse<PdfInfo>(200, "success", response));
+        }
 
         [HttpPost]
         public async Task<IActionResult> PdfInfo(IFormFile arquivo)
@@ -181,18 +192,13 @@ namespace API.Controllers
             {
                 var arquivoByteArray = await PdfTools.ObterArquivo(arquivo);
                 var response = TransformaPdfCore.PdfInfo(arquivoByteArray);
-                return Ok(response);
+                return Ok(new ApiResponse<PdfInfo>(200, "success", response));
             }
 
             return BadRequest();
         }
 
-        [HttpPost]
-        public async Task<IActionResult> PdfInfoUrl([FromForm] string url)
-        {
-            var response = await TransformaPdfCore.PdfInfo(url);
-            return Ok(response);
-        }
+        #endregion
 
         #region Concatenar Pdfs
 

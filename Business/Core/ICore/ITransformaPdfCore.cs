@@ -1,6 +1,7 @@
 ﻿using Business.Shared.Models;
 using Infrastructure.Models;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace Business.Core.ICore
@@ -20,8 +21,12 @@ namespace Business.Core.ICore
         bool PossuiRestricoes(byte[] file);
         Task<bool> PossuiRestricoes(string url);
         //Task<ApiResponse<PdfInfo>> PdfInfo(InputFile inputFile);
-        ApiResponse<PdfInfo> PdfInfo(byte[] file);
-        Task<ApiResponse<PdfInfo>> PdfInfo(string url);
-        //Task<ValidationsResult> Validacoes(string url, string validations);
+
+        Task<PdfInfo> PdfInfo(InputFile inputFile);
+        Task<PdfInfo> PdfInfo(string url);
+        PdfInfo PdfInfo(byte[] file);
+        PdfInfo PdfInfo(MemoryStream memoryStream);
+
+        Task<ValidationsResult> Validacoes(string url, string validations);
     }
 }

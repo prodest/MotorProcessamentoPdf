@@ -46,13 +46,28 @@ namespace Business.Core
         public async Task<bool> HasDigitalSignature(string url)
         {
             byte[] arquivo = await JsonData.GetAndReadByteArrayAsync(url);
+            
             var response = HasDigitalSignature(arquivo);
+            
             return response;
         }
 
         public bool HasDigitalSignature(byte[] file)
         {
             using (MemoryStream memoryStream = new MemoryStream(file))
+            {
+                var result = HasDigitalSignature(memoryStream);
+                
+                memoryStream.Close();
+                
+                return result;
+            }
+        }
+
+        public bool HasDigitalSignature(MemoryStream memoryStream)
+        {
+            memoryStream.Seek(0, SeekOrigin.Begin);
+
             using (PdfReader pdfReader = new PdfReader(memoryStream))
             using (PdfDocument pdfDocument = new PdfDocument(pdfReader))
             {
@@ -61,11 +76,10 @@ namespace Business.Core
 
                 pdfDocument.Close();
                 pdfReader.Close();
-                memoryStream.Close();
 
                 if (assinaturas?.Count >= 1)
                     return true;
-                else 
+                else
                     return false;
             }
         }
