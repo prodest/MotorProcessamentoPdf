@@ -171,7 +171,7 @@ namespace API.Controllers
         #region PDF Info
 
         [HttpPost]
-        public async Task<IActionResult> PdfInfo([FromForm]InputFileDto inputFileDto)
+        public async Task<IActionResult> InputFileByInputFile([FromForm]InputFileDto inputFileDto)
         {
             InputFile inputFile = Mapper.Map<InputFile>(inputFileDto);
             var response = await TransformaPdfCore.PdfInfo(inputFile);
