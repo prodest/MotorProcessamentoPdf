@@ -169,18 +169,6 @@ namespace Business.Core
                     pdfReader, outputMemoryStream,
                     new StampingProperties());
 
-                // Create the signature appearance
-                iText.Kernel.Geom.Rectangle rect = new iText.Kernel.Geom.Rectangle(36, 648, 200, 100);
-                PdfSignatureAppearance appearance = signer.GetSignatureAppearance();
-                appearance.SetReason(reason)
-                    .SetLocation(location)
-                    // Specify if the appearance before field is signed will be used
-                    // as a background for the signed field. The "false" value is the default value.
-                    .SetReuseAppearance(false)
-                    .SetPageRect(rect)
-                    .SetPageNumber(1);
-                signer.SetFieldName("sig");
-
                 IExternalSignature pks = new PrivateKeySignature(pk, digestAlgorithm);
 
                 try
