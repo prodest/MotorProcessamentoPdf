@@ -4,6 +4,7 @@ using BusinessItextSharp.Models;
 using Infrastructure;
 using Infrastructure.Models;
 using iTextSharp.text.pdf;
+using Microsoft.Extensions.Configuration;
 using Org.BouncyCastle.Crypto;
 using Org.BouncyCastle.Pkcs;
 using System;
@@ -25,11 +26,13 @@ namespace BusinessItextSharp.Core
         private static string message = "\nConsidere capturar este documento como \"cópia\".";
         private readonly JsonData JsonData;
         private readonly IMapper Mapper;
+        private readonly IConfiguration Configuration;
 
-        public AssinaturaDigitalCore(JsonData jsonData, IMapper mapper)
+        public AssinaturaDigitalCore(JsonData jsonData, IMapper mapper, IConfiguration configuration)
         {
             JsonData = jsonData;
             Mapper = mapper;
+            Configuration = configuration;
         }
 
         #region Validate Digital Signatures
@@ -260,10 +263,14 @@ namespace BusinessItextSharp.Core
 
         public CertificadoDigitalDto ObterInformacoesCertificadoDigital()
         {
-            string KEYSTORE = $@"{Path.GetDirectoryName(Assembly.GetExecutingAssembly().CodeBase)}\Resources\teste-e-docs.des.es.gov.br.pfx".Replace(@"file:\", "");
-            char[] PASSWORD = "kglZcWZ&yas95I$5".ToCharArray();
+            string keystoreRoot = $@"{Path.GetDirectoryName(Assembly.GetExecutingAssembly().CodeBase)}".Replace(@"file:\", "");
+            string keystorePath = Configuration.GetSection("CertificadoDigitalEdocs").Value;
+            string keystore = $@"{keystoreRoot}\{keystorePath}";
 
-            Pkcs12Store pk12 = new Pkcs12Store(new FileStream(KEYSTORE, FileMode.Open, FileAccess.Read), PASSWORD);
+            var certificado = new FileStream(keystore, FileMode.Open, FileAccess.Read);
+            char[] password = "kglZcWZ&yas95I$5".ToCharArray();
+            Pkcs12Store pk12 = new Pkcs12Store(certificado, password);
+
             string alias = null;
             foreach (var a in pk12.Aliases)
             {
@@ -280,9 +287,9 @@ namespace BusinessItextSharp.Core
                 chain[k] = ce[k].Certificate;
             }
 
-            var certificado = new CertificadoDigital(new X509Certificate2(chain[0].GetEncoded()));
+            var certificadoDigital = new CertificadoDigital(new X509Certificate2(chain[0].GetEncoded()));
 
-            var certificadoDigitalDto = Mapper.Map<CertificadoDigitalDto>(certificado);
+            var certificadoDigitalDto = Mapper.Map<CertificadoDigitalDto>(certificadoDigital);
 
             return certificadoDigitalDto;
         }
