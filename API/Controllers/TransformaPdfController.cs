@@ -115,9 +115,9 @@ namespace API.Controllers
         #region Possui Assinatura Digital
 
         [HttpPost]
-        public IActionResult HasDigitalSignature(IFormFile arquivo)
+        public async Task<IActionResult> HasDigitalSignature(IFormFile arquivo)
         {
-            var file = Mapper.Map<byte[]>(arquivo);
+            var file = await Mapper.Map<Task<byte[]>>(arquivo);
             var response = AssinaturaDigitalCore.HasDigitalSignature(file);
             return Ok(new ApiResponse<object>(200, "success", response));
         }
@@ -136,7 +136,7 @@ namespace API.Controllers
         [HttpPost]
         public async Task<IActionResult> ValidarAssinaturaDigital(IFormFile arquivo)
         {
-            var arquivoBytes = Mapper.Map<byte[]>(arquivo);
+            var arquivoBytes = await Mapper.Map<Task<byte[]>>(arquivo);
             var result = await AssinaturaDigitalCore.SignatureValidation(arquivoBytes);
             return Ok(result);
         }
@@ -155,7 +155,7 @@ namespace API.Controllers
         [HttpPost]
         public async Task<IActionResult> AdicionarAssinaturaDigital([FromForm]InputFileDto inputFileDto, [FromForm]string signatureFieldName)
         {
-            var inputFile = Mapper.Map<InputFile>(inputFileDto);
+            var inputFile = await Mapper.Map<Task<InputFile>>(inputFileDto);
             var documentoAssinado = await AssinaturaDigitalCore.AdicionarAssinaturaDigital(inputFile, signatureFieldName);
             return File(documentoAssinado, "application/octet-stream"); ;
         }
@@ -173,7 +173,7 @@ namespace API.Controllers
         [HttpPost]
         public async Task<IActionResult> InputFileByInputFile([FromForm]InputFileDto inputFileDto)
         {
-            InputFile inputFile = Mapper.Map<InputFile>(inputFileDto);
+            InputFile inputFile = await Mapper.Map<Task<InputFile>>(inputFileDto);
             var response = await TransformaPdfCore.PdfInfo(inputFile);
             return Ok(new ApiResponse<PdfInfo>(200, "success", response));
         }

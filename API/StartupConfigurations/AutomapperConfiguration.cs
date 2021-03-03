@@ -3,6 +3,7 @@ using AutoMapper;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace API.StartupConfigurations
 {
@@ -12,8 +13,8 @@ namespace API.StartupConfigurations
         {
             // configurar automapper
             var config = new MapperConfiguration(cfg => {
-                cfg.CreateMap<InputFileDto, InputFile>().ConvertUsing<InputFileDTOToInputFile>();
-                cfg.CreateMap<IFormFile, byte[]>().ConvertUsing<IFormFileToByteArray>();
+                cfg.CreateMap<InputFileDto, Task<InputFile>>().ConvertUsing<InputFileDTOToInputFile>();
+                cfg.CreateMap<IFormFile, Task<byte[]>>().ConvertUsing<IFormFileToByteArray>();
             });
 
             IMapper mapper = config.CreateMapper();
@@ -22,40 +23,40 @@ namespace API.StartupConfigurations
             return services;
         }
 
-        public class InputFileDTOToInputFile : ITypeConverter<InputFileDto, InputFile>
+        public class InputFileDTOToInputFile : ITypeConverter<InputFileDto, Task<InputFile>>
         {
-            public InputFile Convert(InputFileDto source, InputFile destination, ResolutionContext context)
+            public async Task<InputFile> Convert(InputFileDto source, Task<InputFile> destination, ResolutionContext context)
             {
                 InputFile inputFile = new InputFile();
-                inputFile.FileUrl = source.FileUrl;
-                
-                // TODO(Marcelo): Pesquisar a possibilidade de usar async
-                if(source.FileBytes != null)
+
+                if (source?.FileBytes != null)
                 {
                     using (var memoryStream = new MemoryStream())
                     {
-                        source.FileBytes.CopyTo(memoryStream);
-                        inputFile.FileBytes = memoryStream.ToArray(); 
+                        await source.FileBytes.CopyToAsync(memoryStream);
+                        inputFile.FileBytes = memoryStream.ToArray();
                         memoryStream.Close();
                     }
                 }
+
+                if (source?.FileUrl != null)
+                    inputFile.FileUrl = source.FileUrl;
 
                 return inputFile;
             }
         }
 
-        public class IFormFileToByteArray : ITypeConverter<IFormFile, byte[]>
+        public class IFormFileToByteArray : ITypeConverter<IFormFile, Task<byte[]>>
         {
-            public byte[] Convert(IFormFile source, byte[] destination, ResolutionContext context)
+            public async Task<byte[]> Convert(IFormFile source, Task<byte[]> destination, ResolutionContext context)
             {
                 byte[] byteArray;
                 using (var memoryStream = new MemoryStream())
                 {
-                    source.CopyTo(memoryStream);
+                    await source. CopyToAsync(memoryStream);
                     byteArray = memoryStream.ToArray();
                     memoryStream.Close();
                 }
-
                 return byteArray;
             }
         }

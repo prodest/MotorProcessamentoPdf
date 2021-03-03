@@ -76,7 +76,7 @@ namespace API.Controllers
         [HttpPost]
         public async Task<IActionResult> Documento(IFormFile arquivo, [FromForm] string registro, [FromForm] int natureza, [FromForm] int valorLegal, [FromForm] DateTime dataHora)
         {
-            var arquivoBytes = Mapper.Map<byte[]>(arquivo);
+            var arquivoBytes = await Mapper.Map<Task<byte[]>>(arquivo);
             var arquivoCarimbado = CarimboCore.Documento(
                 arquivoBytes,
                 registro,
@@ -89,7 +89,7 @@ namespace API.Controllers
         [HttpPost]
         public async Task<IActionResult> DocumentoByFile(IFormFile arquivo, [FromForm] string registro, [FromForm] int natureza, [FromForm] int valorLegal, [FromForm] DateTime dataHora)
         {
-            var arquivoBytes = Mapper.Map<byte[]>(arquivo);
+            var arquivoBytes = await Mapper.Map<Task<byte[]>>(arquivo);
             var arquivoCarimbado = CarimboCore.Documento(
                 arquivoBytes,
                 registro,

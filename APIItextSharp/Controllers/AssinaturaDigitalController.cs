@@ -24,9 +24,9 @@ namespace APIItextSharp.Controllers
         #region Possui Assinatura Digital
 
         [HttpPost]
-        public IActionResult HasDigitalSignature(IFormFile arquivo)
+        public async Task<IActionResult> HasDigitalSignature(IFormFile arquivo)
         {
-            var arquivoByteArray = Mapper.Map<byte[]>(arquivo);
+            var arquivoByteArray = await Mapper.Map<Task<byte[]>>(arquivo);
             var response = AssinaturaDigitalCore.HasDigitalSignature(arquivoByteArray);
             return Ok(response);
         }
@@ -46,7 +46,7 @@ namespace APIItextSharp.Controllers
         [Route("/api/TransformaPdf/ValidarAssinaturaDigital")]
         public async Task<IActionResult> ValidarAssinaturaDigital(IFormFile arquivo)
         {
-            var arquivoByteArray = Mapper.Map<byte[]>(arquivo);
+            var arquivoByteArray = await Mapper.Map<Task<byte[]>>(arquivo);
             var result = await AssinaturaDigitalCore.SignatureValidation(arquivoByteArray);
             var certificadoDigitalDto = Mapper.Map<IEnumerable<CertificadoDigitalDto>>(result);
             return Ok(new ApiResponse<IEnumerable<CertificadoDigitalDto>>(200, "success", certificadoDigitalDto));
