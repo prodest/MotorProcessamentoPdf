@@ -153,10 +153,10 @@ namespace API.Controllers
         #region Adicionar Assinatura Digital
 
         [HttpPost]
-        public async Task<IActionResult> AdicionarAssinaturaDigital([FromForm] InputFileDto inputFileDto)
+        public async Task<IActionResult> AdicionarAssinaturaDigital([FromForm]InputFileDto inputFileDto, [FromForm]string signatureFieldName)
         {
             var inputFile = Mapper.Map<InputFile>(inputFileDto);
-            var documentoAssinado = await AssinaturaDigitalCore.AdicionarAssinaturaDigital(inputFile);
+            var documentoAssinado = await AssinaturaDigitalCore.AdicionarAssinaturaDigital(inputFile, signatureFieldName);
             return File(documentoAssinado, "application/octet-stream"); ;
         }
 

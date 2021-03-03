@@ -102,27 +102,27 @@ namespace Business.Core
 
         #endregion
 
-        public async Task<byte[]> AdicionarAssinaturaDigital(InputFile inputFile)
+        public async Task<byte[]> AdicionarAssinaturaDigital(InputFile inputFile, string signatureFieldName)
         {
             inputFile.IsValid();
 
-            byte[] dococumentoAssinado = null;
+            byte[] dococumentoAssinado;
             if (inputFile.FileUrl != null)
-                dococumentoAssinado = await AdicionarAssinaturaDigital(inputFile.FileUrl);
+                dococumentoAssinado = await AdicionarAssinaturaDigital(inputFile.FileUrl, signatureFieldName);
             else
-                dococumentoAssinado = AdicionarAssinaturaDigital(inputFile.FileBytes);
+                dococumentoAssinado = AdicionarAssinaturaDigital(inputFile.FileBytes, signatureFieldName);
 
             return dococumentoAssinado;
         }
 
-        private async Task<byte[]> AdicionarAssinaturaDigital(string url)
+        private async Task<byte[]> AdicionarAssinaturaDigital(string url, string signatureFieldName)
         {
             byte[] documento = await JsonData.GetAndReadByteArrayAsync(url);
-            var documentoCarimbado = AdicionarAssinaturaDigital(documento);
+            var documentoCarimbado = AdicionarAssinaturaDigital(documento, signatureFieldName);
             return documentoCarimbado;
         }
 
-        private byte[] AdicionarAssinaturaDigital(byte[] fileBytes)
+        private byte[] AdicionarAssinaturaDigital(byte[] fileBytes, string signatureFieldName)
         {
             string keystoreRoot = $@"{Path.GetDirectoryName(Assembly.GetExecutingAssembly().CodeBase)}".Replace(@"file:\", "");
             string keystorePath = Configuration.GetSection("CertificadoDigitalEdocs").Value;
@@ -150,8 +150,8 @@ namespace Business.Core
                 fileBytes, chain, pk,
                 DigestAlgorithms.SHA512,
                 PdfSigner.CryptoStandard.CADES,
-                "Motivo de teste", 
-                "Local de teste");
+                signatureFieldName
+            );
 
             return documentoAssinado;
         }
@@ -159,7 +159,7 @@ namespace Business.Core
         #region Métodos privados
 
         private byte[] Sign(byte[] src, Org.BouncyCastle.X509.X509Certificate[] chain, ICipherParameters pk,
-            string digestAlgorithm, PdfSigner.CryptoStandard subfilter, string reason, string location)
+            string digestAlgorithm, PdfSigner.CryptoStandard subfilter, string registroDocumento)
         {
             using (MemoryStream outputMemoryStream = new MemoryStream())
             using (MemoryStream memoryStream = new MemoryStream(src))
@@ -168,6 +168,8 @@ namespace Business.Core
                 PdfSigner signer = new PdfSigner(
                     pdfReader, outputMemoryStream,
                     new StampingProperties());
+
+                signer.SetFieldName(registroDocumento);
 
                 IExternalSignature pks = new PrivateKeySignature(pk, digestAlgorithm);
 
