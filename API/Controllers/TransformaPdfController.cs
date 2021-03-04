@@ -7,6 +7,7 @@ using Infrastructure.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -158,6 +159,14 @@ namespace API.Controllers
             var inputFile = await Mapper.Map<Task<InputFile>>(inputFileDto);
             var documentoAssinado = await AssinaturaDigitalCore.AdicionarAssinaturaDigital(inputFile, signatureFieldName);
             return File(documentoAssinado, "application/octet-stream"); ;
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ValidarHashDocumento([FromForm] InputFileDto inputFileDto, [FromForm]string HashDoBanco)
+        {
+            using Stream stream = inputFileDto.FileBytes.OpenReadStream();
+            var documentoAssinado = await AssinaturaDigitalCore.ValidarHashDocumento(stream, HashDoBanco);
+            return Ok(documentoAssinado);
         }
 
         #endregion

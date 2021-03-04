@@ -10,7 +10,9 @@ using Org.BouncyCastle.Pkcs;
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
+using System.Security.Cryptography;
 using System.Threading.Tasks;
 
 namespace Business.Core
@@ -156,10 +158,32 @@ namespace Business.Core
             return documentoAssinado;
         }
 
+        public async Task<bool> ValidarHashDocumento(Stream stream, string hashDoBancoString)
+        {
+            // obter hash do documento postado
+            HashAlgorithm sha512 = SHA512.Create();
+            byte[] document = new byte[stream.Length];
+            await stream.ReadAsync(document, 0, (int)stream.Length);
+            var Hash = sha512.ComputeHash(document);
+
+            // converter representação hexadecimal em byte[]
+            hashDoBancoString = hashDoBancoString.Substring(2, hashDoBancoString.Length - 2);
+            var hashDoBancoBytes = Enumerable.Range(0, hashDoBancoString.Length)
+                .Where(x => x % 2 == 0)
+                .Select(x => Convert.ToByte(hashDoBancoString.Substring(x, 2), 16))
+                .ToArray();
+
+            if (Hash.SequenceEqual(hashDoBancoBytes))
+                return true;
+            else
+                return false;
+        }
+
         #region Métodos privados
 
         private byte[] Sign(byte[] src, Org.BouncyCastle.X509.X509Certificate[] chain, ICipherParameters pk,
-            string digestAlgorithm, PdfSigner.CryptoStandard subfilter, string registroDocumento)
+            string digestAlgorithm, PdfSigner.CryptoStandard subfilter, string signatureFieldName
+        )
         {
             using (MemoryStream outputMemoryStream = new MemoryStream())
             using (MemoryStream memoryStream = new MemoryStream(src))
@@ -167,9 +191,10 @@ namespace Business.Core
             {
                 PdfSigner signer = new PdfSigner(
                     pdfReader, outputMemoryStream,
-                    new StampingProperties());
+                    new StampingProperties().UseAppendMode()
+                );
 
-                signer.SetFieldName(registroDocumento);
+                signer.SetFieldName(signatureFieldName);
 
                 IExternalSignature pks = new PrivateKeySignature(pk, digestAlgorithm);
 
@@ -190,6 +215,27 @@ namespace Business.Core
 
                 return documentoAssinado;
             }
+        }
+
+        private async Task<byte[]> AdicionarMetadados(byte[] input, KeyValuePair<string, string> customMetadaData)
+        {
+            byte[] output;
+            using (PdfReader pdfReader = new PdfReader(new MemoryStream(input)))
+            using (MemoryStream outputStream = new MemoryStream())
+            using (PdfWriter pdfWriter = new PdfWriter(outputStream))
+            using (PdfDocument pdfDocument = new PdfDocument(pdfReader, pdfWriter))
+            {
+                pdfDocument.GetDocumentInfo().SetMoreInfo(customMetadaData.Key, customMetadaData.Value);
+                pdfDocument.Close();
+
+                output = outputStream.ToArray();
+
+                pdfWriter.Close();
+                outputStream.Close();
+                pdfReader.Close();
+            }
+
+            return output;
         }
 
         #endregion

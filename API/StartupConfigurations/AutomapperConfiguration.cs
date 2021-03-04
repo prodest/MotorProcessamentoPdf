@@ -51,12 +51,14 @@ namespace API.StartupConfigurations
             public async Task<byte[]> Convert(IFormFile source, Task<byte[]> destination, ResolutionContext context)
             {
                 byte[] byteArray;
+
                 using (var memoryStream = new MemoryStream())
                 {
-                    await source. CopyToAsync(memoryStream);
+                    await source.CopyToAsync(memoryStream);
                     byteArray = memoryStream.ToArray();
                     memoryStream.Close();
                 }
+
                 return byteArray;
             }
         }
