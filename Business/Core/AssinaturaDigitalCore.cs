@@ -102,6 +102,19 @@ namespace Business.Core
             return response;
         }
 
+        public void SignatureValidationV2(byte[] arquivoBytes)
+        {
+            using PdfReader pdfReader = new PdfReader(new MemoryStream(arquivoBytes));
+            using PdfDocument pdfDocument = new PdfDocument(pdfReader);
+            SignatureUtil signatureUtil = new SignatureUtil(pdfDocument);
+            foreach (var signatureName in signatureUtil.GetSignatureNames())
+            {
+                var aaaa = signatureUtil.SignatureCoversWholeDocument(signatureName);
+                PdfPKCS7 signatureData = signatureUtil.ReadSignatureData(signatureName);
+                var bbbb = signatureData.VerifySignatureIntegrityAndAuthenticity();
+            }
+        }
+
         #endregion
 
         public async Task<byte[]> AdicionarAssinaturaDigital(InputFile inputFile, string signatureFieldName)
@@ -177,6 +190,17 @@ namespace Business.Core
                 return true;
             else
                 return false;
+        }
+
+        public IList<string> ObterSignatureFieldName(Stream stream)
+        {
+            using PdfReader pdfReader = new PdfReader(stream);
+            using PdfDocument pdfDocument = new PdfDocument(pdfReader);
+
+            SignatureUtil signUtil = new SignatureUtil(pdfDocument);
+            var assinaturas = signUtil.GetSignatureNames();
+
+            return assinaturas;
         }
 
         #region Métodos privados

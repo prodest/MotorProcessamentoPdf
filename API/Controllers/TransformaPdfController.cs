@@ -142,6 +142,14 @@ namespace API.Controllers
             return Ok(result);
         }
 
+        //[HttpPost]
+        //public async Task<IActionResult> ValidarAssinaturaDigitalV2(IFormFile arquivo)
+        //{
+        //    var arquivoBytes = await Mapper.Map<Task<byte[]>>(arquivo);
+        //    AssinaturaDigitalCore.SignatureValidationV2(arquivoBytes);
+        //    return Ok("nice!");
+        //}
+
         [HttpPost]
         public async Task<IActionResult> ValidarAssinaturaDigitalByUrl([FromForm] string url)
         {
@@ -150,8 +158,6 @@ namespace API.Controllers
         }
 
         #endregion
-
-        #region Adicionar Assinatura Digital
 
         [HttpPost]
         public async Task<IActionResult> AdicionarAssinaturaDigital([FromForm]InputFileDto inputFileDto, [FromForm]string signatureFieldName)
@@ -169,7 +175,13 @@ namespace API.Controllers
             return Ok(documentoAssinado);
         }
 
-        #endregion
+        [HttpPost]
+        public IActionResult ObterListaSignatureFieldName([FromForm] InputFileDto inputFileDto)
+        {
+            using Stream stream = inputFileDto.FileBytes.OpenReadStream();
+            IList<string> signatureFieldName = AssinaturaDigitalCore.ObterSignatureFieldName(stream);
+            return Ok(signatureFieldName);
+        }
 
         #endregion
 

@@ -14,9 +14,12 @@ namespace Business.Core.ICore
 
         Task<ApiResponse<IEnumerable<CertificadoDigitalDto>>> SignatureValidation(string url);
         Task<ApiResponse<IEnumerable<CertificadoDigitalDto>>> SignatureValidation(byte[] file);
+        void SignatureValidationV2(byte[] arquivoBytes);
 
         Task<byte[]> AdicionarAssinaturaDigital(InputFile inputFile, string registroDocumento);
         
         Task<bool> ValidarHashDocumento(Stream stream, string hashDoBanco);
+
+        IList<string> ObterSignatureFieldName(Stream stream);
     }
 }
