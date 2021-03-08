@@ -167,27 +167,18 @@ namespace BusinessItextSharp.Core
             
             DocumentoPossuiAssinaturaDigital(reader);
 
-            var orderedSignatureNames = GetOrderedSignatureNames(reader);
-
-            // ordernar as posições das tabelas de referência cruzada
-            List<int> XrefByteOffsetOrdered = reader.XrefByteOffset.Cast<int>().ToList();
-            XrefByteOffsetOrdered.Sort();
-
-            var assinaramTodoDocumentoSN = reader.SignaturesCoverWholeDocument().Cast<string>().ToList();
-
-            List<KeyValuePair<string, string>> naoAssinaramTodoDocumento = new List<KeyValuePair<string, string>>();
-            List<KeyValuePair<string, string>> assinaramTodoDocumento = new List<KeyValuePair<string, string>>();
-            List<KeyValuePair<string, CertificadoDigital>> listaCertificados = new List<KeyValuePair<string, CertificadoDigital>>();
-            foreach (string signatureName in orderedSignatureNames)
+            var digitalCertificateList = new List<CertificadoDigital>();
+            var signatureNameList = reader.AcroFields.GetSignatureNames();
+            foreach (string signatureName in signatureNameList)
             {
                 PdfPkcs7 pkcs7 = reader.AcroFields.VerifySignature(signatureName);
 
+                // validação do certificado via outbound
                 var messages = await OnlineChainValidation(pkcs7.SigningCertificate.GetEncoded());
                 if (!string.IsNullOrWhiteSpace(messages))
                     throw new Exception(messages);
 
                 CertificadoDigital cert = new CertificadoDigital(pkcs7);
-                listaCertificados.Add(new KeyValuePair<string, CertificadoDigital>(signatureName, cert));
 
                 // validations
                 ValidCertificateChain(cert);
@@ -202,23 +193,10 @@ namespace BusinessItextSharp.Core
                 if (cert.PessoaJuridica != null)
                     pessoa += $" ({cert.PessoaJuridica.RazaoSocial.ToUpper()})";
 
-                if (!assinaramTodoDocumentoSN.Contains(signatureName))
-                    naoAssinaramTodoDocumento.Add(new KeyValuePair<string, string>(pessoa, signatureName));
-                else
-                    assinaramTodoDocumento.Add(new KeyValuePair<string, string>(pessoa, signatureName));
+                digitalCertificateList.Add(cert);
             }
 
-            // Deixar apenas a última assinatura de cada pessoa/cnpj
-            var distinctSignersList = RemoverAssinaturasDuplicadas(assinaramTodoDocumento);
-            var distinctNaoAssinaramTodoDocumento = RemoverAssinaturasDuplicadas(naoAssinaramTodoDocumento);
-
-            TodosAssinaramDocumentoPorInteiro(distinctNaoAssinaramTodoDocumento);
-
-            var distinctCert = listaCertificados
-                .Where(x => distinctSignersList.Select(y => y.Value).Contains(x.Key))
-                .Select(x => x.Value);
-
-            return distinctCert;
+            return digitalCertificateList;
         }
 
         #endregion
