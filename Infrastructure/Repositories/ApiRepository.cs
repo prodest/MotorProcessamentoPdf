@@ -1,4 +1,5 @@
 ﻿using Infrastructure.Models;
+using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
@@ -10,11 +11,12 @@ namespace Infrastructure.Repositories
     public class ApiRepository : IApiRepository
     {
         private readonly JsonData JsonData;
-        private static string PDF_MOTOR_PROCESSAMENTO_PDF = "http://localhost:61442";
+        private static string PDF_MOTOR_PROCESSAMENTO_PDF;
 
-        public ApiRepository(JsonData jsonData)
+        public ApiRepository(JsonData jsonData, IConfiguration config)
         {
             JsonData = jsonData;
+            PDF_MOTOR_PROCESSAMENTO_PDF = config.GetValue<string>("APIItextSharp");
         }
 
         public async Task<ApiResponse<IEnumerable<CertificadoDigitalDto>>> ValidarAssinaturaDigitalAsync(byte[] arquivo)
