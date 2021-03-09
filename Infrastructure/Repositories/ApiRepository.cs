@@ -36,7 +36,7 @@ namespace Infrastructure.Repositories
 
                 multipartContent.Add(streamContent, "arquivo");
 
-                var result = await JsonData.PostAndReadObjectAsync<ApiResponse<IEnumerable<CertificadoDigitalDto>>>(
+                var result = await JsonData.PostAndReadObjectAsync<IEnumerable<CertificadoDigitalDto>>(
                     PDF_MOTOR_PROCESSAMENTO_PDF + "/api/TransformaPdf/ValidarAssinaturaDigital",
                     multipartContent);
 
@@ -50,7 +50,7 @@ namespace Infrastructure.Repositories
             {
                 multipartFormDataContent.Add(new StringContent(url), "url");
                 
-                var result = await JsonData.PostAndReadObjectAsync<ApiResponse<IEnumerable<CertificadoDigitalDto>>>(
+                var result = await JsonData.PostAndReadObjectAsync<IEnumerable<CertificadoDigitalDto>>(
                     PDF_MOTOR_PROCESSAMENTO_PDF + "/api/TransformaPdf/ValidarAssinaturaDigitalByUrl",
                     multipartFormDataContent);
                 

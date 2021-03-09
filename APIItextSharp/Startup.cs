@@ -1,3 +1,4 @@
+using APIItextSharp.Filters;
 using APIItextSharp.StartupConfigurations;
 using BusinessItextSharp.Core;
 using Elastic.Apm.AspNetCore;
@@ -29,6 +30,9 @@ namespace APIItextSharp
             services.AddScoped<IAssinaturaDigitalCore, AssinaturaDigitalCore>();
             services.AddScoped<JsonData, JsonData>();
             services.AddHttpClient();
+            services.AddControllers(options =>
+                options.Filters.Add(new HttpResponseExceptionFilter())
+            );
 
             services.AddControllers();
 
