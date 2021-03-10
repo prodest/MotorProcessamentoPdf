@@ -140,11 +140,12 @@ namespace Business.Core
         private byte[] AdicionarAssinaturaDigital(byte[] fileBytes, string signatureFieldName)
         {
             string keystoreRoot = $@"{Path.GetDirectoryName(Assembly.GetExecutingAssembly().CodeBase)}".Replace(@"file:\", "");
-            string keystorePath = Configuration.GetSection("CertificadoDigitalEdocs").Value;
+            string keystorePath = Configuration["DigitalCertificate:Keystore"];
             string keystore = $@"{keystoreRoot}\{keystorePath}";
 
+            string passwordString = Configuration["DigitalCertificate:Password"];
+            char[] password = passwordString.ToCharArray();
             var certificado = new FileStream(keystore, FileMode.Open, FileAccess.Read);
-            char[] password = "kglZcWZ&yas95I$5".ToCharArray();
             Pkcs12Store pk12 = new Pkcs12Store(certificado, password);
 
             string alias = null;
