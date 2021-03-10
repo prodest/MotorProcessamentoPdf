@@ -20,6 +20,6 @@ namespace Business.Core.ICore
         
         Task<bool> ValidarHashDocumento(Stream stream, string hashDoBanco);
 
-        IList<string> ObterSignatureFieldName(Stream stream);
+        Task<ICollection<string>> ObterSignatureFieldName(InputFile inputFile);
     }
 }

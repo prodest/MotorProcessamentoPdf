@@ -176,11 +176,11 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        public IActionResult ObterListaSignatureFieldName([FromForm] InputFileDto inputFileDto)
+        public async Task<IActionResult> ObterListaSignatureFieldName([FromForm] InputFileDto inputFileDto)
         {
-            using Stream stream = inputFileDto.FileBytes.OpenReadStream();
-            IList<string> signatureFieldName = AssinaturaDigitalCore.ObterSignatureFieldName(stream);
-            return Ok(signatureFieldName);
+            var inputFile = await Mapper.Map<Task<InputFile>>(inputFileDto);
+            ICollection<string> signatureFieldName = await AssinaturaDigitalCore.ObterSignatureFieldName(inputFile);
+            return Ok(new ApiResponse<ICollection<string>>(200, "success", signatureFieldName));
         }
 
         #endregion

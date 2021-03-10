@@ -192,9 +192,29 @@ namespace Business.Core
                 return false;
         }
 
-        public IList<string> ObterSignatureFieldName(Stream stream)
+        public async Task<ICollection<string>> ObterSignatureFieldName(InputFile inputFile)
         {
-            using PdfReader pdfReader = new PdfReader(stream);
+            inputFile.IsValid();
+
+            ICollection<string> dococumentoAssinado;
+            if (inputFile.FileUrl != null)
+                dococumentoAssinado = await ObterSignatureFieldName(inputFile.FileUrl);
+            else
+                dococumentoAssinado = ObterSignatureFieldName(inputFile.FileBytes);
+
+            return dococumentoAssinado;
+        }
+
+        private async Task<ICollection<string>> ObterSignatureFieldName(string url)
+        {
+            byte[] documento = await JsonData.GetAndReadByteArrayAsync(url);
+            var documentoCarimbado = ObterSignatureFieldName(documento);
+            return documentoCarimbado;
+        }
+
+        private ICollection<string> ObterSignatureFieldName(byte[] fileBytes)
+        {
+            using PdfReader pdfReader = new PdfReader(new MemoryStream(fileBytes));
             using PdfDocument pdfDocument = new PdfDocument(pdfReader);
 
             SignatureUtil signUtil = new SignatureUtil(pdfDocument);
