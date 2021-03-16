@@ -172,22 +172,40 @@ namespace Business.Core
             return documentoAssinado;
         }
 
-        public async Task<bool> ValidarHashDocumento(Stream stream, string hashDoBancoString)
+        public async Task<bool> ValidarHashDocumento(InputFile inputFile, string hash)
         {
-            // obter hash do documento postado
-            HashAlgorithm sha512 = SHA512.Create();
-            byte[] document = new byte[stream.Length];
-            await stream.ReadAsync(document, 0, (int)stream.Length);
-            var Hash = sha512.ComputeHash(document);
+            inputFile.IsValid();
 
+            bool documentoAutentico;
+            if (!string.IsNullOrWhiteSpace(inputFile.FileUrl))
+                documentoAutentico = await ValidarHashDocumento(inputFile.FileUrl, hash);
+            else
+                documentoAutentico = ValidarHashDocumento(inputFile.FileBytes, hash);
+
+            return documentoAutentico;
+        }
+
+        private async Task<bool> ValidarHashDocumento(string fileUrl, string hash)
+        {
+            byte[] file = await JsonData.GetAndReadByteArrayAsync(fileUrl);
+            bool documentoAutentico = ValidarHashDocumento(file, hash);
+            return documentoAutentico;
+        }
+
+        private bool ValidarHashDocumento(byte[] fileBytes, string hash)
+        {
             // converter representação hexadecimal em byte[]
-            hashDoBancoString = hashDoBancoString.Substring(2, hashDoBancoString.Length - 2);
-            var hashDoBancoBytes = Enumerable.Range(0, hashDoBancoString.Length)
+            hash = hash.Substring(2, hash.Length - 2);
+            byte[] hashArray = Enumerable.Range(0, hash.Length)
                 .Where(x => x % 2 == 0)
-                .Select(x => Convert.ToByte(hashDoBancoString.Substring(x, 2), 16))
+                .Select(x => Convert.ToByte(hash.Substring(x, 2), 16))
                 .ToArray();
 
-            if (Hash.SequenceEqual(hashDoBancoBytes))
+            // obter hash do documento postado
+            HashAlgorithm sha512 = SHA512.Create();
+            byte[] hashCalculado = sha512.ComputeHash(fileBytes);
+
+            if (hashCalculado.SequenceEqual(hashArray))
                 return true;
             else
                 return false;

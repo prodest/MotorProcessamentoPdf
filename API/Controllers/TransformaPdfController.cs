@@ -168,11 +168,11 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> ValidarHashDocumento([FromForm] InputFileDto inputFileDto, [FromForm]string HashDoBanco)
+        public async Task<IActionResult> ValidarHashDocumento([FromForm] InputFileDto inputFileDto, [FromForm]string hash)
         {
-            using Stream stream = inputFileDto.FileBytes.OpenReadStream();
-            var documentoAssinado = await AssinaturaDigitalCore.ValidarHashDocumento(stream, HashDoBanco);
-            return Ok(documentoAssinado);
+            var inputFile = await Mapper.Map<Task<InputFile>>(inputFileDto);
+            var documentoAutentico = await AssinaturaDigitalCore.ValidarHashDocumento(inputFile, hash);
+            return Ok(new ApiResponse<bool>(200, "success", documentoAutentico));
         }
 
         [HttpPost]

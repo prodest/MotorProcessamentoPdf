@@ -18,7 +18,7 @@ namespace Business.Core.ICore
 
         Task<byte[]> AdicionarAssinaturaDigital(InputFile inputFile, string registroDocumento);
         
-        Task<bool> ValidarHashDocumento(Stream stream, string hashDoBanco);
+        Task<bool> ValidarHashDocumento(InputFile inputFile, string hash);
 
         Task<ICollection<string>> ObterSignatureFieldName(InputFile inputFile);
     }
