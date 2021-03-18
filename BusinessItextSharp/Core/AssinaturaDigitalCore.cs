@@ -403,7 +403,7 @@ namespace BusinessItextSharp.Core
         private static void ValidDigitalCertificate(CertificadoDigital cert, PdfPkcs7 pkcs7)
         {
             bool timestampImprint = pkcs7.VerifyTimestampImprint();
-            if (!timestampImprint && !cert.PeriodoValido )
+            if (!timestampImprint && !cert.PeriodoValido)
                 throw new Exception("Este documento possui uma assinatura ICPBrasil inválida.");
         }
 

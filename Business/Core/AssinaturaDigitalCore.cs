@@ -90,30 +90,18 @@ namespace Business.Core
 
         #region Signature Validation
 
-        public async Task<ApiResponse<IEnumerable<CertificadoDigitalDto>>> SignatureValidation(string url)
-        {
-            var response = await ApiRepository.ValidarAssinaturaDigitalAsync(url);
-            return response;
-        }
-
-        public async Task<ApiResponse<IEnumerable<CertificadoDigitalDto>>> SignatureValidation(byte[] file)
-        {
-            var response = await ApiRepository.ValidarAssinaturaDigitalAsync(file);
-            return response;
-        }
-
-        public void SignatureValidationV2(byte[] arquivoBytes)
-        {
-            using PdfReader pdfReader = new PdfReader(new MemoryStream(arquivoBytes));
-            using PdfDocument pdfDocument = new PdfDocument(pdfReader);
-            SignatureUtil signatureUtil = new SignatureUtil(pdfDocument);
-            foreach (var signatureName in signatureUtil.GetSignatureNames())
-            {
-                var aaaa = signatureUtil.SignatureCoversWholeDocument(signatureName);
-                PdfPKCS7 signatureData = signatureUtil.ReadSignatureData(signatureName);
-                var bbbb = signatureData.VerifySignatureIntegrityAndAuthenticity();
-            }
-        }
+        //public void SignatureValidationV2(byte[] arquivoBytes)
+        //{
+        //    using PdfReader pdfReader = new PdfReader(new MemoryStream(arquivoBytes));
+        //    using PdfDocument pdfDocument = new PdfDocument(pdfReader);
+        //    SignatureUtil signatureUtil = new SignatureUtil(pdfDocument);
+        //    foreach (var signatureName in signatureUtil.GetSignatureNames())
+        //    {
+        //        var aaaa = signatureUtil.SignatureCoversWholeDocument(signatureName);
+        //        PdfPKCS7 signatureData = signatureUtil.ReadSignatureData(signatureName);
+        //        var bbbb = signatureData.VerifySignatureIntegrityAndAuthenticity();
+        //    }
+        //}
 
         #endregion
 

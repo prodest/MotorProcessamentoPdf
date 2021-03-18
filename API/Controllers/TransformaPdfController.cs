@@ -134,28 +134,13 @@ namespace API.Controllers
 
         #region Validar Assinatura Digital
 
-        [HttpPost]
-        public async Task<IActionResult> ValidarAssinaturaDigital(IFormFile arquivo)
-        {
-            var arquivoBytes = await Mapper.Map<Task<byte[]>>(arquivo);
-            var result = await AssinaturaDigitalCore.SignatureValidation(arquivoBytes);
-            return Ok(result);
-        }
-
         //[HttpPost]
         //public async Task<IActionResult> ValidarAssinaturaDigitalV2(IFormFile arquivo)
         //{
         //    var arquivoBytes = await Mapper.Map<Task<byte[]>>(arquivo);
         //    AssinaturaDigitalCore.SignatureValidationV2(arquivoBytes);
-        //    return Ok("nice!");
+        //    return Ok();
         //}
-
-        [HttpPost]
-        public async Task<IActionResult> ValidarAssinaturaDigitalByUrl([FromForm] string url)
-        {
-            var result = await AssinaturaDigitalCore.SignatureValidation(url);
-            return Ok(result);
-        }
 
         #endregion
 

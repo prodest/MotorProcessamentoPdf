@@ -12,9 +12,7 @@ namespace Business.Core.ICore
         bool HasDigitalSignature(byte[] file);
         bool HasDigitalSignature(MemoryStream memoryStream);
 
-        Task<ApiResponse<IEnumerable<CertificadoDigitalDto>>> SignatureValidation(string url);
-        Task<ApiResponse<IEnumerable<CertificadoDigitalDto>>> SignatureValidation(byte[] file);
-        void SignatureValidationV2(byte[] arquivoBytes);
+        //void SignatureValidationV2(byte[] arquivoBytes);
 
         Task<byte[]> AdicionarAssinaturaDigital(InputFile inputFile, string registroDocumento);
         
