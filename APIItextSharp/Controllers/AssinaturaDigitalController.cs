@@ -1,5 +1,7 @@
-﻿using AutoMapper;
+﻿using APIItextSharp.Models;
+using AutoMapper;
 using BusinessItextSharp.Core;
+using BusinessItextSharp.Models;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -40,28 +42,13 @@ namespace APIItextSharp.Controllers
 
         #endregion
 
-        #region Validar Assinatura Digital
-
         [HttpPost]
-        [Route("/api/TransformaPdf/ValidarAssinaturaDigital")]
-        public async Task<IActionResult> ValidarAssinaturaDigital(IFormFile arquivo)
+        public async Task<IActionResult> ValidarAssinaturaDigital([FromForm]InputFileDto inputFileDto, [FromForm] bool ignorarExpiradas)
         {
-            var arquivoByteArray = await Mapper.Map<Task<byte[]>>(arquivo);
-            var result = await AssinaturaDigitalCore.SignatureValidation(arquivoByteArray);
-            var certificadoDigitalDto = Mapper.Map<IEnumerable<CertificadoDigitalDto>>(result);
-            return Ok(new ApiResponse<IEnumerable<CertificadoDigitalDto>>(200, "success", certificadoDigitalDto));
+            var inputFile = await Mapper.Map<Task<InputFile>>(inputFileDto);
+            var result = await AssinaturaDigitalCore.SignatureValidation(inputFile, ignorarExpiradas);
+            return Ok(new ApiResponse<IEnumerable<CertificadoDigitalDto>>(200, "success", result));
         }
-
-        [HttpPost]
-        [Route("/api/TransformaPdf/ValidarAssinaturaDigitalByUrl")]
-        public async Task<IActionResult> ValidarAssinaturaDigitalByUrl([FromForm] string url)
-        {
-            var result = await AssinaturaDigitalCore.SignatureValidation(url);
-            var certificadoDigitalDto = Mapper.Map<IEnumerable<CertificadoDigitalDto>>(result);
-            return Ok(new ApiResponse<IEnumerable<CertificadoDigitalDto>>(200, "success", certificadoDigitalDto));
-        }
-
-        #endregion
 
         [HttpGet]
         [Route("/api/ObterInformacoesCertificadoDigital")]

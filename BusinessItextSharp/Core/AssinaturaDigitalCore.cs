@@ -22,7 +22,6 @@ namespace BusinessItextSharp.Core
 {
     public class AssinaturaDigitalCore : IAssinaturaDigitalCore
     {
-        private static string apiValidarCertificado = @"https://api.es.gov.br/certificado/api/validar-certificado";
         private static string message = "\nConsidere capturar este documento como \"cópia\".";
         private readonly JsonData JsonData;
         private readonly IMapper Mapper;
@@ -131,20 +130,22 @@ namespace BusinessItextSharp.Core
 
         #region Signature Validation
 
-        public async Task<IEnumerable<CertificadoDigital>> SignatureValidation(InputFile inputFile)
+        public async Task<IEnumerable<CertificadoDigitalDto>> SignatureValidation(InputFile inputFile, bool ignoreExpired = false)
         {
             inputFile.IsValid();
 
             IEnumerable<CertificadoDigital> listaCertificados = new List<CertificadoDigital>();
             if (inputFile.FileBytes != null)
-                listaCertificados = await SignatureValidation(inputFile.FileBytes);
+                listaCertificados = await SignatureValidation(inputFile.FileBytes, ignoreExpired);
             else
-                listaCertificados = await SignatureValidation(inputFile.FileUrl);
+                listaCertificados = await SignatureValidation(inputFile.FileUrl, ignoreExpired);
 
-            return listaCertificados;
+            var result = Mapper.Map<IEnumerable<CertificadoDigitalDto>>(listaCertificados);
+
+            return result;
         }
 
-        public async Task<IEnumerable<CertificadoDigital>> SignatureValidation(string url)
+        private async Task<IEnumerable<CertificadoDigital>> SignatureValidation(string url, bool ignoreExpired = false)
         {
             byte[] file = null;
             try
@@ -156,12 +157,12 @@ namespace BusinessItextSharp.Core
                 throw new Exception("Documento indisponível");
             }
 
-            var certificado = await SignatureValidation(file);
+            var certificado = await SignatureValidation(file, ignoreExpired);
 
             return certificado;
         }
 
-        public async Task<IEnumerable<CertificadoDigital>> SignatureValidation(byte[] file)
+        private async Task<IEnumerable<CertificadoDigital>> SignatureValidation(byte[] file, bool ignoreExpired = false)
         {
             PdfReader reader = new PdfReader(file);
             
@@ -174,7 +175,10 @@ namespace BusinessItextSharp.Core
                 PdfPkcs7 pkcs7 = reader.AcroFields.VerifySignature(signatureName);
 
                 // validação do certificado via outbound
-                var messages = await OnlineChainValidation(pkcs7.SigningCertificate.GetEncoded());
+                var messages = await OnlineChainValidation(
+                    pkcs7.SigningCertificate.GetEncoded(),
+                    ignoreExpired
+                );
                 if (!string.IsNullOrWhiteSpace(messages))
                     throw new Exception(messages);
 
@@ -182,7 +186,8 @@ namespace BusinessItextSharp.Core
 
                 // validations
                 ValidCertificateChain(cert);
-                ValidDigitalCertificate(cert, pkcs7);
+                if(!ignoreExpired)
+                    ValidDigitalCertificate(cert, pkcs7);
                 ValidSignatureType(cert);
                 ValidSignatureDate(pkcs7);
                 IsDocumentUnadulterated(pkcs7);
@@ -330,17 +335,17 @@ namespace BusinessItextSharp.Core
             return orderedSignatures;
         }
 
-        public static async Task<HttpResponseMessage> Upload(string url, byte[] pdf)
+        public static async Task<HttpResponseMessage> Upload(string url, byte[] pdf, bool ignoreExpired = false)
         {
-            using (var client = new HttpClient())
-            using (var stream = new MemoryStream(pdf))
-            {
-                var multipartContent = new MultipartFormDataContent()
-            {
-                { new StreamContent(stream), "certificateFile", "sadfsdafsdafsda" }
-            };
-                return await client.PostAsync(url, multipartContent);
-            }
+            using MemoryStream memoryStream = new MemoryStream(pdf);
+
+            using var MultipartFormDataContent = new MultipartFormDataContent();
+            MultipartFormDataContent.Add(new StreamContent(memoryStream), "certificateFile", "certificateFile");
+
+            using HttpClient httpClient = new HttpClient();
+            HttpResponseMessage httpResponseMessage = await httpClient.PostAsync(url, MultipartFormDataContent);
+
+            return httpResponseMessage;
         }
 
         #endregion
@@ -398,7 +403,7 @@ namespace BusinessItextSharp.Core
         private static void ValidDigitalCertificate(CertificadoDigital cert, PdfPkcs7 pkcs7)
         {
             bool timestampImprint = pkcs7.VerifyTimestampImprint();
-            if (!timestampImprint && !cert.PeriodoValido)
+            if (!timestampImprint && !cert.PeriodoValido )
                 throw new Exception("Este documento possui uma assinatura ICPBrasil inválida.");
         }
 
@@ -431,14 +436,21 @@ namespace BusinessItextSharp.Core
             }
         }
 
-        private static async Task<string> OnlineChainValidation(byte[] certificate)
+        private async Task<string> OnlineChainValidation(byte[] certificate, bool ignoreExpired = false)
         {
-            HttpResponseMessage result = await Upload(apiValidarCertificado, certificate);
+            string urlValidarCertificado;
+            if (ignoreExpired)
+                urlValidarCertificado = Configuration["OutboundValidacaoCertificado"] + "/api/validar-certificado-ignorar-expirados";
+            else
+                urlValidarCertificado = Configuration["OutboundValidacaoCertificado"] + "/api/validar-certificado"; ;
+
+            HttpResponseMessage result = await Upload(urlValidarCertificado, certificate);
 
             if (result.StatusCode == System.Net.HttpStatusCode.OK)
                 return string.Empty;
 
             var messageArray = result.Content.ReadAsStringAsync().Result;
+            
             return messageArray;
         }
 

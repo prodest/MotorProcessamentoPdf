@@ -21,41 +21,38 @@ namespace Infrastructure.Repositories
 
         public async Task<ApiResponse<IEnumerable<CertificadoDigitalDto>>> ValidarAssinaturaDigitalAsync(byte[] arquivo)
         {
-            using (MemoryStream memoryStream = new MemoryStream(arquivo))
-            using (StreamContent streamContent = new StreamContent(memoryStream))
-            using (MultipartFormDataContent multipartContent = new MultipartFormDataContent())
+            using MemoryStream memoryStream = new MemoryStream(arquivo);
+            
+            using StreamContent streamContent = new StreamContent(memoryStream);
+            streamContent.Headers.ContentType = MediaTypeHeaderValue.Parse("application/octet-stream");
+            streamContent.Headers.ContentDisposition = new ContentDispositionHeaderValue("form-data")
             {
-                streamContent.Headers.ContentType =
-                    MediaTypeHeaderValue.Parse("application/octet-stream");
+                Name = "arquivo",
+                FileName = "arquivo.pdf"
+            };
 
-                streamContent.Headers.ContentDisposition = new ContentDispositionHeaderValue("form-data")
-                {
-                    Name = "arquivo",
-                    FileName = "arquivo.pdf"
-                };
+            using MultipartFormDataContent multipartContent = new MultipartFormDataContent();
+            multipartContent.Add(streamContent, "arquivo");
 
-                multipartContent.Add(streamContent, "arquivo");
+            var result = await JsonData.PostAndReadObjectAsync<IEnumerable<CertificadoDigitalDto>>(
+                PDF_MOTOR_PROCESSAMENTO_PDF + "/api/TransformaPdf/ValidarAssinaturaDigital",
+                multipartContent
+            );
 
-                var result = await JsonData.PostAndReadObjectAsync<IEnumerable<CertificadoDigitalDto>>(
-                    PDF_MOTOR_PROCESSAMENTO_PDF + "/api/TransformaPdf/ValidarAssinaturaDigital",
-                    multipartContent);
-
-                return result;
-            }
+            return result;
         }
 
         public async Task<ApiResponse<IEnumerable<CertificadoDigitalDto>>> ValidarAssinaturaDigitalAsync(string url)
         {
-            using (MultipartFormDataContent multipartFormDataContent = new MultipartFormDataContent())
-            {
-                multipartFormDataContent.Add(new StringContent(url), "url");
+            using MultipartFormDataContent multipartFormDataContent = new MultipartFormDataContent();
+            multipartFormDataContent.Add(new StringContent(url), "url");
                 
-                var result = await JsonData.PostAndReadObjectAsync<IEnumerable<CertificadoDigitalDto>>(
-                    PDF_MOTOR_PROCESSAMENTO_PDF + "/api/TransformaPdf/ValidarAssinaturaDigitalByUrl",
-                    multipartFormDataContent);
+            var result = await JsonData.PostAndReadObjectAsync<IEnumerable<CertificadoDigitalDto>>(
+                PDF_MOTOR_PROCESSAMENTO_PDF + "/api/TransformaPdf/ValidarAssinaturaDigitalByUrl",
+                multipartFormDataContent
+            );
                 
-                return result;
-            }
+            return result;
         }
     }
 }
