@@ -85,7 +85,7 @@ namespace Business.Core
             }
         }
 
-        public byte[] CopiaProcesso(byte[] arquivo, string protocolo, string geradoPor, DateTime dataHora, int totalPaginas, int paginaInicial = 1)
+        public byte[] CopiaProcesso(byte[] arquivo, string protocolo, string geradoPor, DateTime dataHora, int totalDocumentos, int documentoIncial, int totalPaginas, int paginaInicial)
         {
             // validações
             Validations.ArquivoValido(arquivo);
@@ -95,43 +95,45 @@ namespace Business.Core
             TotalPaginasValido(totalPaginas);
             PaginaInicialValida(paginaInicial, totalPaginas);
 
-            using (MemoryStream inputStream = new MemoryStream(arquivo))
-            using (PdfReader reader = new PdfReader(inputStream))
-            using (MemoryStream outputStream = new MemoryStream())
-            using (PdfWriter writer = new PdfWriter(outputStream))
-            using (PdfDocument pdfDocument = new PdfDocument(reader, writer))
+            using MemoryStream inputStream = new MemoryStream(arquivo);
+            using PdfReader reader = new PdfReader(inputStream);
+
+            using MemoryStream outputStream = new MemoryStream();
+            using PdfWriter writer = new PdfWriter(outputStream);
+            using PdfDocument pdfDocument = new PdfDocument(reader, writer);
+
+            paginaInicial--;
+            for (int i = 1; i <= pdfDocument.GetNumberOfPages(); i++)
             {
-                paginaInicial--;
-                for (int i = 1; i <= pdfDocument.GetNumberOfPages(); i++)
-                {
-                    PdfPage page = pdfDocument.GetPage(i);
-                    Rectangle rectangle = new Rectangle(0, 0, 10, page.GetPageSize().GetHeight());
-                    using (Canvas canvas = new Canvas(page, rectangle))
-                    {
-                        var paragraph = CopiaProcessoParagrafo(
-                            protocolo,
-                            geradoPor,
-                            dataHora.ToString(dateFormat),
-                            paginaInicial + i,
-                            totalPaginas
-                        );
+                PdfPage page = pdfDocument.GetPage(i);
+                Rectangle rectangle = new Rectangle(0, 0, 10, page.GetPageSize().GetHeight());
 
-                        canvas.ShowTextAligned(
-                            paragraph,
-                            0, page.GetPageSize().GetHeight() / 2,
-                            i,
-                            TextAlignment.CENTER, VerticalAlignment.TOP,
-                            0.5f * (float)Math.PI
-                        );
+                using Canvas canvas = new Canvas(page, rectangle);
 
-                        canvas.Close();
-                    }
-                }
+                var paragraph = CopiaProcessoParagrafo(
+                    protocolo,
+                    geradoPor,
+                    dataHora.ToString(dateFormat),
+                    documentoIncial,
+                    totalDocumentos,
+                    paginaInicial + i,
+                    totalPaginas
+                );
 
-                pdfDocument.Close();
+                canvas.ShowTextAligned(
+                    paragraph,
+                    0, page.GetPageSize().GetHeight() / 2,
+                    i,
+                    TextAlignment.CENTER, VerticalAlignment.TOP,
+                    0.5f * (float)Math.PI
+                );
 
-                return outputStream.ToArray();
+                canvas.Close();
             }
+
+            pdfDocument.Close();
+
+            return outputStream.ToArray();
         }
 
         public byte[] AdicionarMarcaDagua(
@@ -391,9 +393,9 @@ namespace Business.Core
             return paragraph;
         }
 
-        private Paragraph CopiaProcessoParagrafo(string protocolo, string geradoPor, string dataHora, int paginaInicial, int paginaFinal)
+        private Paragraph CopiaProcessoParagrafo(string protocolo, string geradoPor, string dataHora, int documentoInicial, int documentoFinal, int paginaInicial, int paginaFinal)
         {
-            var text = new Text($"E-DOCS - CÓPIA DO PROCESSO {protocolo.ToUpper()} GERADO POR {geradoPor.ToUpper()} EM {dataHora} PÁGINA {paginaInicial} / {paginaFinal}");
+            var text = new Text($"E-DOCS - CÓPIA DO PROCESSO {protocolo.ToUpper()} GERADO POR {geradoPor.ToUpper()} EM {dataHora} DOCUMENTO {documentoInicial} / {documentoFinal} PÁGINA {paginaInicial} / {paginaFinal}");
 
             PdfFont font = PdfFontFactory.CreateFont(StandardFonts.HELVETICA);
 

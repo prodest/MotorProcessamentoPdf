@@ -100,8 +100,11 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> CopiaProcesso(IFormFile arquivo, [FromForm] string protocolo, [FromForm] string geradoPor, [FromForm] DateTime dataHora, [FromForm] int totalPaginas, [FromForm] int paginaInicial)
-        {
+        public async Task<IActionResult> CopiaProcesso(
+            IFormFile arquivo, [FromForm] string protocolo, [FromForm] string geradoPor, [FromForm] DateTime dataHora,
+            [FromForm] int totalDocumentos, [FromForm] int documentoInicial,
+            [FromForm] int totalPaginas, [FromForm] int paginaInicial
+        ){
             if (arquivo.Length > 0)
             {
                 var arquivoBytes = await PdfTools.ObterArquivo(arquivo);
@@ -111,18 +114,23 @@ namespace API.Controllers
                     protocolo,
                     geradoPor,
                     dataHora,
+                    totalDocumentos,
+                    documentoInicial,
                     totalPaginas,
                     paginaInicial
                 );
 
-                return Ok(new ApiResponse<byte[]>(200, "success", arquivoCarimbado));
+                return File(arquivoCarimbado, "application/pdf");
             }
             else
                 return BadRequest();
         }
 
         [HttpPost]
-        public async Task<IActionResult> CopiaProcessoByFile(IFormFile arquivo, [FromForm] string protocolo, [FromForm] string geradoPor, [FromForm] DateTime dataHora, [FromForm] int totalPaginas, [FromForm] int paginaInicial)
+        public async Task<IActionResult> CopiaProcessoByFile(
+            IFormFile arquivo, [FromForm] string protocolo, [FromForm] string geradoPor, [FromForm] DateTime dataHora, 
+            [FromForm] int totalDocumentos, [FromForm] int documentoInicial,
+            [FromForm] int totalPaginas, [FromForm] int paginaInicial)
         {
             if (arquivo.Length > 0)
             {
@@ -133,6 +141,8 @@ namespace API.Controllers
                     protocolo,
                     geradoPor,
                     dataHora,
+                    totalDocumentos,
+                    documentoInicial,
                     totalPaginas,
                     paginaInicial
                 );
