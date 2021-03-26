@@ -1,10 +1,11 @@
-﻿using API.Tools;
+﻿using API.Models;
+using API.Tools;
 using AutoMapper;
 using Business.Core.ICore;
+using Business.Shared.Models;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -74,83 +75,13 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Documento(IFormFile arquivo, [FromForm] string registro, [FromForm] int natureza, [FromForm] int valorLegal, [FromForm] DateTime dataHora)
-        {
-            var arquivoBytes = await Mapper.Map<Task<byte[]>>(arquivo);
-            var arquivoCarimbado = CarimboCore.Documento(
-                arquivoBytes,
-                registro,
-                natureza,
-                valorLegal,
-                dataHora);
-            return Ok(new ApiResponse<byte[]>(200, "success", arquivoCarimbado));
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> DocumentoByFile(IFormFile arquivo, [FromForm] string registro, [FromForm] int natureza, [FromForm] int valorLegal, [FromForm] DateTime dataHora)
-        {
-            var arquivoBytes = await Mapper.Map<Task<byte[]>>(arquivo);
-            var arquivoCarimbado = CarimboCore.Documento(
-                arquivoBytes,
-                registro,
-                natureza,
-                valorLegal,
-                dataHora);
-            return File(arquivoCarimbado, "application/pdf");
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> CopiaProcesso(
-            IFormFile arquivo, [FromForm] string protocolo, [FromForm] string geradoPor, [FromForm] DateTime dataHora,
-            [FromForm] int totalDocumentos, [FromForm] int documentoInicial,
-            [FromForm] int totalPaginas, [FromForm] int paginaInicial
+        public async Task<IActionResult> CarimboLateral(
+            [FromForm] InputFileDto inputFileDto, [FromForm] string texto, [FromForm] Margem margem,
+            [FromForm] string cor, [FromForm] int? paginaInicial = null, [FromForm] int? totalPaginas = null
         ){
-            if (arquivo.Length > 0)
-            {
-                var arquivoBytes = await PdfTools.ObterArquivo(arquivo);
-
-                var arquivoCarimbado = CarimboCore.CopiaProcesso(
-                    arquivoBytes,
-                    protocolo,
-                    geradoPor,
-                    dataHora,
-                    totalDocumentos,
-                    documentoInicial,
-                    totalPaginas,
-                    paginaInicial
-                );
-
-                return File(arquivoCarimbado, "application/pdf");
-            }
-            else
-                return BadRequest();
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> CopiaProcessoByFile(
-            IFormFile arquivo, [FromForm] string protocolo, [FromForm] string geradoPor, [FromForm] DateTime dataHora, 
-            [FromForm] int totalDocumentos, [FromForm] int documentoInicial,
-            [FromForm] int totalPaginas, [FromForm] int paginaInicial)
-        {
-            if (arquivo.Length > 0)
-            {
-                var arquivoBytes = await PdfTools.ObterArquivo(arquivo);
-
-                var arquivoCarimbado = CarimboCore.CopiaProcesso(
-                    arquivoBytes,
-                    protocolo,
-                    geradoPor,
-                    dataHora,
-                    totalDocumentos,
-                    documentoInicial,
-                    totalPaginas,
-                    paginaInicial
-                );
-
-                return File(arquivoCarimbado, "application/pdf");
-            }
-            else
-                return BadRequest();
+            var inputFile = await Mapper.Map<Task<InputFile>>(inputFileDto);
+            var documentoAssinado = await CarimboCore.CarimboLateral(inputFile, texto, margem, cor, paginaInicial, totalPaginas);
+            return File(documentoAssinado, "application/octet-stream"); ;
         }
 
         #endregion

@@ -1,5 +1,6 @@
 ﻿using Business.Core.ICore;
 using Business.Helpers;
+using Business.Shared.Models;
 using Infrastructure;
 using iText.IO.Font.Constants;
 using iText.Kernel.Colors;
@@ -25,8 +26,6 @@ namespace Business.Core
 {
     public class CarimboCore : ICarimboCore
     {
-        private readonly string dateFormat = "dd/MM/yyyy hh:mm";
-        private readonly string identificadorEdocs = "<edocs>registro</edocs>";
         private readonly JsonData JsonData;
 
         public CarimboCore(JsonData jsonData)
@@ -36,105 +35,187 @@ namespace Business.Core
 
         #region Adição de Carimbos
 
-        public byte[] Documento(byte[] arquivo, string registro, int natureza, int valorLegal, DateTime dataHora)
-        {
-            // validações
-            Validations.ArquivoValido(arquivo);
-            Validations.RegistroValido(registro);
-            Validations.dataHoraValida(dataHora);
+        #region Carimbo Lateral
 
-            using (MemoryStream readingStream = new MemoryStream(arquivo))
-            using (PdfReader pdfReader = new PdfReader(readingStream))
-            using (MemoryStream writingStream = new MemoryStream())
-            using (PdfWriter pdfWriter = new PdfWriter(writingStream))
-            using (PdfDocument pdfDocument = new PdfDocument(pdfReader, pdfWriter))
-            {
-                for (int i = 1; i <= pdfDocument.GetNumberOfPages(); i++)
-                {
-                    PdfPage page = pdfDocument.GetPage(i);
-                    page.SetIgnorePageRotationForContent(true);
-                    Rectangle pageSize = pdfDocument.GetPage(i).GetPageSizeWithRotation();
-                    Rectangle rectangle = new Rectangle(0, 0, 10, pageSize.GetHeight());
-                    using (Canvas canvas = new Canvas(page, rectangle))
-                    {
-                        var paragraph = ValorLegalParagrafo(
-                            registro,
-                            CarimboDocumentoHelper.CarimboDocumento(natureza, valorLegal),
-                            dataHora.ToString(dateFormat),
-                            i,
-                            pdfDocument.GetNumberOfPages(),
-                            pageSize.GetHeight()
-                        );
+        public async Task<byte[]> CarimboLateral(InputFile inputFile, string texto, Margem margem, 
+            string cor, int? paginaInicial, int? totalPaginas
+        ){
+            inputFile.IsValid();
 
-                        canvas.ShowTextAligned(
-                            paragraph,
-                            pageSize.GetWidth(),
-                            pageSize.GetHeight() / 2,
-                            i,
-                            TextAlignment.CENTER, VerticalAlignment.BOTTOM,
-                            0.5f * (float)Math.PI
-                        );
+            byte[] response;
+            if (!string.IsNullOrWhiteSpace(inputFile.FileUrl))
+                response = await CarimboLateral(inputFile.FileUrl, texto, margem, cor, paginaInicial, totalPaginas);
+            else
+                response = CarimboLateral(inputFile.FileBytes, texto, margem, cor, paginaInicial, totalPaginas);
 
-                        canvas.Close();
-                    }
-                }
-
-                pdfDocument.Close();
-
-                return writingStream.ToArray();
-            }
+            return response;
         }
 
-        public byte[] CopiaProcesso(byte[] arquivo, string protocolo, string geradoPor, DateTime dataHora, int totalDocumentos, int documentoIncial, int totalPaginas, int paginaInicial)
-        {
-            // validações
-            Validations.ArquivoValido(arquivo);
-            Validations.ProtocoloValido(protocolo);
-            GeradoPorValido(geradoPor);
-            Validations.dataHoraValida(dataHora);
-            TotalPaginasValido(totalPaginas);
-            PaginaInicialValida(paginaInicial, totalPaginas);
+        private async Task<byte[]> CarimboLateral(string url, string texto, Margem margem, string cor, 
+            int? paginaInicial, int? totalPaginas
+        ){
+            byte[] arquivo = await JsonData.GetAndReadByteArrayAsync(url);
+            var resposta = CarimboLateral(arquivo, texto, margem, cor, paginaInicial, totalPaginas);
+            return resposta;
+        }
 
-            using MemoryStream inputStream = new MemoryStream(arquivo);
-            using PdfReader reader = new PdfReader(inputStream);
+        private byte[] CarimboLateral(byte[] arquivo, string texto, Margem margem, string cor, 
+            int? paginaInicial, int? totalPaginas
+        ){
+            using MemoryStream readingStream = new MemoryStream(arquivo);
+            using PdfReader pdfReader = new PdfReader(readingStream);
 
-            using MemoryStream outputStream = new MemoryStream();
-            using PdfWriter writer = new PdfWriter(outputStream);
-            using PdfDocument pdfDocument = new PdfDocument(reader, writer);
+            using MemoryStream writingStream = new MemoryStream();
+            using PdfWriter pdfWriter = new PdfWriter(writingStream);
+
+            using PdfDocument pdfDocument = new PdfDocument(pdfReader, pdfWriter);
+
+            if (paginaInicial == null)
+                paginaInicial = 1;
+
+            int numberOfPages = pdfDocument.GetNumberOfPages();
+            if (totalPaginas == null)
+                totalPaginas = numberOfPages;
 
             paginaInicial--;
-            for (int i = 1; i <= pdfDocument.GetNumberOfPages(); i++)
+            for (int i = 1; i <= numberOfPages; i++)
             {
                 PdfPage page = pdfDocument.GetPage(i);
-                Rectangle rectangle = new Rectangle(0, 0, 10, page.GetPageSize().GetHeight());
+                page.SetIgnorePageRotationForContent(true);
+                Rectangle pageSize = pdfDocument.GetPage(i).GetPageSizeWithRotation();
+                Rectangle rectangle = new Rectangle(0, 0, 10, pageSize.GetHeight());
 
-                using Canvas canvas = new Canvas(page, rectangle);
-
-                var paragraph = CopiaProcessoParagrafo(
-                    protocolo,
-                    geradoPor,
-                    dataHora.ToString(dateFormat),
-                    documentoIncial,
-                    totalDocumentos,
-                    paginaInicial + i,
-                    totalPaginas
-                );
-
-                canvas.ShowTextAligned(
-                    paragraph,
-                    0, page.GetPageSize().GetHeight() / 2,
-                    i,
-                    TextAlignment.CENTER, VerticalAlignment.TOP,
-                    0.5f * (float)Math.PI
-                );
-
-                canvas.Close();
+                using (Canvas canvas = new Canvas(page, rectangle))
+                {
+                    Paragraph paragraph = CriarParagrafo(texto, margem, cor, pageSize.GetHeight(), paginaInicial + i, totalPaginas);
+                    ConfigurarCanvas(canvas, pageSize, margem, paragraph, i);
+                    canvas.Close();
+                }
             }
 
             pdfDocument.Close();
 
-            return outputStream.ToArray();
+            return writingStream.ToArray();
         }
+
+        #region CarimboLateral: Auxiliares
+
+        private void ConfigurarCanvas(Canvas canvas, Rectangle pageSize, Margem margem, Paragraph paragraph, int i)
+        {
+            if (margem == Margem.Esquerda)
+            {
+                canvas.ShowTextAligned(
+                    paragraph,
+                    0, pageSize.GetHeight() / 2,
+                    i,
+                    TextAlignment.CENTER, VerticalAlignment.TOP,
+                    0.5f * (float)Math.PI
+                );
+            }
+            else if (margem == Margem.Direita)
+            {
+                canvas.ShowTextAligned(
+                    paragraph,
+                    pageSize.GetWidth(),
+                    pageSize.GetHeight() / 2,
+                    i,
+                    TextAlignment.CENTER, VerticalAlignment.BOTTOM,
+                    0.5f * (float)Math.PI
+                );
+            }
+            else
+                throw new Exception("Valor de margem desconhecido.");
+        }
+
+        private Paragraph CriarParagrafo(string texto, Margem margem, string cor, float alturaPagina, int? paginaInicial, int? totalPaginas)
+        {
+            PdfFont font = PdfFontFactory.CreateFont(StandardFonts.HELVETICA);
+
+            float fontSize;
+            float padding;
+            DefinirParametrosParagrafo(alturaPagina, out fontSize, out padding);
+
+            DeviceRgb color = Hexa2Rgb(cor);
+
+            var style = new Style();
+            style.SetFont(font);
+            style.SetFontSize(fontSize);
+            style.SetFontColor(color);
+            
+            if (margem == Margem.Esquerda)
+                style.SetPaddingTop(padding);
+            else if (margem == Margem.Direita)
+                style.SetPaddingBottom(padding);
+            else
+                throw new Exception("Valor de margem desconhecido.");
+
+            if (texto.Contains("{PaginaInicial}"))
+                texto = texto.Replace("{PaginaInicial}", paginaInicial.ToString());
+            if (texto.Contains("{TotalPaginas}"))
+                texto = texto.Replace("{TotalPaginas}", totalPaginas.ToString());
+
+            var text = new Text(texto);
+            text.AddStyle(style);
+
+            Paragraph paragraph = new Paragraph(text);
+            paragraph.SetWidth(alturaPagina)
+                .SetFixedLeading(fontSize + 1);
+
+            return paragraph;
+        }
+
+        private void DefinirParametrosParagrafo(float alturaPagina, out float fontSize, out float padding)
+        {
+            float A4Height = 842;
+            float A5Height = 595;
+            float A6Height = 420;
+            float A7Height = 298;
+            float A8Height = 210;
+            float A9Height = 147;
+            float A10Height = 105;
+
+            if (alturaPagina >= A4Height * 0.95)
+            {
+                fontSize = 8;
+                padding = 8;
+            }
+            else if (alturaPagina >= 0.95 * A5Height && alturaPagina < 0.95 * A4Height)
+            {
+                fontSize = 7;
+                padding = 7;
+            }
+            else if (alturaPagina >= 0.95 * A6Height && alturaPagina < 0.95 * A5Height)
+            {
+                fontSize = 6;
+                padding = 6;
+            }
+            else if (alturaPagina >= 0.95 * A7Height && alturaPagina < 0.95 * A6Height)
+            {
+                fontSize = 4;
+                padding = 4;
+            }
+            else if (alturaPagina >= 0.95 * A8Height && alturaPagina < 0.95 * A7Height)
+            {
+                fontSize = 3;
+                padding = 3;
+            }
+            else if (alturaPagina >= 0.95 * A9Height && alturaPagina < 0.95 * A8Height)
+            {
+                fontSize = 2;
+                padding = 2;
+            }
+            else if (alturaPagina >= 0.95 * A10Height && alturaPagina < 0.95 * A9Height)
+            {
+                fontSize = 1.5f;
+                padding = 1;
+            }
+            else
+                throw new Exception("O E-Docs não aceita documentos com dimensões menores que um papel A10.");
+        }
+
+        #endregion
+
+        #endregion
 
         public byte[] AdicionarMarcaDagua(
             byte[] arquivo, string[] texto, int tamanhoFonte = 40, string corHexa = "ff0000",
@@ -169,7 +250,7 @@ namespace Business.Core
                             // Desenhar Marca D'dágua
                             Paragraph p = new Paragraph(texto[textCounter])
                                 .SetFontSize(tamanhoFonte)
-                                .SetFontColor(FromHexa2Rgb(corHexa));
+                                .SetFontColor(Hexa2Rgb(corHexa));
                             canvas.SaveState();
                             PdfExtGState gs1 = new PdfExtGState().SetFillOpacity(opacidade);
                             canvas.SetExtGState(gs1);
@@ -183,47 +264,6 @@ namespace Business.Core
                             );
                         }
                     }
-                    canvas.RestoreState();
-                }
-                pdfDocument.Close();
-
-                return writingStream.ToArray();
-            }
-        }
-
-        public byte[] AdicionarTokenEdocs(byte[] arquivo, string registro)
-        {
-            // validações
-            Validations.ArquivoValido(arquivo);
-
-            using (MemoryStream readingStream = new MemoryStream(arquivo))
-            using (PdfReader pdfReader = new PdfReader(readingStream))
-            using (MemoryStream writingStream = new MemoryStream())
-            using (PdfWriter pdfWriter = new PdfWriter(writingStream))
-            using (PdfDocument pdfDocument = new PdfDocument(pdfReader, pdfWriter))
-            using (Document document = new Document(pdfDocument))
-            {
-                PdfCanvas canvas;
-                int n = pdfDocument.GetNumberOfPages();
-
-                for (int i = 1; i <= n; i++)
-                {
-                    PdfPage page = pdfDocument.GetPage(i);
-                    var pageSize = page.GetPageSize();
-                    canvas = new PdfCanvas(page);
-                    // Desenhar Marca D'dágua
-                    var text = identificadorEdocs.Replace("registro", registro);
-                    Paragraph p = new Paragraph(text).SetFontColor(ColorConstants.RED).SetFontSize(0.1f);
-                    canvas.SaveState();
-                    PdfExtGState gs1 = new PdfExtGState().SetFillOpacity(0);
-                    canvas.SetExtGState(gs1);
-                    document.ShowTextAligned(
-                        p,
-                        pageSize.GetWidth()/2, pageSize.GetHeight()/2,
-                        pdfDocument.GetPageNumber(page),
-                        TextAlignment.LEFT, VerticalAlignment.BOTTOM,
-                        0
-                    );
                     canvas.RestoreState();
                 }
                 pdfDocument.Close();
@@ -294,214 +334,25 @@ namespace Business.Core
             }
         }
 
-        private void PaginaInicialValida(int paginaInicial, int totalPaginas)
-        {
-            if (paginaInicial <= 0)
-                throw new Exception("O número da página inicial da cópia de processo precisa ser maior que zero.");
-            if (paginaInicial > totalPaginas)
-                throw new Exception("O número da página inicial da cópia de processo não pode ser superior ao número total de páginas.");
-        }
-
-        private void TotalPaginasValido(int totalPaginas)
-        {
-            if (totalPaginas <= 0)
-                throw new Exception("O número total de páginas da cópia de processo precisa ser maior que zero.");
-        }
-
-        private void GeradoPorValido(string geradoPor)
-        {
-            if (string.IsNullOrWhiteSpace(geradoPor))
-                throw new Exception("O nome do solicitante da cópia de processo está vazio.");
-        }
-
         #endregion
 
         #region Auxiliares
 
-        private DeviceRgb FromHexa2Rgb(string corHexa)
+        private DeviceRgb Hexa2Rgb(string corHexa)
         {
             if (corHexa.Length == 6)
             {
                 int red = Convert.ToInt32(corHexa.Substring(0, 2), 16);
                 int green = Convert.ToInt32(corHexa.Substring(2, 2), 16);
                 int blue = Convert.ToInt32(corHexa.Substring(4, 2), 16);
-                return new DeviceRgb(red, green, blue);
+                DeviceRgb deviceRgb = new DeviceRgb(red, green, blue);
+                return deviceRgb;
             }
             else
                 throw new Exception("Informe todos os 6 caracteres do código hexadecimal");
         }
 
-        private Paragraph ValorLegalParagrafo(string protocolo, string valorLegal, string dataHora, int paginaInicial, int paginaFinal, float pageHeight)
-        {
-            float A4Height = 842;
-            float A5Height = 595;
-            float A6Height = 420;
-            float A7Height = 298;
-            float A8Height = 210;
-            float A9Height = 147;
-            float A10Height = 105;
-
-            var text = new Text($"{protocolo.ToUpper()} - E-DOCS - {valorLegal.ToUpper()}    {dataHora}    PÁGINA {paginaInicial} / {paginaFinal}");
-
-            PdfFont font = PdfFontFactory.CreateFont(StandardFonts.HELVETICA);
-
-            var style = new Style();
-            style.SetFont(font);
-            style.SetFontColor(new DeviceRgb(0, 124, 191));
-
-            if (pageHeight >= A4Height * 0.95)
-            {
-                style.SetFontSize(8);
-                style.SetPaddingBottom(8);
-            }
-            else if (pageHeight >= 0.95 * A5Height && pageHeight < 0.95 * A4Height)
-            {
-                style.SetFontSize(7);
-                style.SetPaddingBottom(7);
-            }
-            else if (pageHeight >= 0.95 * A6Height && pageHeight < 0.95 * A5Height)
-            {
-                style.SetFontSize(6);
-                style.SetPaddingBottom(6);
-            }
-            else if (pageHeight >= 0.95 * A7Height && pageHeight < 0.95 * A6Height)
-            {
-                style.SetFontSize(4);
-                style.SetPaddingBottom(4);
-            }
-            else if (pageHeight >= 0.95 * A8Height && pageHeight < 0.95 * A7Height)
-            {
-                style.SetFontSize(3);
-                style.SetPaddingBottom(3);
-            }
-            else if (pageHeight >= 0.95 * A9Height && pageHeight < 0.95 * A8Height)
-            {
-                style.SetFontSize(2);
-                style.SetPaddingBottom(2);
-            }
-            else if (pageHeight >= 0.95 * A10Height && pageHeight < 0.95 * A9Height)
-            {
-                style.SetFontSize(1.5f);
-                style.SetPaddingBottom(1);
-            }
-            else
-                throw new Exception("O E-Docs não aceita documentos com dimensões menores que um papel A10.");
-
-            text.AddStyle(style);
-
-            var paragraph = new Paragraph(text);
-            return paragraph;
-        }
-
-        private Paragraph CopiaProcessoParagrafo(string protocolo, string geradoPor, string dataHora, int documentoInicial, int documentoFinal, int paginaInicial, int paginaFinal)
-        {
-            var text = new Text($"E-DOCS - CÓPIA DO PROCESSO {protocolo.ToUpper()} GERADO POR {geradoPor.ToUpper()} EM {dataHora} DOCUMENTO {documentoInicial} / {documentoFinal} PÁGINA {paginaInicial} / {paginaFinal}");
-
-            PdfFont font = PdfFontFactory.CreateFont(StandardFonts.HELVETICA);
-
-            var style = new Style();
-            style.SetFont(font);
-            style.SetFontSize(8);
-            style.SetFontColor(ColorConstants.RED);
-
-            style.SetPaddingTop(8);
-            text.AddStyle(style);
-
-            var paragraph = new Paragraph(text);
-            return paragraph;
-        }
-
         #endregion
 
-        #region Outros
-
-        private string ValidarMetadadosEdocs(byte[] arquivo)
-        {
-            // validações
-            Validations.ArquivoValido(arquivo);
-
-            using (MemoryStream readingStream = new MemoryStream(arquivo))
-            using (PdfReader pdfReader = new PdfReader(readingStream))
-            using (PdfDocument pdfDocument = new PdfDocument(pdfReader))
-            {
-                var metadados = pdfDocument.GetXmpMetadata();
-                if (metadados == null)
-                    return null;
-
-                string metadadosString = Encoding.UTF8.GetString(metadados);
-                if (metadadosString.Contains("<xmp:CreatorTool>E-DOCS</xmp:CreatorTool>"))
-                {
-                    string texto = "E-DOCS, Documento capturado pelo E-DOCS, ";
-                    string registroDocumento = metadadosString.Substring(metadadosString.IndexOf(texto) + texto.Length, 11);
-                    return $"Este documento já foi capturado e está disponível no E-Docs sob registro: {registroDocumento}";
-                }
-                else
-                    return null;
-            }
-        }
-
-        private string BuscarCarimboDocumento(byte[] arquivo)
-        {
-            // validações
-            Validations.ArquivoValido(arquivo);
-
-            int paginaValidada = 1;
-
-            using (MemoryStream readingStream = new MemoryStream(arquivo))
-            using (PdfReader pdfReader = new PdfReader(readingStream))
-            using (PdfDocument pdfDocument = new PdfDocument(pdfReader))
-            {
-                string text = PdfTextExtractor.GetTextFromPage(
-                    pdfDocument.GetPage(paginaValidada),
-                    new SimpleTextExtractionStrategy()
-                );
-
-                var carimboDocumento = Regex.Match(text, "20[0-9]{2}-[0-9B-DF-HJ-NP-TV-Z]{6} - E-DOCS");
-                if (carimboDocumento.Success)
-                {
-                    var possivelCarimbo = text.Substring(carimboDocumento.Index, text.Length - carimboDocumento.Index);
-                    var carimbo = Regex.Match(possivelCarimbo, "20[0-9]{2}-[0-9B-DF-HJ-NP-TV-Z]{6} - E-DOCS .* [0-9]{2}/[0-9]{2}/20[0-9]{2} [0-9]{2}:[0-9]{2} .* PÁGINA");
-                    if (carimbo.Success)
-                    {
-                        return $"Este documento já foi capturado e está disponível no E-Docs sob registro: {possivelCarimbo.Substring(0, 11)}";
-                    }
-                }
-
-                return null;
-            }
-        }
-
-        private string BuscarCarimboCopiaProcesso(byte[] arquivo)
-        {
-            // validações
-            Validations.ArquivoValido(arquivo);
-
-            int paginaValidada = 1;
-
-            using (MemoryStream readingStream = new MemoryStream(arquivo))
-            using (PdfReader pdfReader = new PdfReader(readingStream))
-            using (PdfDocument pdfDocument = new PdfDocument(pdfReader))
-            {
-                string text = PdfTextExtractor.GetTextFromPage(
-                    pdfDocument.GetPage(paginaValidada),
-                    new SimpleTextExtractionStrategy()
-                );
-
-                var carimboCopiaProcesso = Regex.Match(text, "E-DOCS - CÓPIA DO PROCESSO 20[0-9]{2}-[0-9B-DF-HJ-NP-TV-Z]{5}");
-                if (carimboCopiaProcesso.Success)
-                {
-                    var possivelCarimbo = text.Substring(carimboCopiaProcesso.Index, text.Length - carimboCopiaProcesso.Index);
-                    var carimbo = Regex.Match(possivelCarimbo, "E-DOCS - CÓPIA DO PROCESSO 20[0-9]{2}-[0-9B-DF-HJ-NP-TV-Z]{5} GERADO POR .* [0-9]{2}/[0-9]{2}/20[0-9]{2} [0-9]{2}:[0-9]{2} PÁGINA");
-                    if (carimbo.Success)
-                    {
-                        return $"Não é permitido capturar uma Cópia de Processo";
-                    }
-                }
-
-                return null;
-            }
-        }
-
-        #endregion
     }
 }
