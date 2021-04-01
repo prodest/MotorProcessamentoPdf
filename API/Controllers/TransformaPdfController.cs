@@ -149,7 +149,15 @@ namespace API.Controllers
         {
             var inputFile = await Mapper.Map<Task<InputFile>>(inputFileDto);
             var documentoAssinado = await AssinaturaDigitalCore.AdicionarAssinaturaDigital(inputFile, signatureFieldName);
-            return File(documentoAssinado, "application/octet-stream"); ;
+            return File(documentoAssinado, "application/octet-stream");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> RemoverAssinaturasDigitais([FromForm] InputFileDto inputFileDto)
+        {
+            InputFile inputFile = await Mapper.Map<Task<InputFile>>(inputFileDto);
+            byte[] documentoSemAssinaturas = await AssinaturaDigitalCore.RemoverAssinaturasDigitais(inputFile);
+            return File(documentoSemAssinaturas, "application/octet-stream");
         }
 
         [HttpPost]

@@ -1,5 +1,4 @@
-﻿using Infrastructure.Models;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -19,5 +18,7 @@ namespace Business.Core.ICore
         Task<bool> ValidarHashDocumento(InputFile inputFile, string hash);
 
         Task<ICollection<string>> ObterSignatureFieldName(InputFile inputFile);
+        
+        Task<byte[]> RemoverAssinaturasDigitais(InputFile inputFile);
     }
 }

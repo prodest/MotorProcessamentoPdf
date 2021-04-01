@@ -2,6 +2,7 @@
 using Infrastructure;
 using Infrastructure.Models;
 using Infrastructure.Repositories;
+using iText.Forms;
 using iText.Kernel.Pdf;
 using iText.Signatures;
 using Microsoft.Extensions.Configuration;
@@ -21,11 +22,9 @@ namespace Business.Core
     {
         private readonly JsonData JsonData;
         private readonly IConfiguration Configuration;
-        private readonly IApiRepository ApiRepository;
 
-        public AssinaturaDigitalCore(IApiRepository apiRepository, JsonData jsonData, IConfiguration configuration)
+        public AssinaturaDigitalCore(JsonData jsonData, IConfiguration configuration)
         {
-            ApiRepository = apiRepository;
             JsonData = jsonData;
             Configuration = configuration;
         }
@@ -288,6 +287,50 @@ namespace Business.Core
 
             return output;
         }
+
+        #region RemoverAssinaturasDigitais
+
+        public async Task<byte[]> RemoverAssinaturasDigitais(InputFile inputFile)
+        {
+            inputFile.IsValid();
+
+            byte[] arquivoSemAssinatura;
+            if (!string.IsNullOrWhiteSpace(inputFile.FileUrl))
+                arquivoSemAssinatura = await RemoverAssinaturasDigitais(inputFile.FileUrl);
+            else
+                arquivoSemAssinatura = RemoverAssinaturasDigitais(inputFile.FileBytes);
+
+            return arquivoSemAssinatura;
+        }
+
+        private async Task<byte[]> RemoverAssinaturasDigitais(string fileUrl)
+        {
+            byte[] arquivo = await JsonData.GetAndReadByteArrayAsync(fileUrl);
+            var response = RemoverAssinaturasDigitais(arquivo);
+            return response;
+        }
+
+        private byte[] RemoverAssinaturasDigitais(byte[] fileBytes)
+        {
+            using PdfReader pdfReader = new PdfReader(new MemoryStream(fileBytes));
+
+            using MemoryStream outputStream = new MemoryStream();
+            using PdfWriter pdfWriter = new PdfWriter(outputStream);
+
+            using PdfDocument pdfDocument = new PdfDocument(pdfReader, pdfWriter);
+            PdfAcroForm form = PdfAcroForm.GetAcroForm(pdfDocument, true);
+            form.FlattenFields();
+
+            pdfDocument.Close();
+            pdfWriter.Close();
+            outputStream.Close();
+            pdfReader.Close();
+
+            byte[] outputArray = outputStream.ToArray();
+            return outputArray;
+        }
+
+        #endregion
 
         #endregion
     }
