@@ -1,9 +1,6 @@
-﻿using Infrastructure.Models;
-using Microsoft.Extensions.Configuration;
-using System.Collections.Generic;
+﻿using Microsoft.Extensions.Configuration;
 using System.IO;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Threading.Tasks;
 
 namespace Infrastructure.Repositories
@@ -11,48 +8,36 @@ namespace Infrastructure.Repositories
     public class ApiRepository : IApiRepository
     {
         private readonly JsonData JsonData;
-        private static string PDF_MOTOR_PROCESSAMENTO_PDF;
+        private readonly IConfiguration Configuration;
 
-        public ApiRepository(JsonData jsonData, IConfiguration config)
+        public ApiRepository(JsonData jsonData, IConfiguration configuration)
         {
             JsonData = jsonData;
-            PDF_MOTOR_PROCESSAMENTO_PDF = config.GetValue<string>("APIItextSharp");
+            Configuration = configuration;
         }
 
-        public async Task<ApiResponse<IEnumerable<CertificadoDigitalDto>>> ValidarAssinaturaDigitalAsync(byte[] arquivo)
+        public async Task<string> OnlineChainValidationAsync(byte[] certificateBytes, bool ignoreExpired)
         {
-            using MemoryStream memoryStream = new MemoryStream(arquivo);
-            
-            using StreamContent streamContent = new StreamContent(memoryStream);
-            streamContent.Headers.ContentType = MediaTypeHeaderValue.Parse("application/octet-stream");
-            streamContent.Headers.ContentDisposition = new ContentDispositionHeaderValue("form-data")
-            {
-                Name = "arquivo",
-                FileName = "arquivo.pdf"
-            };
+            string urlValidarCertificado;
+            if (ignoreExpired)
+                urlValidarCertificado = Configuration["OutboundValidacaoCertificado"] + "/api/validar-certificado-ignorar-expirados";
+            else
+                urlValidarCertificado = Configuration["OutboundValidacaoCertificado"] + "/api/validar-certificado";
 
-            using MultipartFormDataContent multipartContent = new MultipartFormDataContent();
-            multipartContent.Add(streamContent, "arquivo");
+            using MemoryStream memoryStream = new MemoryStream(certificateBytes);
 
-            var result = await JsonData.PostAndReadObjectAsync<IEnumerable<CertificadoDigitalDto>>(
-                PDF_MOTOR_PROCESSAMENTO_PDF + "/api/TransformaPdf/ValidarAssinaturaDigital",
-                multipartContent
-            );
+            using var MultipartFormDataContent = new MultipartFormDataContent();
+            MultipartFormDataContent.Add(new StreamContent(memoryStream), "certificateFile", "certificateFile");
 
-            return result;
+            string response = await JsonData.PostAndReadAsStringAsync(urlValidarCertificado, MultipartFormDataContent);
+
+            return response;
         }
 
-        public async Task<ApiResponse<IEnumerable<CertificadoDigitalDto>>> ValidarAssinaturaDigitalAsync(string url)
+        public async Task<byte[]> GetAndReadAsByteArrayAsync(string url)
         {
-            using MultipartFormDataContent multipartFormDataContent = new MultipartFormDataContent();
-            multipartFormDataContent.Add(new StringContent(url), "url");
-                
-            var result = await JsonData.PostAndReadObjectAsync<IEnumerable<CertificadoDigitalDto>>(
-                PDF_MOTOR_PROCESSAMENTO_PDF + "/api/TransformaPdf/ValidarAssinaturaDigitalByUrl",
-                multipartFormDataContent
-            );
-                
-            return result;
+            byte[] response = await JsonData.GetAndReadAsByteArrayAsync(url);
+            return response;
         }
     }
 }

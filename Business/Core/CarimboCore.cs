@@ -54,7 +54,7 @@ namespace Business.Core
         private async Task<byte[]> CarimboLateral(string url, string texto, Margem margem, string cor, 
             int? paginaInicial, int? totalPaginas
         ){
-            byte[] arquivo = await JsonData.GetAndReadByteArrayAsync(url);
+            byte[] arquivo = await JsonData.GetAndReadAsByteArrayAsync(url);
             var resposta = CarimboLateral(arquivo, texto, margem, cor, paginaInicial, totalPaginas);
             return resposta;
         }
@@ -278,7 +278,7 @@ namespace Business.Core
 
         public async Task<string> BuscarExpressoesRegulares(string url, IEnumerable<string> expressoesRegulares, IEnumerable<int> paginas)
         {
-            var arquivo = await JsonData.GetAndReadByteArrayAsync(url);
+            var arquivo = await JsonData.GetAndReadAsByteArrayAsync(url);
             string response = BuscarExpressoesRegulares(arquivo, expressoesRegulares, paginas);
             return response;
         }

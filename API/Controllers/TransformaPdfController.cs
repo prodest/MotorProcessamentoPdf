@@ -3,11 +3,11 @@ using API.Tools;
 using AutoMapper;
 using Business.Core.ICore;
 using Business.Shared.Models;
+using Business.Shared.Models.CertificadoDigital;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -134,13 +134,14 @@ namespace API.Controllers
 
         #region Validar Assinatura Digital
 
-        //[HttpPost]
-        //public async Task<IActionResult> ValidarAssinaturaDigitalV2(IFormFile arquivo)
-        //{
-        //    var arquivoBytes = await Mapper.Map<Task<byte[]>>(arquivo);
-        //    AssinaturaDigitalCore.SignatureValidationV2(arquivoBytes);
-        //    return Ok();
-        //}
+        [HttpPost]
+        public async Task<IActionResult> ValidarAssinaturaDigital([FromForm]InputFileDto inputFileDto, [FromForm] bool ignorarExpiradas)
+        {
+            InputFile inputFile = await Mapper.Map<Task<InputFile>>(inputFileDto);
+            IEnumerable<CertificadoDigital> assinaturas = await AssinaturaDigitalCore.ValidarAssinaturaDigital(inputFile, ignorarExpiradas);
+            IEnumerable<CertificadoDigitalDto> assinaturasDto = Mapper.Map<IEnumerable<CertificadoDigitalDto>>(assinaturas);
+            return Ok(new ApiResponse<IEnumerable<CertificadoDigitalDto>>(200, "success", assinaturasDto));
+        }
 
         #endregion
 

@@ -1,5 +1,8 @@
 ﻿using API.Models;
 using AutoMapper;
+using Business.Shared.Models;
+using Business.Shared.Models.CertificadoDigital;
+using Infrastructure.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using System.IO;
@@ -15,6 +18,10 @@ namespace API.StartupConfigurations
             var config = new MapperConfiguration(cfg => {
                 cfg.CreateMap<InputFileDto, Task<InputFile>>().ConvertUsing<InputFileDTOToInputFile>();
                 cfg.CreateMap<IFormFile, Task<byte[]>>().ConvertUsing<IFormFileToByteArray>();
+
+                cfg.CreateMap<CertificadoDigital, CertificadoDigitalDto>();
+                cfg.CreateMap<PessoaFisica, PessoaFisicaDto>();
+                cfg.CreateMap<PessoaJuridica, PessoaJuridicaDto>();
             });
 
             IMapper mapper = config.CreateMapper();

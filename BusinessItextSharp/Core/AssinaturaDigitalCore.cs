@@ -54,7 +54,7 @@ namespace BusinessItextSharp.Core
             byte[] file = null;
             try
             {
-                file = await JsonData.GetAndReadByteArrayAsync(url);
+                file = await JsonData.GetAndReadAsByteArrayAsync(url);
             }
             catch (Exception)
             {
@@ -150,7 +150,7 @@ namespace BusinessItextSharp.Core
             byte[] file = null;
             try
             {
-                file = await JsonData.GetAndReadByteArrayAsync(url);
+                file = await JsonData.GetAndReadAsByteArrayAsync(url);
             }
             catch (Exception)
             {
@@ -223,7 +223,7 @@ namespace BusinessItextSharp.Core
 
         public async Task<bool> HasDigitalSignature(string url)
         {
-            byte[] arquivo = await JsonData.GetAndReadByteArrayAsync(url);
+            byte[] arquivo = await JsonData.GetAndReadAsByteArrayAsync(url);
             var response = HasDigitalSignature(arquivo);
             return response;
         }
@@ -442,7 +442,7 @@ namespace BusinessItextSharp.Core
             if (ignoreExpired)
                 urlValidarCertificado = Configuration["OutboundValidacaoCertificado"] + "/api/validar-certificado-ignorar-expirados";
             else
-                urlValidarCertificado = Configuration["OutboundValidacaoCertificado"] + "/api/validar-certificado"; ;
+                urlValidarCertificado = Configuration["OutboundValidacaoCertificado"] + "/api/validar-certificado";
 
             HttpResponseMessage result = await Upload(urlValidarCertificado, certificate);
 

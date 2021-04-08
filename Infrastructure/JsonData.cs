@@ -15,17 +15,16 @@ namespace Infrastructure
             HttpClientFactory = httpClientFactory;
         }
 
-        public async Task<byte[]> GetAndReadByteArrayAsync(string url)
+        public async Task<byte[]> GetAndReadAsByteArrayAsync(string url)
         {
-            HttpClient httpClient = HttpClientFactory.CreateClient("default");
-            var response = await httpClient.GetAsync(url);
-            
-            if (!response.IsSuccessStatusCode)
-                throw new Exception(await response.Content.ReadAsStringAsync());
+            HttpClient httpClient = HttpClientFactory.CreateClient("multipart/form-data");
+            HttpResponseMessage httpResponseMessage = await httpClient.GetAsync(url);
 
-            var result = await response.Content.ReadAsByteArrayAsync();
+            if (!httpResponseMessage.IsSuccessStatusCode)
+                throw new Exception($"{httpResponseMessage.StatusCode}-{httpResponseMessage.Content.ReadAsStringAsync()}");
 
-            return result;
+            byte[] response = await httpResponseMessage.Content.ReadAsByteArrayAsync();
+            return response;
         }
 
         public async Task<T> GetAndReadObjectAsync<T>(string url)
@@ -61,6 +60,31 @@ namespace Infrastructure
             }
 
             return apiResponse;
+        }
+
+        public async Task<string> PostAndReadAsStringAsync(string url, HttpContent content)
+        {
+            HttpClient httpClient = HttpClientFactory.CreateClient("multipart/form-data");
+            HttpResponseMessage httpResponseMessage = await httpClient.PostAsync(url, content);
+
+            string response = await httpResponseMessage.Content.ReadAsStringAsync();
+
+            if (!httpResponseMessage.IsSuccessStatusCode)
+                throw new Exception($"{httpResponseMessage.StatusCode}-{response}");
+                
+            return response;
+        }
+
+        public async Task<byte[]> PostAndReadAsByteArrayAsync(string url, HttpContent content)
+        {
+            HttpClient httpClient = HttpClientFactory.CreateClient("multipart/form-data");
+            HttpResponseMessage httpResponseMessage = await httpClient.PostAsync(url, content);
+
+            if (!httpResponseMessage.IsSuccessStatusCode)
+                throw new Exception($"{httpResponseMessage.StatusCode}-{httpResponseMessage.Content.ReadAsStringAsync()}");
+                
+            byte[] response = await httpResponseMessage.Content.ReadAsByteArrayAsync();
+            return response;
         }
     }
 }

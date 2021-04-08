@@ -1,7 +1,7 @@
 ﻿using Business.Core.ICore;
 using Business.Helpers;
 using Business.Shared.Models;
-using Infrastructure;
+using Infrastructure.Repositories;
 using iText.Html2pdf;
 using iText.Kernel.Crypto;
 using iText.Kernel.Pdf;
@@ -19,13 +19,13 @@ namespace Business.Core
     public class TransformaPdfCore : ITransformaPdfCore
     {
         private const string Intent = "./wwwroot/resources/color/sRGB_CS_profile.icm";
-        private readonly JsonData JsonData;
+        private readonly IApiRepository ApiRepository;
         private readonly IAssinaturaDigitalCore AssinaturaDigitalCore;
         private readonly ICarimboCore CarimboCore;
 
-        public TransformaPdfCore(JsonData jsonData, IAssinaturaDigitalCore assinaturaDigitalCore, ICarimboCore carimboCore)
+        public TransformaPdfCore(IApiRepository apiRepository, IAssinaturaDigitalCore assinaturaDigitalCore, ICarimboCore carimboCore)
         {
-            JsonData = jsonData;
+            ApiRepository = apiRepository;
             AssinaturaDigitalCore = assinaturaDigitalCore;
             CarimboCore = carimboCore;
         }
@@ -50,7 +50,7 @@ namespace Business.Core
             try
             {
                 if (!string.IsNullOrWhiteSpace(url)) 
-                    file = await JsonData.GetAndReadByteArrayAsync(url);
+                    file = await ApiRepository.GetAndReadAsByteArrayAsync(url);
                 else
                     throw new Exception("Não é possível ler este documento pois ele não é um arquivo PDF válido.");
             }
@@ -134,7 +134,7 @@ namespace Business.Core
 
         public async Task<PdfInfo> PdfInfo(string url)
         {
-            byte[] arquivo = await JsonData.GetAndReadByteArrayAsync(url);
+            byte[] arquivo = await ApiRepository.GetAndReadAsByteArrayAsync(url);
             var resposta = PdfInfo(arquivo);
             return resposta;
         }
@@ -278,7 +278,7 @@ namespace Business.Core
             try
             {
                 foreach (var url in urls)
-                    arquivos.Add(await JsonData.GetAndReadByteArrayAsync(url));
+                    arquivos.Add(await ApiRepository.GetAndReadAsByteArrayAsync(url));
             }
             catch (Exception)
             {
@@ -295,7 +295,7 @@ namespace Business.Core
             byte[] documentoFromUrl;
             try
             {
-                documentoFromUrl = await JsonData.GetAndReadByteArrayAsync(url);
+                documentoFromUrl = await ApiRepository.GetAndReadAsByteArrayAsync(url);
             }
             catch (Exception)
             {
@@ -309,7 +309,7 @@ namespace Business.Core
 
         public async Task<ValidationsResult> Validacoes(string url, string validations)
         {
-            var documentoFromUrl = await JsonData.GetAndReadByteArrayAsync(url);
+            var documentoFromUrl = await ApiRepository.GetAndReadAsByteArrayAsync(url);
 
             var validationsSelector = JsonConvert.DeserializeObject<ValidationsSelector>(validations);
 

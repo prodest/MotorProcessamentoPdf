@@ -1,6 +1,6 @@
 ﻿using Business.Core.ICore;
-using Infrastructure;
-using Infrastructure.Models;
+using Business.Shared.Models;
+using Business.Shared.Models.CertificadoDigital;
 using Infrastructure.Repositories;
 using iText.Forms;
 using iText.Kernel.Pdf;
@@ -14,19 +14,22 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace Business.Core
 {
     public class AssinaturaDigitalCore : IAssinaturaDigitalCore
     {
-        private readonly JsonData JsonData;
+        private static string message = "\nConsidere capturar este documento como \"cópia\".";
         private readonly IConfiguration Configuration;
+        private readonly IApiRepository ApiRepository;
 
-        public AssinaturaDigitalCore(JsonData jsonData, IConfiguration configuration)
+        public AssinaturaDigitalCore(IConfiguration configuration, IApiRepository apiRepository)
         {
-            JsonData = jsonData;
             Configuration = configuration;
+            ApiRepository = apiRepository;
         }
 
         #region Has Digital Signature
@@ -46,10 +49,8 @@ namespace Business.Core
 
         public async Task<bool> HasDigitalSignature(string url)
         {
-            byte[] arquivo = await JsonData.GetAndReadByteArrayAsync(url);
-            
+            byte[] arquivo = await ApiRepository.GetAndReadAsByteArrayAsync(url);
             var response = HasDigitalSignature(arquivo);
-            
             return response;
         }
 
@@ -87,22 +88,7 @@ namespace Business.Core
 
         #endregion
 
-        #region Signature Validation
-
-        //public void SignatureValidationV2(byte[] arquivoBytes)
-        //{
-        //    using PdfReader pdfReader = new PdfReader(new MemoryStream(arquivoBytes));
-        //    using PdfDocument pdfDocument = new PdfDocument(pdfReader);
-        //    SignatureUtil signatureUtil = new SignatureUtil(pdfDocument);
-        //    foreach (var signatureName in signatureUtil.GetSignatureNames())
-        //    {
-        //        var aaaa = signatureUtil.SignatureCoversWholeDocument(signatureName);
-        //        PdfPKCS7 signatureData = signatureUtil.ReadSignatureData(signatureName);
-        //        var bbbb = signatureData.VerifySignatureIntegrityAndAuthenticity();
-        //    }
-        //}
-
-        #endregion
+        #region AdicionarAssinaturaDigital
 
         public async Task<byte[]> AdicionarAssinaturaDigital(InputFile inputFile, string signatureFieldName)
         {
@@ -119,7 +105,7 @@ namespace Business.Core
 
         private async Task<byte[]> AdicionarAssinaturaDigital(string url, string signatureFieldName)
         {
-            byte[] documento = await JsonData.GetAndReadByteArrayAsync(url);
+            byte[] documento = await ApiRepository.GetAndReadAsByteArrayAsync(url);
             var documentoCarimbado = AdicionarAssinaturaDigital(documento, signatureFieldName);
             return documentoCarimbado;
         }
@@ -159,77 +145,7 @@ namespace Business.Core
             return documentoAssinado;
         }
 
-        public async Task<bool> ValidarHashDocumento(InputFile inputFile, string hash)
-        {
-            inputFile.IsValid();
-
-            bool documentoAutentico;
-            if (!string.IsNullOrWhiteSpace(inputFile.FileUrl))
-                documentoAutentico = await ValidarHashDocumento(inputFile.FileUrl, hash);
-            else
-                documentoAutentico = ValidarHashDocumento(inputFile.FileBytes, hash);
-
-            return documentoAutentico;
-        }
-
-        private async Task<bool> ValidarHashDocumento(string fileUrl, string hash)
-        {
-            byte[] file = await JsonData.GetAndReadByteArrayAsync(fileUrl);
-            bool documentoAutentico = ValidarHashDocumento(file, hash);
-            return documentoAutentico;
-        }
-
-        private bool ValidarHashDocumento(byte[] fileBytes, string hash)
-        {
-            // converter representação hexadecimal em byte[]
-            hash = hash.Substring(2, hash.Length - 2);
-            byte[] hashArray = Enumerable.Range(0, hash.Length)
-                .Where(x => x % 2 == 0)
-                .Select(x => Convert.ToByte(hash.Substring(x, 2), 16))
-                .ToArray();
-
-            // obter hash do documento postado
-            HashAlgorithm sha512 = SHA512.Create();
-            byte[] hashCalculado = sha512.ComputeHash(fileBytes);
-
-            if (hashCalculado.SequenceEqual(hashArray))
-                return true;
-            else
-                return false;
-        }
-
-        public async Task<ICollection<string>> ObterSignatureFieldName(InputFile inputFile)
-        {
-            inputFile.IsValid();
-
-            ICollection<string> dococumentoAssinado;
-            if (inputFile.FileUrl != null)
-                dococumentoAssinado = await ObterSignatureFieldName(inputFile.FileUrl);
-            else
-                dococumentoAssinado = ObterSignatureFieldName(inputFile.FileBytes);
-
-            return dococumentoAssinado;
-        }
-
-        private async Task<ICollection<string>> ObterSignatureFieldName(string url)
-        {
-            byte[] documento = await JsonData.GetAndReadByteArrayAsync(url);
-            var documentoCarimbado = ObterSignatureFieldName(documento);
-            return documentoCarimbado;
-        }
-
-        private ICollection<string> ObterSignatureFieldName(byte[] fileBytes)
-        {
-            using PdfReader pdfReader = new PdfReader(new MemoryStream(fileBytes));
-            using PdfDocument pdfDocument = new PdfDocument(pdfReader);
-
-            SignatureUtil signUtil = new SignatureUtil(pdfDocument);
-            var assinaturas = signUtil.GetSignatureNames();
-
-            return assinaturas;
-        }
-
-        #region Métodos privados
+        #region Auxiliares
 
         private byte[] Sign(byte[] src, Org.BouncyCastle.X509.X509Certificate[] chain, ICipherParameters pk,
             string digestAlgorithm, PdfSigner.CryptoStandard subfilter, string signatureFieldName
@@ -267,26 +183,87 @@ namespace Business.Core
             }
         }
 
-        private async Task<byte[]> AdicionarMetadados(byte[] input, KeyValuePair<string, string> customMetadaData)
+        #endregion
+
+        #endregion
+
+        #region ValidarHashDocumento
+
+        public async Task<bool> ValidarHashDocumento(InputFile inputFile, string hash)
         {
-            byte[] output;
-            using (PdfReader pdfReader = new PdfReader(new MemoryStream(input)))
-            using (MemoryStream outputStream = new MemoryStream())
-            using (PdfWriter pdfWriter = new PdfWriter(outputStream))
-            using (PdfDocument pdfDocument = new PdfDocument(pdfReader, pdfWriter))
-            {
-                pdfDocument.GetDocumentInfo().SetMoreInfo(customMetadaData.Key, customMetadaData.Value);
-                pdfDocument.Close();
+            inputFile.IsValid();
 
-                output = outputStream.ToArray();
+            bool documentoAutentico;
+            if (!string.IsNullOrWhiteSpace(inputFile.FileUrl))
+                documentoAutentico = await ValidarHashDocumento(inputFile.FileUrl, hash);
+            else
+                documentoAutentico = ValidarHashDocumento(inputFile.FileBytes, hash);
 
-                pdfWriter.Close();
-                outputStream.Close();
-                pdfReader.Close();
-            }
-
-            return output;
+            return documentoAutentico;
         }
+
+        private async Task<bool> ValidarHashDocumento(string fileUrl, string hash)
+        {
+            byte[] file = await ApiRepository.GetAndReadAsByteArrayAsync(fileUrl);
+            bool documentoAutentico = ValidarHashDocumento(file, hash);
+            return documentoAutentico;
+        }
+
+        private bool ValidarHashDocumento(byte[] fileBytes, string hash)
+        {
+            // converter representação hexadecimal em byte[]
+            hash = hash.Substring(2, hash.Length - 2);
+            byte[] hashArray = Enumerable.Range(0, hash.Length)
+                .Where(x => x % 2 == 0)
+                .Select(x => Convert.ToByte(hash.Substring(x, 2), 16))
+                .ToArray();
+
+            // obter hash do documento postado
+            HashAlgorithm sha512 = SHA512.Create();
+            byte[] hashCalculado = sha512.ComputeHash(fileBytes);
+
+            if (hashCalculado.SequenceEqual(hashArray))
+                return true;
+            else
+                return false;
+        }
+
+        #endregion
+
+        #region ObterSignatureFieldName
+
+        public async Task<ICollection<string>> ObterSignatureFieldName(InputFile inputFile)
+        {
+            inputFile.IsValid();
+
+            ICollection<string> dococumentoAssinado;
+            if (inputFile.FileUrl != null)
+                dococumentoAssinado = await ObterSignatureFieldName(inputFile.FileUrl);
+            else
+                dococumentoAssinado = ObterSignatureFieldName(inputFile.FileBytes);
+
+            return dococumentoAssinado;
+        }
+
+        private async Task<ICollection<string>> ObterSignatureFieldName(string url)
+        {
+            byte[] documento = await ApiRepository.GetAndReadAsByteArrayAsync(url);
+            var documentoCarimbado = ObterSignatureFieldName(documento);
+            return documentoCarimbado;
+        }
+
+        private ICollection<string> ObterSignatureFieldName(byte[] fileBytes)
+        {
+            using PdfReader pdfReader = new PdfReader(new MemoryStream(fileBytes));
+            using PdfDocument pdfDocument = new PdfDocument(pdfReader);
+
+            SignatureUtil signUtil = new SignatureUtil(pdfDocument);
+            var assinaturas = signUtil.GetSignatureNames();
+
+            return assinaturas;
+        }
+
+        #endregion
 
         #region RemoverAssinaturasDigitais
 
@@ -305,7 +282,7 @@ namespace Business.Core
 
         private async Task<byte[]> RemoverAssinaturasDigitais(string fileUrl)
         {
-            byte[] arquivo = await JsonData.GetAndReadByteArrayAsync(fileUrl);
+            byte[] arquivo = await ApiRepository.GetAndReadAsByteArrayAsync(fileUrl);
             var response = RemoverAssinaturasDigitais(arquivo);
             return response;
         }
@@ -332,6 +309,132 @@ namespace Business.Core
 
         #endregion
 
+        #region ValidarAssinaturaDigital
+
+        public async Task<IEnumerable<CertificadoDigital>> ValidarAssinaturaDigital(InputFile inputFile, bool ignorarExpiradas)
+        {
+            inputFile.IsValid();
+
+            IEnumerable<CertificadoDigital> result;
+            if (!string.IsNullOrWhiteSpace(inputFile.FileUrl))
+                result = await ValidarAssinaturaDigital(inputFile.FileUrl, ignorarExpiradas);
+            else
+                result = await ValidarAssinaturaDigitalAsync(inputFile.FileBytes, ignorarExpiradas);
+
+            return result;
+        }
+
+        private async Task<IEnumerable<CertificadoDigital>> ValidarAssinaturaDigital(string fileUrl, bool ignorarExpiradas)
+        {
+            byte[] fileBytes = await ApiRepository.GetAndReadAsByteArrayAsync(fileUrl);
+            IEnumerable<CertificadoDigital> certificados = await ValidarAssinaturaDigitalAsync(fileBytes, ignorarExpiradas);
+            return certificados;
+        }
+
+        private async Task<IEnumerable<CertificadoDigital>> ValidarAssinaturaDigitalAsync(byte[] fileBytes, bool ignorarExpiradas)
+        {
+            if (!HasDigitalSignature(fileBytes))
+                throw new Exception("Este documento não possui Assinaturas Digitais");
+
+            using MemoryStream memoryStream = new MemoryStream(fileBytes);
+            using PdfReader pdfReader = new PdfReader(memoryStream);
+            using PdfDocument pdfDocument = new PdfDocument(pdfReader);
+            SignatureUtil signatureUtil = new SignatureUtil(pdfDocument);
+
+            var digitalCertificateList = new List<CertificadoDigital>();
+            foreach (var signatureName in signatureUtil.GetSignatureNames())
+            {
+                PdfPKCS7 pdfPKCS7 = signatureUtil.ReadSignatureData(signatureName);
+                byte[] signingCertificate = pdfPKCS7.GetSigningCertificate().GetEncoded();
+                CertificadoDigital certificadoDigital = new CertificadoDigital(signingCertificate);
+
+                // validações online (outbound)
+                await ApiRepository.OnlineChainValidationAsync(signingCertificate, ignorarExpiradas);
+
+                // validações locais
+                ValidCertificateChain(certificadoDigital);
+                if (!ignorarExpiradas)
+                    ValidDigitalCertificate(certificadoDigital, pdfPKCS7);
+                ValidSignatureType(certificadoDigital);
+                ValidSignatureDate(pdfPKCS7);
+                IsDocumentUnadulterated(pdfPKCS7);
+
+                // cpf-cnpj, name, signature's date
+                PessoaFisica pessoaFisica = certificadoDigital.PessoaJuridica?.Responsavel ?? certificadoDigital.PessoaFisica;
+                string pessoa = $"{pessoaFisica.Nome.ToUpper()}";
+                if (certificadoDigital.PessoaJuridica != null)
+                    pessoa += $" ({certificadoDigital.PessoaJuridica.RazaoSocial.ToUpper()})";
+
+                digitalCertificateList.Add(certificadoDigital);
+            }
+
+            return digitalCertificateList;
+        }
+
+        #region Axiliares
+
+        private static void IsDocumentUnadulterated(PdfPKCS7 pdfPKCS7)
+        {
+            if(!pdfPKCS7.VerifySignatureIntegrityAndAuthenticity())
+                throw new Exception("A integridade deste documento está comprometida.");
+        }
+
+        private static void ValidSignatureDate(PdfPKCS7 pkcs7)
+        {
+            if (pkcs7.GetSignDate() == null && pkcs7.GetSignDate() <= DateTime.Now)
+                throw new Exception("A assinatura digital deste documento possui uma data de assinatura inválida." + message);
+        }
+
+        private static void ValidSignatureType(CertificadoDigital cert)
+        {
+            if (cert.TipoCertificado != TipoCertificadoEnum.eCPF && cert.TipoCertificado != TipoCertificadoEnum.eCNPJ)
+                throw new Exception("A assinatura digital deste documento possui um tipo desconhecido.");
+
+            if ((cert.PessoaFisica == null || string.IsNullOrWhiteSpace(cert.PessoaFisica.CPF)) && (cert.PessoaJuridica == null || cert.PessoaJuridica.Responsavel == null || string.IsNullOrWhiteSpace(cert.PessoaJuridica.Responsavel.CPF)))
+                throw new Exception("A assinatura digital deste documento não está associada a um CPF ou CNPJ.");
+
+            if ((cert.PessoaFisica == null || string.IsNullOrWhiteSpace(cert.PessoaFisica.CPF)) && (cert.PessoaJuridica == null || cert.PessoaJuridica.Responsavel == null || string.IsNullOrWhiteSpace(cert.PessoaJuridica.Responsavel.Nome)))
+                throw new Exception("A assinatura digital deste documento não possui a informação do nome do assinante.");
+        }
+
+        private static void ValidDigitalCertificate(CertificadoDigital cert, PdfPKCS7 pkcs7)
+        {
+            bool timestampImprint = pkcs7.VerifyTimestampImprint();
+            if (!timestampImprint && !cert.PeriodoValido)
+                throw new Exception("Este documento possui uma assinatura ICPBrasil inválida.");
+        }
+
+        private static void ValidCertificateChain(CertificadoDigital cert)
+        {
+            if (cert.ErrosValidacaoCadeia != null && cert.ErrosValidacaoCadeia.Any())
+            {
+                StringBuilder erroMessage = new StringBuilder();
+
+                bool exception = cert.ErrosValidacaoCadeia.Any(e =>
+                    e.Key == (int)X509ChainStatusFlags.PartialChain ||
+                    e.Key == (int)X509ChainStatusFlags.RevocationStatusUnknown ||
+                    e.Key == (int)X509ChainStatusFlags.OfflineRevocation);
+
+                foreach (var erro in cert.ErrosValidacaoCadeia)
+                {
+                    erroMessage.AppendLine($"Status: {erro.Key} | Status Information: {erro.Value}");
+                }
+
+                if (exception)
+                {
+                    erroMessage.Insert(0, $"Não foi possível validar a cadeia do certificado digital.\n");
+                    throw new Exception(erroMessage.ToString());
+                }
+                else
+                {
+                    erroMessage.Insert(0, $"Certificado digital com cadeia inválida. {message}\n");
+                    throw new Exception(erroMessage.ToString());
+                }
+            }
+        }
+
+        #endregion
+        
         #endregion
     }
 }
