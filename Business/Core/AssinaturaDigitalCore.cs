@@ -1,7 +1,5 @@
 ﻿using Business.Core.ICore;
 using Infrastructure;
-using Infrastructure.Models;
-using Infrastructure.Repositories;
 using iText.Forms;
 using iText.Kernel.Pdf;
 using iText.Signatures;
@@ -313,6 +311,7 @@ namespace Business.Core
         private byte[] RemoverAssinaturasDigitais(byte[] fileBytes)
         {
             using PdfReader pdfReader = new PdfReader(new MemoryStream(fileBytes));
+            pdfReader.SetUnethicalReading(true);
 
             using MemoryStream outputStream = new MemoryStream();
             using PdfWriter pdfWriter = new PdfWriter(outputStream);
