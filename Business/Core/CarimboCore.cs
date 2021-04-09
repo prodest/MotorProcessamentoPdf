@@ -37,29 +37,29 @@ namespace Business.Core
 
         #region Carimbo Lateral
 
-        public async Task<byte[]> CarimboLateral(InputFile inputFile, string texto, Margem margem, 
-            string cor, int? paginaInicial, int? totalPaginas
+        public async Task<byte[]> CarimboLateral(InputFile inputFile, string texto, float tamanhoFonte, 
+            Margem margem, string cor, int? paginaInicial, int? totalPaginas
         ){
             inputFile.IsValid();
 
             byte[] response;
             if (!string.IsNullOrWhiteSpace(inputFile.FileUrl))
-                response = await CarimboLateral(inputFile.FileUrl, texto, margem, cor, paginaInicial, totalPaginas);
+                response = await CarimboLateral(inputFile.FileUrl, texto, tamanhoFonte, margem, cor, paginaInicial, totalPaginas);
             else
-                response = CarimboLateral(inputFile.FileBytes, texto, margem, cor, paginaInicial, totalPaginas);
+                response = CarimboLateral(inputFile.FileBytes, texto, tamanhoFonte, margem, cor, paginaInicial, totalPaginas);
 
             return response;
         }
 
-        private async Task<byte[]> CarimboLateral(string url, string texto, Margem margem, string cor, 
+        private async Task<byte[]> CarimboLateral(string url, string texto, float tamanhoFonte, Margem margem, string cor, 
             int? paginaInicial, int? totalPaginas
         ){
             byte[] arquivo = await JsonData.GetAndReadByteArrayAsync(url);
-            var resposta = CarimboLateral(arquivo, texto, margem, cor, paginaInicial, totalPaginas);
+            var resposta = CarimboLateral(arquivo, texto, tamanhoFonte, margem, cor, paginaInicial, totalPaginas);
             return resposta;
         }
 
-        private byte[] CarimboLateral(byte[] arquivo, string texto, Margem margem, string cor, 
+        private byte[] CarimboLateral(byte[] arquivo, string texto, float tamanhoFonte, Margem margem, string cor, 
             int? paginaInicial, int? totalPaginas
         ){
             using MemoryStream readingStream = new MemoryStream(arquivo);
@@ -87,7 +87,7 @@ namespace Business.Core
 
                 using (Canvas canvas = new Canvas(page, rectangle))
                 {
-                    Paragraph paragraph = CriarParagrafo(texto, margem, cor, pageSize.GetHeight(), paginaInicial + i, totalPaginas);
+                    Paragraph paragraph = CriarParagrafo(texto, tamanhoFonte, margem, cor, pageSize.GetHeight(), paginaInicial + i, totalPaginas);
                     ConfigurarCanvas(canvas, pageSize, margem, paragraph, i);
                     canvas.Close();
                 }
@@ -127,13 +127,13 @@ namespace Business.Core
                 throw new Exception("Valor de margem desconhecido.");
         }
 
-        private Paragraph CriarParagrafo(string texto, Margem margem, string cor, float alturaPagina, int? paginaInicial, int? totalPaginas)
+        private Paragraph CriarParagrafo(string texto, float tamanhoFonte, Margem margem, string cor, float alturaPagina, int? paginaInicial, int? totalPaginas)
         {
             PdfFont font = PdfFontFactory.CreateFont(StandardFonts.HELVETICA);
 
             float fontSize;
             float padding;
-            DefinirParametrosParagrafo(alturaPagina, out fontSize, out padding);
+            DefinirParametrosParagrafo(alturaPagina, tamanhoFonte, out fontSize, out padding);
 
             DeviceRgb color = Hexa2Rgb(cor);
 
@@ -164,53 +164,18 @@ namespace Business.Core
             return paragraph;
         }
 
-        private void DefinirParametrosParagrafo(float alturaPagina, out float fontSize, out float padding)
+        private void DefinirParametrosParagrafo(float alturaPagina, float tamanhoFonte, out float fontSize, out float padding)
         {
-            float A4Height = 842;
-            float A5Height = 595;
-            float A6Height = 420;
-            float A7Height = 298;
-            float A8Height = 210;
-            float A9Height = 147;
-            float A10Height = 105;
+            fontSize = alturaPagina * tamanhoFonte;
+            padding = alturaPagina * tamanhoFonte;
 
-            if (alturaPagina >= A4Height * 0.95)
-            {
+            if (fontSize > 8)
                 fontSize = 8;
+
+            if (padding > 8)
                 padding = 8;
-            }
-            else if (alturaPagina >= 0.95 * A5Height && alturaPagina < 0.95 * A4Height)
-            {
-                fontSize = 7;
-                padding = 7;
-            }
-            else if (alturaPagina >= 0.95 * A6Height && alturaPagina < 0.95 * A5Height)
-            {
-                fontSize = 6;
-                padding = 6;
-            }
-            else if (alturaPagina >= 0.95 * A7Height && alturaPagina < 0.95 * A6Height)
-            {
-                fontSize = 4;
-                padding = 4;
-            }
-            else if (alturaPagina >= 0.95 * A8Height && alturaPagina < 0.95 * A7Height)
-            {
-                fontSize = 3;
-                padding = 3;
-            }
-            else if (alturaPagina >= 0.95 * A9Height && alturaPagina < 0.95 * A8Height)
-            {
-                fontSize = 2;
-                padding = 2;
-            }
-            else if (alturaPagina >= 0.95 * A10Height && alturaPagina < 0.95 * A9Height)
-            {
-                fontSize = 1.5f;
+            if (padding < 1)
                 padding = 1;
-            }
-            else
-                throw new Exception("O E-Docs não aceita documentos com dimensões menores que um papel A10.");
         }
 
         #endregion

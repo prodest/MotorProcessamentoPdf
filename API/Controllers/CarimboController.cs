@@ -78,10 +78,23 @@ namespace API.Controllers
         public async Task<IActionResult> CarimboLateral(
             [FromForm] InputFileDto inputFileDto, [FromForm] string texto, [FromForm] Margem margem,
             [FromForm] string cor, [FromForm] int? paginaInicial = null, [FromForm] int? totalPaginas = null
-        ){
+        )
+        {
             var inputFile = await Mapper.Map<Task<InputFile>>(inputFileDto);
-            var documentoAssinado = await CarimboCore.CarimboLateral(inputFile, texto, margem, cor, paginaInicial, totalPaginas);
+            var documentoAssinado = await CarimboCore.CarimboLateral(inputFile, texto, 0.01f, margem, cor, paginaInicial, totalPaginas);
             return File(documentoAssinado, "application/octet-stream"); ;
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> CarimboLateralNovo(
+            [FromForm] InputFileDto inputFileDto, [FromForm] string texto, [FromForm] float tamanhoFonte, 
+            [FromForm] Margem margem, [FromForm] string cor, 
+            [FromForm] int? paginaInicial = null, [FromForm] int? totalPaginas = null
+        )
+        {
+            var inputFile = await Mapper.Map<Task<InputFile>>(inputFileDto);
+            var documentoAssinado = await CarimboCore.CarimboLateral(inputFile, texto, tamanhoFonte, margem, cor, paginaInicial, totalPaginas);
+            return File(documentoAssinado, "application/octet-stream");
         }
 
         #endregion
