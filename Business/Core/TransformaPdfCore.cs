@@ -88,28 +88,28 @@ namespace Business.Core
         {
             try
             {
-                using (MemoryStream fileMemoryStream = new MemoryStream(file))
-                using (PdfReader filePdfReader = new PdfReader(fileMemoryStream))
-                using (PdfDocument filePdfDocument = new PdfDocument(filePdfReader))
+                using MemoryStream memoryStream = new MemoryStream(file);
+                using PdfReader pdfReader = new PdfReader(memoryStream);
+                try
                 {
-                    filePdfDocument.Close();
-                    filePdfReader.Close();
-                    fileMemoryStream.Close();
+                    using PdfDocument pdfDocument = new PdfDocument(pdfReader);
+                    if (pdfReader.IsEncrypted())
+                        throw new Exception("Não é possível ler este documento pois ele possui restrições de acesso ao seu conteúdo.");
+
+                    pdfDocument.Close();
+                    pdfReader.Close();
+                    memoryStream.Close();
 
                     return true;
+                }
+                catch (BadPasswordException)
+                {
+                    throw new Exception("Não é possível ler este documento pois ele está protegido por senha.");
                 }
             }
             catch (iText.IO.IOException)
             {
                 throw new Exception("Não é possível ler este documento pois ele não é um arquivo PDF válido.");
-            }
-            catch (BadPasswordException)
-            {
-                throw new Exception("Não é possível ler este documento pois ele está protegido por senha.");
-            }
-            catch (Exception)
-            {
-                throw new Exception("Não é possível ler este documento pois ele possui restrições de acesso ao seu conteúdo.");
             }
         }
 
