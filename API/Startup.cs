@@ -57,16 +57,17 @@ namespace API
             //    options.Limits.MaxRequestBodySize = int.MaxValue; // if don't set default value is: 30 MB
             //});
 
-            services.Configure<IISServerOptions>(options =>
+            services.Configure<IISServerOptions>(iisServerOptions =>
             {
-                options.MaxRequestBodySize = int.MaxValue;
+                iisServerOptions.MaxRequestBodySize = int.MaxValue;
             });
 
-            services.Configure<FormOptions>(x =>
+            services.Configure<FormOptions>(formOptions =>
             {
-                x.ValueLengthLimit = int.MaxValue;
-                x.MultipartBodyLengthLimit = int.MaxValue; // if don't set default value is: 128 MB
-                x.MultipartHeadersLengthLimit = int.MaxValue;
+                formOptions.ValueCountLimit = int.MaxValue;
+                formOptions.ValueLengthLimit = int.MaxValue;
+                formOptions.MultipartBodyLengthLimit = int.MaxValue; // if don't set default value is: 128 MB
+                formOptions.MultipartHeadersLengthLimit = int.MaxValue;
             });
         }
 

@@ -5,6 +5,7 @@ using Elastic.Apm.AspNetCore;
 using Infrastructure;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -46,6 +47,19 @@ namespace APIItextSharp
             });
 
             services.ConfigurarAutomapper();
+
+            services.Configure<IISServerOptions>(iisServerOptions =>
+            {
+                iisServerOptions.MaxRequestBodySize = int.MaxValue;
+            });
+
+            services.Configure<FormOptions>(formOptions =>
+            {
+                formOptions.ValueCountLimit = int.MaxValue;
+                formOptions.ValueLengthLimit = int.MaxValue;
+                formOptions.MultipartBodyLengthLimit = int.MaxValue; // if don't set default value is: 128 MB
+                formOptions.MultipartHeadersLengthLimit = int.MaxValue;
+            });
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
