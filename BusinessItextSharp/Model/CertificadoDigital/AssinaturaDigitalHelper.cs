@@ -1,5 +1,5 @@
-﻿using BusinessItextSharp.Model.CertificadoDigital;
-using iTextSharp.text.pdf;
+﻿using iTextSharp.text.pdf;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -14,10 +14,15 @@ namespace BusinessItextSharp.Model.CertificadoDigital
 {
     public class AssinaturaDigitalHelper
     {
-        private static string apiValidarCertificado = @"https://api.es.gov.br/certificado/api/validar-certificado";
         private static string message = "\nConsidere capturar este documento como \"cópia\".";
+        private readonly IConfiguration Configuration;
 
-        public static async Task<bool> ValidateDigitalSignatures(byte[] file)
+        public AssinaturaDigitalHelper(IConfiguration configuration)
+        {
+            Configuration = configuration;
+        }
+
+        public async Task<bool> ValidateDigitalSignatures(byte[] file)
         {
             try
             {
@@ -38,7 +43,10 @@ namespace BusinessItextSharp.Model.CertificadoDigital
                 {
                     PdfPkcs7 pkcs7 = reader.AcroFields.VerifySignature(signatureName);
 
-                    var messages = await OnlineChainValidation(pkcs7.SigningCertificate.GetEncoded());
+                    var messages = await OnlineChainValidation(
+                        pkcs7.SigningCertificate.GetEncoded(),
+                        Configuration["OutboundValidacaoCertificado"] + "/certificado/api/validar-certificado"
+                    );
                     if (!string.IsNullOrWhiteSpace(messages))
                         throw new Exception(messages);
 
@@ -228,9 +236,9 @@ namespace BusinessItextSharp.Model.CertificadoDigital
             }
         }
 
-        private static async Task<string> OnlineChainValidation(byte[] certificate)
+        private static async Task<string> OnlineChainValidation(byte[] certificate, string urlValidarCertificado)
         {
-            HttpResponseMessage result = await Upload(apiValidarCertificado, certificate);
+            HttpResponseMessage result = await Upload(urlValidarCertificado, certificate);
 
             if (result.StatusCode == System.Net.HttpStatusCode.OK)
                 return string.Empty;
