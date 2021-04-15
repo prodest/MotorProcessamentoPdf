@@ -1,6 +1,10 @@
 using API.Shared.Filters;
+using API.StartupConfigurations;
 using Business.Core;
 using Business.Core.ICore;
+using Elastic.Apm.NetCoreAll;
+using Infrastructure;
+using Infrastructure.Repositories;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http.Features;
@@ -8,10 +12,6 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Prodest.HealthCheck;
-using Elastic.Apm.AspNetCore;
-using API.StartupConfigurations;
-using Infrastructure.Repositories;
-using Infrastructure;
 
 namespace API
 {
@@ -74,8 +74,8 @@ namespace API
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            app.UseAllElasticApm(Configuration);
             app.UseForwardedHeaders();
-            app.UseElasticApm(Configuration);
             app.UseCors(options => options.AllowAnyHeader().AllowAnyOrigin().AllowAnyMethod());
 
             app.UseSwagger();

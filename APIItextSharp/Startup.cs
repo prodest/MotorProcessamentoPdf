@@ -1,7 +1,7 @@
 using APIItextSharp.Filters;
 using APIItextSharp.StartupConfigurations;
 using BusinessItextSharp.Core;
-using Elastic.Apm.AspNetCore;
+using Elastic.Apm.NetCoreAll;
 using Infrastructure;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -65,8 +65,8 @@ namespace APIItextSharp
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+            app.UseAllElasticApm(Configuration);
             app.UseForwardedHeaders();
-            app.UseElasticApm(Configuration);
             app.UseCors(options => options.AllowAnyHeader().AllowAnyOrigin().AllowAnyMethod());
 
             app.UseSwagger();
