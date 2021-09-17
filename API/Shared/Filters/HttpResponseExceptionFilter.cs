@@ -14,7 +14,11 @@ namespace API.Shared.Filters
         {
             if (context.Exception != null)
             {
-                var response = new ApiResponse<object>(500, context.Exception.Message);
+                var response = new ApiResponse<object>(
+                    statusCode:   500, 
+                    message: context.Exception.Message,
+                    stackTrace: context.Exception.StackTrace
+                    );
                 context.Result = new ObjectResult(response){ StatusCode = 500};
                 context.ExceptionHandled = true;
             }

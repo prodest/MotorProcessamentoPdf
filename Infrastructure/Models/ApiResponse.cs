@@ -4,6 +4,7 @@
     {
         public int StatusCode { get; set; }
         public string Message { get; set; }
+        public string StackTrace { get; set; }
         public T Data { get; set; }
 
         public ApiResponse()
@@ -17,11 +18,12 @@
             Message = errorResponse.Message;
         }
 
-        public ApiResponse(int statusCode, string message = default, T data = default)
+        public ApiResponse(int statusCode, string message = default, T data = default, string stackTrace = default)
         {
             StatusCode = statusCode;
             Message = message ?? GetDefaultMessageForStatusCode(statusCode);
             Data = data;
+            StackTrace = stackTrace;
         }
 
         private string GetDefaultMessageForStatusCode(int statusCode)
