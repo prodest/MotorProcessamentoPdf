@@ -321,11 +321,11 @@ namespace Business.Core
             form.FlattenFields();
 
             pdfDocument.Close();
-            pdfWriter.Close();
-            outputStream.Close();
-            pdfReader.Close();
-
             byte[] outputArray = outputStream.ToArray();
+            //pdfWriter.Close();
+            //outputStream.Close();
+            //pdfReader.Close();
+
             return outputArray;
         }
 
