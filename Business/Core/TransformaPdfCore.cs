@@ -3,7 +3,7 @@ using Business.Helpers;
 using Business.Shared.Models;
 using Infrastructure;
 using iText.Html2pdf;
-using iText.Kernel.Crypto;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Pdf;
 using iText.Kernel.Utils;
 using iText.Pdfa;
@@ -69,7 +69,7 @@ namespace Business.Core
                         return true;
                     }
                 }
-                catch (iText.IO.IOException e)
+                catch (iText.IO.Exceptions.IOException e)
                 {
                     throw new Exception("Não é possível ler este documento pois ele não é um arquivo PDF válido.");
                 }
@@ -107,7 +107,7 @@ namespace Business.Core
                     throw new Exception("Não é possível ler este documento pois ele está protegido por senha.");
                 }
             }
-            catch (iText.IO.IOException)
+            catch (iText.IO.Exceptions.IOException)
             {
                 throw new Exception("Não é possível ler este documento pois ele não é um arquivo PDF válido.");
             }

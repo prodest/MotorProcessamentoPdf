@@ -16,7 +16,7 @@ namespace Infrastructure.Repositories
         public ApiRepository(JsonData jsonData, IConfiguration config)
         {
             JsonData = jsonData;
-            PDF_MOTOR_PROCESSAMENTO_PDF = config.GetValue<string>("APIItextSharp");
+            PDF_MOTOR_PROCESSAMENTO_PDF = config.GetSection("APIItextSharp").Value;
         }
 
         public async Task<ApiResponse<IEnumerable<CertificadoDigitalDto>>> ValidarAssinaturaDigitalAsync(byte[] arquivo)
