@@ -6,7 +6,7 @@
 
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="10.1.1" />
-    <PackageReference Include="Elastic.Apm.NetCoreAll" Version="1.11.0" />
+    <PackageReference Include="Elastic.Apm.NetCoreAll" Version="1.12.1" />
     <PackageReference Include="Prodest.HealthCheck" Version="0.0.3" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
     <PackageReference Include="System.Net.NameResolution" Version="4.3.0" />
