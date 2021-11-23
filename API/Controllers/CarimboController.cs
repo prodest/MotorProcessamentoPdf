@@ -22,8 +22,6 @@ namespace API.Controllers
             Mapper = mapper;
         }
 
-        #region Adição de Carimbos
-
         [HttpPost]
         public async Task<IActionResult> AdicionarMarcaDagua(
             IFormFile arquivo, [FromForm] string[] texto, [FromForm] int tamanhoFonte = 40, [FromForm] string corHexa = "ff0000",
@@ -97,7 +95,15 @@ namespace API.Controllers
             return File(documentoAssinado, "application/octet-stream");
         }
 
-        #endregion
+        [HttpPost]
+        public async Task<IActionResult> RemoverCarimboLateral([FromForm] InputFileDto inputFileDto, [FromForm] float largura = 0.025f, [FromForm] float limiteMaximo = 20f)
+        {
+            InputFile inputFile = await Mapper.Map<Task<InputFile>>(inputFileDto);
+
+            byte[] documentoAssinado = await CarimboCore.RemoverCarimboLateral(inputFile, largura, limiteMaximo);
+
+            return File(documentoAssinado, "application/octet-stream");
+        }
 
         #region Validações
 

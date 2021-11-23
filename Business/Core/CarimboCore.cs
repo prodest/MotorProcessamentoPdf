@@ -14,11 +14,11 @@ using iText.Kernel.Pdf.Extgstate;
 using iText.Layout;
 using iText.Layout.Element;
 using iText.Layout.Properties;
+using iText.PdfCleanup;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -55,7 +55,7 @@ namespace Business.Core
             int? paginaInicial, int? totalPaginas
         ){
             byte[] arquivo = await JsonData.GetAndReadByteArrayAsync(url);
-            var resposta = CarimboLateral(arquivo, texto, tamanhoFonte, margem, cor, paginaInicial, totalPaginas);
+            byte[] resposta = CarimboLateral(arquivo, texto, tamanhoFonte, margem, cor, paginaInicial, totalPaginas);
             return resposta;
         }
 
@@ -87,8 +87,14 @@ namespace Business.Core
 
                 using (Canvas canvas = new Canvas(page, rectangle))
                 {
-                    Paragraph paragraph = CriarParagrafo(texto, tamanhoFonte, margem, cor, pageSize.GetHeight(), paginaInicial + i, totalPaginas);
+                    Paragraph paragraph = CriarParagrafo(
+                        texto, tamanhoFonte, margem, cor, 
+                        pageSize.GetHeight(), paginaInicial + i, 
+                        totalPaginas
+                    );
+
                     ConfigurarCanvas(canvas, pageSize, margem, paragraph, i);
+                    
                     canvas.Close();
                 }
             }
@@ -97,6 +103,82 @@ namespace Business.Core
 
             return writingStream.ToArray();
         }
+
+        #region Remover Carimbo Lateral
+
+        public async Task<byte[]> RemoverCarimboLateral(InputFile inputFile, float largura, float limiteMaximo)
+        {
+            inputFile.IsValid();
+
+            byte[] response;
+            if (!string.IsNullOrWhiteSpace(inputFile.FileUrl))
+                response = await RemoverCarimboLateral(inputFile.FileUrl, largura, limiteMaximo);
+            else
+                response = RemoverCarimboLateral(inputFile.FileBytes, largura, limiteMaximo);
+
+            return response;
+        }
+
+        private async Task<byte[]> RemoverCarimboLateral(string fileUrl, float largura, float limiteMaximo)
+        {
+            byte[] arquivo = await JsonData.GetAndReadByteArrayAsync(fileUrl);
+
+            byte[] resposta = RemoverCarimboLateral(arquivo, largura, limiteMaximo);
+
+            return resposta;
+        }
+
+        private byte[] RemoverCarimboLateral(byte[] arquivo, float largura, float limiteMaximo)
+        {
+            using MemoryStream readingStream = new MemoryStream(arquivo);
+            using PdfReader pdfReader = new PdfReader(readingStream);
+
+            using MemoryStream writingStream = new MemoryStream();
+            using PdfWriter pdfWriter = new PdfWriter(writingStream);
+
+            using PdfDocument pdfDocument = new PdfDocument(pdfReader, pdfWriter);
+
+            int numberOfPages = pdfDocument.GetNumberOfPages();
+
+            for (int i = 1; i <= numberOfPages; i++)
+            {
+                PdfPage page = pdfDocument.GetPage(i);
+                page.SetIgnorePageRotationForContent(true);
+                Rectangle pageSize = pdfDocument.GetPage(i).GetPageSizeWithRotation();
+
+                float offset = pageSize.GetWidth() * largura;
+                if (offset > limiteMaximo)
+                    offset = limiteMaximo;
+
+                float numeroLinhas = 4f;
+                float intervalo = offset / (numeroLinhas + 1f);
+                float posicaoIncicial = pageSize.GetWidth() - offset;
+
+                IList<PdfCleanUpLocation> cleanUpLocations = new List<PdfCleanUpLocation>();
+
+                for (int j = 1; j <= numeroLinhas; j++)
+                {
+                    Rectangle rectangle = new Rectangle(
+                        posicaoIncicial + intervalo, 0,
+                        0.1f, pageSize.GetHeight()
+                    );
+
+                    PdfCleanUpLocation location = new PdfCleanUpLocation(i,rectangle);
+
+                    posicaoIncicial = posicaoIncicial + intervalo;
+
+                    cleanUpLocations.Add(location);
+                }
+
+                PdfCleaner.CleanUp(pdfDocument, cleanUpLocations);
+            }
+
+            pdfDocument.Close();
+
+            return writingStream.ToArray();
+        }
+
+        #endregion
 
         #region CarimboLateral: Auxiliares
 
@@ -154,7 +236,7 @@ namespace Business.Core
             if (texto.Contains("{TotalPaginas}"))
                 texto = texto.Replace("{TotalPaginas}", totalPaginas.ToString());
 
-            var text = new Text(texto);
+            Text text = new Text(texto);
             text.AddStyle(style);
 
             Paragraph paragraph = new Paragraph(text);
@@ -318,6 +400,5 @@ namespace Business.Core
         }
 
         #endregion
-
     }
 }
