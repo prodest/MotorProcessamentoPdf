@@ -4,6 +4,7 @@ using Business.Shared.Models;
 using Infrastructure;
 using iText.IO.Font.Constants;
 using iText.Kernel.Colors;
+using iText.Kernel.Exceptions;
 using iText.Kernel.Font;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
@@ -19,6 +20,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -179,7 +181,7 @@ namespace Business.Core
         }
 
         #endregion
-
+        
         #region CarimboLateral: Auxiliares
 
         private void ConfigurarCanvas(Canvas canvas, Rectangle pageSize, Margem margem, Paragraph paragraph, int i)
@@ -318,6 +320,85 @@ namespace Business.Core
                 return writingStream.ToArray();
             }
         }
+
+        #region Remover Marcações E-Docs - Carimbos e Marca D'águas
+
+        public async Task<byte[]> SubstituirExpressaoRegularPorTexto(InputFile inputFile, IEnumerable<string> expressoesRegulares, string texto)
+        {
+            inputFile.IsValid();
+
+            byte[] response;
+            if (!string.IsNullOrWhiteSpace(inputFile.FileUrl))
+                response = await SubstituirExpressaoRegularPorTexto(inputFile.FileUrl, expressoesRegulares, texto);
+            else
+                response = SubstituirExpressaoRegularPorTexto(inputFile.FileBytes, expressoesRegulares, texto);
+
+            return response;
+        }
+
+        private async Task<byte[]> SubstituirExpressaoRegularPorTexto(string fileUrl, IEnumerable<string> expressoesRegulares, string texto)
+        {
+            byte[] arquivo = await JsonData.GetAndReadByteArrayAsync(fileUrl);
+
+            byte[] resposta = SubstituirExpressaoRegularPorTexto(arquivo, expressoesRegulares, texto);
+
+            return resposta;
+        }
+
+        private byte[] SubstituirExpressaoRegularPorTexto(byte[] arquivo, IEnumerable<string> expressoesRegulares, string texto)
+        {
+            // As expressões a seguir descrevem o carimbo de capturado e carimbo de cópia de processo
+            //    @"\d{4}-[\dB-DF-HJ-NP-TV-Z]{6} - E-DOCS - .* \d{2}\/\d{2}\/\d{4} \d{2}:\d{2} .* PÁGINA \d* \/ \d*",
+            //    @"E-DOCS - CÓPIA DO PROCESSO \d{4}-[\dB-DF-HJ-NP-TV-Z]{5} GERADO POR .* EM \d{2}\/\d{2}\/\d{4} \d{2}:\d{2} DOCUMENTO \d* \/ \d* PÁGINA \d* \/ \d*"
+
+            using MemoryStream readingStream = new MemoryStream(arquivo);
+            using PdfReader pdfReader = new PdfReader(readingStream);
+
+            using MemoryStream writingStream = new MemoryStream();
+            using PdfWriter pdfWriter = new PdfWriter(writingStream);
+
+            using PdfDocument pdfDocument = new PdfDocument(pdfReader, pdfWriter);
+
+            int numberOfPdfObject = pdfDocument.GetNumberOfPdfObjects();
+            for (int i = 1; i <= numberOfPdfObject; i++)
+            {
+                PdfObject pdfObject = pdfDocument.GetPdfObject(i);
+
+                if (pdfObject != null && pdfObject.IsStream())
+                {
+                    try
+                    {
+                        PdfStream pdfStreamObject = ((PdfStream)pdfObject);
+
+                        byte[] pdfStreamObjectBytesDecoded = pdfStreamObject.GetBytes(true);
+
+                        string streamContentDecoded = Encoding.GetEncoding("ISO-8859-1").GetString(pdfStreamObjectBytesDecoded);
+
+                        foreach (string regexItem in expressoesRegulares)
+                        {
+                            Match registro = Regex.Match(streamContentDecoded, regexItem);
+
+                            if (registro.Success)
+                            {
+                                streamContentDecoded = streamContentDecoded.Replace(registro.Value, texto);
+
+                                pdfStreamObject.SetData(Encoding.GetEncoding("ISO-8859-1").GetBytes(streamContentDecoded));
+                            }
+                        }
+                    }
+                    catch (PdfException)
+                    {
+                        // shush !
+                    }
+                }
+            }
+
+            pdfDocument.Close();
+
+            return writingStream.ToArray();
+        }
+
+        #endregion
 
         #endregion
 
