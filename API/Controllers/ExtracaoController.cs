@@ -42,5 +42,29 @@ namespace API.Controllers
 
             return BadRequest();
         }
+
+        [HttpPost]
+        public async Task<IActionResult> ExtrairTextoPorPaginasLink([FromForm] string url, [FromForm] IEnumerable<int> paginas)
+        {
+            if (url.Length > 0)
+            {
+                var response = await ExtracaoCore.ExtrairTextoPorPaginasLink(url, paginas);
+                return Ok(new ApiResponse<List<KeyValuePair<int, string>>>(200, "success", response));
+            }
+
+            return BadRequest();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ExtrairTextoConcatenadoLink([FromForm] string url, [FromForm] IEnumerable<int> paginas)
+        {
+            if (url.Length > 0)
+            {
+                var response = await ExtracaoCore.ExtrairTextoConcatenadoLink(url, paginas);
+                return Ok(new ApiResponse<string>(200, "success", response));
+            }
+
+            return BadRequest();
+        }
     }
 }
