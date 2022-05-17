@@ -462,6 +462,81 @@ namespace Business.Core
             }
         }
 
+        public async Task<IEnumerable<KeyValuePair<string, int>>> RegularExpressionMatchCounter(InputFile inputFile, string regularExpression)
+        {
+            inputFile.IsValid();
+
+            IEnumerable<KeyValuePair<string, int>> response;
+            if (!string.IsNullOrWhiteSpace(inputFile.FileUrl))
+                response = await RegularExpressionMatchCounter(inputFile.FileUrl, regularExpression);
+            else
+                response = RegularExpressionMatchCounter(inputFile.FileBytes, regularExpression);
+
+            return response;
+        }
+
+        private async Task<IEnumerable<KeyValuePair<string, int>>> RegularExpressionMatchCounter(string fileUrl, string regularExpression)
+        {
+            if (string.IsNullOrWhiteSpace(fileUrl))
+                throw new ArgumentException($"'{nameof(fileUrl)}' cannot be null or whitespace.", nameof(fileUrl));
+            if (string.IsNullOrWhiteSpace(regularExpression))
+                throw new ArgumentException($"'{nameof(regularExpression)}' cannot be null or whitespace.", nameof(regularExpression));
+
+            byte[] fileBytes = await JsonData.GetAndReadByteArrayAsync(fileUrl);
+
+            IEnumerable<KeyValuePair<string, int>> response = RegularExpressionMatchCounter(fileBytes, regularExpression);
+
+            return response;
+        }
+
+        private IEnumerable<KeyValuePair<string, int>> RegularExpressionMatchCounter(byte[] fileBytes, string regularExpression)
+        {
+            // file bytes validations
+            if (fileBytes is null)
+                throw new ArgumentNullException(nameof(fileBytes));
+            if (fileBytes.Count() == 0)
+                throw new ArgumentException($"'{nameof(fileBytes)}' cannot be empty.", nameof(fileBytes));
+
+            // regular expression validations
+            if (string.IsNullOrWhiteSpace(regularExpression))
+                throw new ArgumentException($"'{nameof(regularExpression)}' cannot be null or whitespace.", nameof(regularExpression));
+
+            // count regular expression matches
+            using MemoryStream memoryStream = new MemoryStream(fileBytes);
+            using PdfReader pdfReader = new PdfReader(memoryStream);
+            using PdfDocument pdfDocument = new PdfDocument(pdfReader);
+            ICollection<string> matches = new List<string>();
+            for (int currentPageNumber = 1; currentPageNumber <= pdfDocument.GetNumberOfPages(); currentPageNumber++)
+            {
+                try
+                {
+                    string pageText = PdfTextExtractor.GetTextFromPage(
+                        pdfDocument.GetPage(currentPageNumber),
+                        new SimpleTextExtractionStrategy()
+                    );
+
+                    Match match = Regex.Match(pageText, regularExpression);
+                    if (match.Success)
+                        matches.Add(match.Value);
+                }
+                catch (Exception)
+                {
+                    // Foi decidido que mesmo que o pdf apresente erros, o processo de leitura deve seguir adiante.
+                    // Portanto, assumiu-se o risco de que pode haver algum texto que atenda a expressão regular, mas que este pode ser ignorado.
+                }
+            }
+            
+            pdfDocument.Close();
+            pdfReader.Close();
+
+            // group and count matches
+            var result =
+                matches.GroupBy(x => x)
+                .Select(x => new KeyValuePair<string, int>(x.Key, x.Count()));
+
+            return result;
+        }
+
         #endregion
 
         #region Auxiliares

@@ -127,6 +127,14 @@ namespace API.Controllers
             return BadRequest();
         }
 
+        [HttpPost]
+        public async Task<IActionResult> RegularExpressionMatchCounter([FromForm] InputFileDto inputFileDto, [FromForm] string regularExpression)
+        {
+            InputFile inputFile = await Mapper.Map<Task<InputFile>>(inputFileDto);
+            IEnumerable<KeyValuePair<string, int>> response = await CarimboCore.RegularExpressionMatchCounter(inputFile, regularExpression);
+            return Ok(new ApiResponse<IEnumerable<KeyValuePair<string, int>>>(200, "success", response));
+        }
+
         #endregion
     }
 }

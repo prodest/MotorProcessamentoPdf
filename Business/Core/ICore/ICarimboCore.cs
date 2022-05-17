@@ -14,5 +14,7 @@ namespace Business.Core.ICore
         Task<string> BuscarExpressoesRegulares(string url, IEnumerable<string> expressoesRegulares, IEnumerable<int> paginas);
         string BuscarExpressoesRegulares(byte[] arquivo, IEnumerable<string> expressoesRegulares, IEnumerable<int> paginas);
         string BuscarExpressoesRegulares(MemoryStream memoryStream, IEnumerable<string> expressoesRegulares, IEnumerable<int> paginas);
+
+        Task<IEnumerable<KeyValuePair<string, int>>> RegularExpressionMatchCounter(InputFile inputFile, string regularExpression);
     }
 }
