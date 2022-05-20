@@ -309,11 +309,12 @@ namespace Business.Core
 
         public async Task<ValidationsResult> Validacoes(string url, string validations)
         {
-            var documentoFromUrl = await JsonData.GetAndReadByteArrayAsync(url);
+            byte[] documentoFromUrl = await JsonData.GetAndReadByteArrayAsync(url);
 
-            var validationsSelector = JsonConvert.DeserializeObject<ValidationsSelector>(validations);
+            ValidationsSelector validationsSelector = 
+                JsonConvert.DeserializeObject<ValidationsSelector>(validations);
 
-            var result = new ValidationsResult();
+            ValidationsResult result = new ValidationsResult();
 
             using (var memoryStream = new MemoryStream(documentoFromUrl))
             {
@@ -327,7 +328,17 @@ namespace Business.Core
                 result.RegexResult = CarimboCore.BuscarExpressoesRegulares(
                     memoryStream, 
                     validationsSelector.RegularExpressionsParameters.ExpressoesRegulares, 
-                    validationsSelector.RegularExpressionsParameters.Paginas);
+                    validationsSelector.RegularExpressionsParameters.Paginas
+                );
+
+                // Count regular expression matches
+                if (validationsSelector.RegularExpressionsCounter)
+                {
+                    result.RegexMatchesCounter = await CarimboCore.RegularExpressionMatchCounter(
+                        new InputFile() { FileUrl = url },
+                        validationsSelector.RegularExpressionsParameters.ExpressoesRegulares.First()
+                    );
+                }
 
                 // Obter informações sobre o pdf
                 result.PdfInfo = PdfInfo(memoryStream);

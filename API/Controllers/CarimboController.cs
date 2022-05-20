@@ -128,7 +128,7 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> RegularExpressionMatchCounter([FromForm] InputFileDto inputFileDto, [FromForm] string regularExpression)
+        public async Task<IActionResult> ContarOcorrenciasDeExpressoesRegulares([FromForm] InputFileDto inputFileDto, [FromForm] string regularExpression)
         {
             InputFile inputFile = await Mapper.Map<Task<InputFile>>(inputFileDto);
             IEnumerable<KeyValuePair<string, int>> response = await CarimboCore.RegularExpressionMatchCounter(inputFile, regularExpression);

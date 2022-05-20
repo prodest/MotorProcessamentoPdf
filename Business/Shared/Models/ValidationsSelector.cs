@@ -9,6 +9,7 @@ namespace Business.Shared.Models
         public bool PossuiAssinaturaDigital { get; set; }
         public RegularExpressionsParameters RegularExpressionsParameters { get; set; }
         public bool PdfInfo { get; set; }
+        public bool RegularExpressionsCounter { get; set; }
     }
 
     public class RegularExpressionsParameters
