@@ -35,9 +35,9 @@ namespace Business.Core
             JsonData = jsonData;
         }
 
-        #region Adição de Carimbos
+        #region Carimbos
 
-        #region Carimbo Lateral
+        #region Adicionar Carimbo Lateral
 
         public async Task<byte[]> CarimboLateral(InputFile inputFile, string texto, float tamanhoFonte, 
             Margem margem, string cor, int? paginaInicial, int? totalPaginas
@@ -105,6 +105,8 @@ namespace Business.Core
 
             return writingStream.ToArray();
         }
+        
+        #endregion
 
         #region Remover Carimbo Lateral
 
@@ -162,10 +164,10 @@ namespace Business.Core
                 {
                     Rectangle rectangle = new Rectangle(
                         posicaoIncicial + intervalo, 0,
-                        0.1f, pageSize.GetHeight()
+                        0.0001f, pageSize.GetHeight()
                     );
 
-                    PdfCleanUpLocation location = new PdfCleanUpLocation(i,rectangle);
+                    PdfCleanUpLocation location = new PdfCleanUpLocation(i, rectangle);
 
                     posicaoIncicial = posicaoIncicial + intervalo;
 
@@ -180,8 +182,6 @@ namespace Business.Core
             return writingStream.ToArray();
         }
 
-        #endregion
-        
         #region CarimboLateral: Auxiliares
 
         private void ConfigurarCanvas(Canvas canvas, Rectangle pageSize, Margem margem, Paragraph paragraph, int i)
@@ -225,7 +225,7 @@ namespace Business.Core
             style.SetFont(font);
             style.SetFontSize(fontSize);
             style.SetFontColor(color);
-            
+
             if (margem == Margem.Esquerda)
                 style.SetPaddingTop(padding);
             else if (margem == Margem.Direita)

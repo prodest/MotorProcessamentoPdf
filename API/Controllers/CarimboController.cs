@@ -96,11 +96,19 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> SubstituirExpressaoRegularTexto([FromForm] InputFileDto inputFileDto, [FromForm] IEnumerable<string> expressoesRegulares, [FromForm] string texto)
+        public async Task<IActionResult> RemoverCarimboLateral([FromForm] InputFileDto inputFileDto, [FromForm] float largura = 0.025f, [FromForm] float limiteMaximo = 20f)
+        {
+            InputFile inputFile = await Mapper.Map<Task<InputFile>>(inputFileDto);
+            byte[] documentoAssinado = await CarimboCore.RemoverCarimboLateral(inputFile, largura, limiteMaximo);
+            return File(documentoAssinado, "application/octet-stream");
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SubstituirExpressoesRegularesPorTexto([FromForm] InputFileDto inputFileDto, [FromForm] IEnumerable<string> regularExpressions, [FromForm] string text)
         {
             InputFile inputFile = await Mapper.Map<Task<InputFile>>(inputFileDto);
 
-            byte[] documentoAssinado = await CarimboCore.SubstituirExpressaoRegularPorTexto(inputFile, expressoesRegulares, texto);
+            byte[] documentoAssinado = await CarimboCore.SubstituirExpressaoRegularPorTexto(inputFile, regularExpressions, text);
 
             return File(documentoAssinado, "application/octet-stream");
         }
