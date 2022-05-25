@@ -164,7 +164,7 @@ namespace Business.Core
                 {
                     Rectangle rectangle = new Rectangle(
                         posicaoIncicial + intervalo, 0,
-                        0.0001f, pageSize.GetHeight()
+                        0.1f, pageSize.GetHeight()
                     );
 
                     PdfCleanUpLocation location = new PdfCleanUpLocation(i, rectangle);
