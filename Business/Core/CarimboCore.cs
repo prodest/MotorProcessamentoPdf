@@ -154,7 +154,7 @@ namespace Business.Core
                 if (offset > limiteMaximo)
                     offset = limiteMaximo;
 
-                float numeroLinhas = 4f;
+                float numeroLinhas = 10f;
                 float intervalo = offset / (numeroLinhas + 1f);
                 float posicaoIncicial = pageSize.GetWidth() - offset;
 
@@ -164,7 +164,7 @@ namespace Business.Core
                 {
                     Rectangle rectangle = new Rectangle(
                         posicaoIncicial + intervalo, 0,
-                        0.0001f, pageSize.GetHeight()
+                        0.001f, pageSize.GetHeight()
                     );
 
                     PdfCleanUpLocation location = new PdfCleanUpLocation(i, rectangle);
