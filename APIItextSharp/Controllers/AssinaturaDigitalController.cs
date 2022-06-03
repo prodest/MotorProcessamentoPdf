@@ -1,7 +1,7 @@
 ﻿using APIItextSharp.Models;
 using AutoMapper;
+using Business.Models;
 using BusinessItextSharp.Core;
-using BusinessItextSharp.Models;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

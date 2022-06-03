@@ -1,7 +1,6 @@
 ﻿using Business.Core.ICore;
 using Business.Helpers;
 using Business.Shared.Models;
-using Infrastructure;
 using iText.IO.Font.Constants;
 using iText.Kernel.Colors;
 using iText.Kernel.Exceptions;
@@ -28,9 +27,9 @@ namespace Business.Core
 {
     public class CarimboCore : ICarimboCore
     {
-        private readonly JsonData JsonData;
+        private readonly IJsonData JsonData;
 
-        public CarimboCore(JsonData jsonData)
+        public CarimboCore(IJsonData jsonData)
         {
             JsonData = jsonData;
         }

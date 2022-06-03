@@ -1,4 +1,5 @@
-﻿using Infrastructure.Models;
+﻿using Business.Core.ICore;
+using Business.Models;
 using Newtonsoft.Json;
 using System;
 using System.Net.Http;
@@ -6,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Infrastructure
 {
-    public class JsonData
+    public class JsonData : IJsonData
     {
         private readonly IHttpClientFactory HttpClientFactory;
 
@@ -19,7 +20,7 @@ namespace Infrastructure
         {
             HttpClient httpClient = HttpClientFactory.CreateClient("default");
             var response = await httpClient.GetAsync(url);
-            
+
             if (!response.IsSuccessStatusCode)
                 throw new Exception(await response.Content.ReadAsStringAsync());
 
@@ -32,7 +33,7 @@ namespace Infrastructure
         {
             HttpClient httpClient = HttpClientFactory.CreateClient("default");
             var response = await httpClient.GetAsync(url);
-            
+
             if (!response.IsSuccessStatusCode)
                 throw new Exception(await response.Content.ReadAsStringAsync());
 

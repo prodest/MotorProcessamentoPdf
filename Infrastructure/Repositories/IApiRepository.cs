@@ -1,4 +1,5 @@
-﻿using Infrastructure.Models;
+﻿using Business.Models;
+using Infrastructure.Models;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 

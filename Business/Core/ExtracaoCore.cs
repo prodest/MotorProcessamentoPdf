@@ -1,6 +1,5 @@
 ﻿using Business.Core.ICore;
 using Business.Helpers;
-using Infrastructure;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Canvas.Parser;
 using iText.Kernel.Pdf.Canvas.Parser.Listener;
@@ -13,9 +12,9 @@ namespace Business.Core
 {
     public class ExtracaoCore : IExtracaoCore
     {
-        private readonly JsonData JsonData;
+        private readonly IJsonData JsonData;
 
-        public ExtracaoCore(JsonData jsonData)
+        public ExtracaoCore(IJsonData jsonData)
         {
             JsonData = jsonData;
         }

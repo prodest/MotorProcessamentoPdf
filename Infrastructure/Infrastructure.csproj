@@ -11,6 +11,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Business\Business.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="teste-e-docs.des.es.gov.br.pfx">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

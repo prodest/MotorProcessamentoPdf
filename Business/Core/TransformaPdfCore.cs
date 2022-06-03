@@ -1,7 +1,6 @@
 ﻿using Business.Core.ICore;
 using Business.Helpers;
 using Business.Shared.Models;
-using Infrastructure;
 using iText.Html2pdf;
 using iText.Kernel.Exceptions;
 using iText.Kernel.Pdf;
@@ -19,11 +18,11 @@ namespace Business.Core
     public class TransformaPdfCore : ITransformaPdfCore
     {
         private const string Intent = "./wwwroot/resources/color/sRGB_CS_profile.icm";
-        private readonly JsonData JsonData;
+        private readonly IJsonData JsonData;
         private readonly IAssinaturaDigitalCore AssinaturaDigitalCore;
         private readonly ICarimboCore CarimboCore;
 
-        public TransformaPdfCore(JsonData jsonData, IAssinaturaDigitalCore assinaturaDigitalCore, ICarimboCore carimboCore)
+        public TransformaPdfCore(IJsonData jsonData, IAssinaturaDigitalCore assinaturaDigitalCore, ICarimboCore carimboCore)
         {
             JsonData = jsonData;
             AssinaturaDigitalCore = assinaturaDigitalCore;

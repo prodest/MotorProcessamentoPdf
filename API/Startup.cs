@@ -35,7 +35,7 @@ namespace API
             services.AddScoped<IAssinaturaDigitalCore, AssinaturaDigitalCore>();
             services.AddScoped<IExtracaoCore, ExtracaoCore>();
             services.AddScoped<IApiRepository, ApiRepository>();
-            services.AddScoped<JsonData, JsonData>();
+            services.AddScoped<IJsonData, JsonData>();
 
             services.ConfigurarAutomapper();
 

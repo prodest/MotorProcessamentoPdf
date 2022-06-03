@@ -1,4 +1,5 @@
-﻿using Infrastructure.Models;
+﻿using Business.Models;
+using Infrastructure.Models;
 using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;
 using System.IO;

@@ -1,5 +1,4 @@
 ﻿using Business.Core.ICore;
-using Infrastructure;
 using iText.Forms;
 using iText.Kernel.Pdf;
 using iText.Signatures;
@@ -18,10 +17,10 @@ namespace Business.Core
 {
     public class AssinaturaDigitalCore : IAssinaturaDigitalCore
     {
-        private readonly JsonData JsonData;
+        private readonly IJsonData JsonData;
         private readonly IConfiguration Configuration;
 
-        public AssinaturaDigitalCore(JsonData jsonData, IConfiguration configuration)
+        public AssinaturaDigitalCore(IJsonData jsonData, IConfiguration configuration)
         {
             JsonData = jsonData;
             Configuration = configuration;

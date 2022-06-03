@@ -1,4 +1,4 @@
-﻿using Infrastructure.Models;
+﻿using Business.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 
