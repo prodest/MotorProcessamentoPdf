@@ -12,6 +12,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Prodest.HealthCheck;
+using Prodest.Monitoring.Extensions.DependencyInjection;
+using Prodest.Monitoring.Extensions.Monitoring;
+
 
 namespace API
 {
@@ -69,6 +72,8 @@ namespace API
                 formOptions.MultipartBodyLengthLimit = int.MaxValue; // if don't set default value is: 128 MB
                 formOptions.MultipartHeadersLengthLimit = int.MaxValue;
             });
+
+            services.AddMachineMonitoring(Configuration.GetConnectionString("RedisConnection"), "PDF");
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -76,6 +81,9 @@ namespace API
         {
             app.UseAllElasticApm(Configuration);
             app.UseForwardedHeaders();
+
+            IMachineMonitoring machineMonitoring = app.ApplicationServices.GetService<IMachineMonitoring>();
+
             app.UseCors(options => options.AllowAnyHeader().AllowAnyOrigin().AllowAnyMethod());
 
             app.UseSwagger();
