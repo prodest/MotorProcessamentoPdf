@@ -79,7 +79,7 @@ namespace API.Controllers
         )
         {
             var inputFile = await Mapper.Map<Task<InputFile>>(inputFileDto);
-            var documentoAssinado = await CarimboCore.CarimboLateral(inputFile, texto, 0.01f, margem, cor, paginaInicial, totalPaginas);
+            var documentoAssinado = await CarimboCore.AdicionarCarimboLateralAsync(inputFile, texto, 0.01f, margem, cor, paginaInicial, totalPaginas);
             return File(documentoAssinado, "application/octet-stream"); ;
         }
 
@@ -91,7 +91,7 @@ namespace API.Controllers
         )
         {
             var inputFile = await Mapper.Map<Task<InputFile>>(inputFileDto);
-            var documentoAssinado = await CarimboCore.CarimboLateral(inputFile, texto, tamanhoFonte, margem, cor, paginaInicial, totalPaginas);
+            var documentoAssinado = await CarimboCore.AdicionarCarimboLateralAsync(inputFile, texto, tamanhoFonte, margem, cor, paginaInicial, totalPaginas);
             return File(documentoAssinado, "application/octet-stream");
         }
 
@@ -99,7 +99,7 @@ namespace API.Controllers
         public async Task<IActionResult> RemoverCarimboLateral([FromForm] InputFileDto inputFileDto, [FromForm] float largura = 0.025f, [FromForm] float limiteMaximo = 20f)
         {
             InputFile inputFile = await Mapper.Map<Task<InputFile>>(inputFileDto);
-            byte[] documentoAssinado = await CarimboCore.RemoverCarimboLateral(inputFile, largura, limiteMaximo);
+            byte[] documentoAssinado = await CarimboCore.RemoverCarimboLateralAsync(inputFile, largura, limiteMaximo);
             return File(documentoAssinado, "application/octet-stream");
         }
 

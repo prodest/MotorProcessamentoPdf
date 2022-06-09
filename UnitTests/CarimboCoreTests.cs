@@ -16,13 +16,17 @@ namespace UnitTests
         public async Task o_pdf_nao_deve_conter_carimbo(string filePath)
         {
             // Arrange
-            string carimbo = @"20[0-9]{2}-[0-9B-DF-HJ-NP-TV-Z]{6} - E-DOCS .* [0-9]{2}/[0-9]{2}/20[0-9]{2} [0-9]{2}:[0-9]{2} .* PÁGINA";
             InputFile inputFile = await CreateInputFile(filePath);
+            string stampRegex = @"20[0-9]{2}-[0-9B-DF-HJ-NP-TV-Z]{6} - E-DOCS .* [0-9]{2}/[0-9]{2}/20[0-9]{2} [0-9]{2}:[0-9]{2} .* PÁGINA";
             Mock<IJsonData> mock = new Mock<IJsonData>();
             CarimboCore carimboCore = new CarimboCore(mock.Object);
 
             // Act
-            string carimboAntes = carimboCore.BuscarExpressoesRegulares(inputFile.FileBytes, new List<string>() { carimbo }, new List<int>());
+            string carimboAntes = carimboCore.BuscarExpressoesRegulares(
+                inputFile.FileBytes, 
+                new List<string>() { stampRegex }, 
+                new List<int>()
+            );
 
             // Assert
             carimboAntes.Should().BeNullOrWhiteSpace();
@@ -39,7 +43,8 @@ namespace UnitTests
             CarimboCore carimboCore = new CarimboCore(mock.Object);
 
             // Act
-            IEnumerable<KeyValuePair<string, int>> carimbos = await carimboCore.RegularExpressionMatchCounter(inputFile, expressaoRegularCarimbo);
+            IEnumerable<KeyValuePair<string, int>> carimbos = 
+                await carimboCore.RegularExpressionMatchCounter(inputFile, expressaoRegularCarimbo);
 
             // Assert
             carimbos.Should().NotBeNullOrEmpty();
@@ -58,16 +63,26 @@ namespace UnitTests
             InputFile inputFile = await CreateInputFile(filePath);
             Mock<IJsonData> mock = new Mock<IJsonData>();
             CarimboCore carimboCore = new CarimboCore(mock.Object);
-            string carimboAntes = carimboCore.BuscarExpressoesRegulares(inputFile.FileBytes, new List<string>() { carimbo }, new List<int>());
+            string carimboAntes = carimboCore.BuscarExpressoesRegulares(
+                inputFile.FileBytes, 
+                new List<string>() { carimbo }, 
+                new List<int>()
+            );
             carimboAntes.Should().NotBeNullOrEmpty();
 
             // Act
-            byte[] result = await carimboCore.RemoverCarimboLateral(inputFile, 0.025f, 20f);
+            byte[] result = await carimboCore.RemoverCarimboLateralAsync(inputFile, 0.025f, 20f);
 
             // Assert
-            string carimboEncontrado = carimboCore.BuscarExpressoesRegulares(result, new List<string>() { carimbo }, new List<int>());
+            string carimboEncontrado = carimboCore.BuscarExpressoesRegulares(
+                result, 
+                new List<string>() { carimbo }, 
+                new List<int>()
+            );
             carimboEncontrado.Should().BeNull();
         }
+
+        #region MyRegion
 
         private async Task<InputFile> CreateInputFile(string filePath)
         {
@@ -90,7 +105,8 @@ namespace UnitTests
                 new object[] { @"C:\Users\Marcelo\Downloads\Laranja\Capturados em DEV\A7.pdf" },
                 new object[] { @"C:\Users\Marcelo\Downloads\Laranja\Capturados em DEV\A8.pdf" },
                 new object[] { @"C:\Users\Marcelo\Downloads\Laranja\Capturados em DEV\A9.pdf" },
-                new object[] { @"C:\Users\Marcelo\Downloads\Laranja\Capturados em DEV\A10.pdf" }
+                new object[] { @"C:\Users\Marcelo\Downloads\Laranja\Capturados em DEV\A10.pdf" },
+                new object[] { @"C:\Users\Marcelo\Downloads\Laranja\Capturados em DEV\Copia-Processo.pdf" }
             };
         }
 
@@ -111,5 +127,7 @@ namespace UnitTests
                 new object[] { @"C:\Users\Marcelo\Downloads\Laranja\Original\A10.pdf" }
             };
         }
+        
+        #endregion
     }
 }

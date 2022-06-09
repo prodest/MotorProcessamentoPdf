@@ -38,29 +38,30 @@ namespace Business.Core
 
         #region Adicionar Carimbo Lateral
 
-        public async Task<byte[]> CarimboLateral(InputFile inputFile, string texto, float tamanhoFonte, 
+
+        public async Task<byte[]> AdicionarCarimboLateralAsync(InputFile inputFile, string texto, float tamanhoFonte, 
             Margem margem, string cor, int? paginaInicial, int? totalPaginas
         ){
             inputFile.IsValid();
 
             byte[] response;
             if (!string.IsNullOrWhiteSpace(inputFile.FileUrl))
-                response = await CarimboLateral(inputFile.FileUrl, texto, tamanhoFonte, margem, cor, paginaInicial, totalPaginas);
+                response = await AdicionarCarimboLateralAsync(inputFile.FileUrl, texto, tamanhoFonte, margem, cor, paginaInicial, totalPaginas);
             else
-                response = CarimboLateral(inputFile.FileBytes, texto, tamanhoFonte, margem, cor, paginaInicial, totalPaginas);
+                response = AdicionarCarimboLateral(inputFile.FileBytes, texto, tamanhoFonte, margem, cor, paginaInicial, totalPaginas);
 
             return response;
         }
 
-        private async Task<byte[]> CarimboLateral(string url, string texto, float tamanhoFonte, Margem margem, string cor, 
+        private async Task<byte[]> AdicionarCarimboLateralAsync(string url, string texto, float tamanhoFonte, Margem margem, string cor, 
             int? paginaInicial, int? totalPaginas
         ){
             byte[] arquivo = await JsonData.GetAndReadByteArrayAsync(url);
-            byte[] resposta = CarimboLateral(arquivo, texto, tamanhoFonte, margem, cor, paginaInicial, totalPaginas);
+            byte[] resposta = AdicionarCarimboLateral(arquivo, texto, tamanhoFonte, margem, cor, paginaInicial, totalPaginas);
             return resposta;
         }
 
-        private byte[] CarimboLateral(byte[] arquivo, string texto, float tamanhoFonte, Margem margem, string cor, 
+        private byte[] AdicionarCarimboLateral(byte[] arquivo, string texto, float tamanhoFonte, Margem margem, string cor, 
             int? paginaInicial, int? totalPaginas
         ){
             using MemoryStream readingStream = new MemoryStream(arquivo);
@@ -109,20 +110,20 @@ namespace Business.Core
 
         #region Remover Carimbo Lateral
 
-        public async Task<byte[]> RemoverCarimboLateral(InputFile inputFile, float largura, float limiteMaximo)
+        public async Task<byte[]> RemoverCarimboLateralAsync(InputFile inputFile, float largura, float limiteMaximo)
         {
             inputFile.IsValid();
 
             byte[] response;
             if (!string.IsNullOrWhiteSpace(inputFile.FileUrl))
-                response = await RemoverCarimboLateral(inputFile.FileUrl, largura, limiteMaximo);
+                response = await RemoverCarimboLateralAsync(inputFile.FileUrl, largura, limiteMaximo);
             else
                 response = RemoverCarimboLateral(inputFile.FileBytes, largura, limiteMaximo);
 
             return response;
         }
 
-        private async Task<byte[]> RemoverCarimboLateral(string fileUrl, float largura, float limiteMaximo)
+        private async Task<byte[]> RemoverCarimboLateralAsync(string fileUrl, float largura, float limiteMaximo)
         {
             byte[] arquivo = await JsonData.GetAndReadByteArrayAsync(fileUrl);
 
@@ -403,6 +404,21 @@ namespace Business.Core
 
         #region Validações
 
+        #region BuscarExpressoesRegulares
+
+        public async Task<string> BuscarExpressoesRegulares(InputFile inputFile, IEnumerable<string> regularExpressions, IEnumerable<int> selectedPageNumbers)
+        {
+            inputFile.IsValid();
+
+            string response;
+            if (!string.IsNullOrWhiteSpace(inputFile.FileUrl))
+                response = await BuscarExpressoesRegulares(inputFile.FileUrl, regularExpressions, selectedPageNumbers);
+            else
+                response = BuscarExpressoesRegulares(inputFile.FileBytes, regularExpressions, selectedPageNumbers);
+
+            return response;
+        }
+
         public async Task<string> BuscarExpressoesRegulares(string url, IEnumerable<string> expressoesRegulares, IEnumerable<int> paginas)
         {
             var arquivo = await JsonData.GetAndReadByteArrayAsync(url);
@@ -412,12 +428,41 @@ namespace Business.Core
 
         public string BuscarExpressoesRegulares(byte[] arquivo, IEnumerable<string> expressoesRegulares, IEnumerable<int> paginas)
         {
-            using (MemoryStream memoryStream = new MemoryStream(arquivo))
+            using MemoryStream memoryStream = new MemoryStream(arquivo);
+            using PdfReader pdfReader = new PdfReader(memoryStream);
+            using PdfDocument pdfDocument = new PdfDocument(pdfReader);
+
+            if (paginas == null || paginas.Count() == 0)
+                paginas = new List<int>(Enumerable.Range(1, pdfDocument.GetNumberOfPages()));
+
+            foreach (var pagina in paginas)
             {
-                var result = BuscarExpressoesRegulares(memoryStream, expressoesRegulares, paginas);
-                memoryStream.Close();
-                return result;
+                try
+                {
+                    string pageText = PdfTextExtractor.GetTextFromPage(
+                        pdfDocument.GetPage(pagina),
+                        new SimpleTextExtractionStrategy()
+                    );
+
+                    foreach (var regexItem in expressoesRegulares)
+                    {
+                        Match registro = Regex.Match(pageText, regexItem);
+                        if (registro.Success)
+                            return registro.Value;
+                    }
+                }
+                catch (Exception)
+                {
+                    // Foi decidido que mesmo que o pdf apresente erros, o processo de leitura deve seguir adiante.
+                    // Portanto, assumiu-se o risco de que pode haver algum texto que atenda a expressão regular, mas que este pode ser ignorado.
+                }
             }
+
+            pdfDocument.Close();
+            pdfReader.Close();
+            memoryStream.Close();
+
+            return null;
         }
 
         public string BuscarExpressoesRegulares(MemoryStream memoryStream, IEnumerable<string> expressoesRegulares, IEnumerable<int> paginas)
@@ -460,6 +505,8 @@ namespace Business.Core
                 return null;
             }
         }
+
+        #endregion
 
         public async Task<IEnumerable<KeyValuePair<string, int>>> RegularExpressionMatchCounter(InputFile inputFile, string regularExpression)
         {
