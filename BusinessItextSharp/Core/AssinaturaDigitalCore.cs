@@ -133,15 +133,12 @@ namespace BusinessItextSharp.Core
         public async Task<IEnumerable<CertificadoDigitalDto>> SignatureValidation(InputFile inputFile, bool ignoreExpired = false)
         {
             inputFile.IsValid();
-
             IEnumerable<CertificadoDigital> listaCertificados = new List<CertificadoDigital>();
             if (inputFile.FileBytes != null)
                 listaCertificados = await SignatureValidation(inputFile.FileBytes, ignoreExpired);
             else
                 listaCertificados = await SignatureValidation(inputFile.FileUrl, ignoreExpired);
-
-            var result = Mapper.Map<IEnumerable<CertificadoDigitalDto>>(listaCertificados);
-
+            IEnumerable<CertificadoDigitalDto> result = Mapper.Map<IEnumerable<CertificadoDigitalDto>>(listaCertificados);
             return result;
         }
 
@@ -165,8 +162,9 @@ namespace BusinessItextSharp.Core
         private async Task<IEnumerable<CertificadoDigital>> SignatureValidation(byte[] file, bool ignoreExpired = false)
         {
             PdfReader reader = new PdfReader(file);
-            
-            DocumentoPossuiAssinaturaDigital(reader);
+
+            if (!DocumentoPossuiAssinaturaDigital(reader))
+                return new List<CertificadoDigital>();
 
             var digitalCertificateList = new List<CertificadoDigital>();
             var signatureNameList = reader.AcroFields.GetSignatureNames();
@@ -352,11 +350,12 @@ namespace BusinessItextSharp.Core
 
         #region Validações
 
-        private void DocumentoPossuiAssinaturaDigital(PdfReader reader)
+        private bool DocumentoPossuiAssinaturaDigital(PdfReader reader)
         {
             var qntAssinaturas = reader.AcroFields.GetSignatureNames().Count;
             if (qntAssinaturas <= 0)
-                throw new Exception("Este documento não possui Assinaturas Digitais");
+                return false;
+            return true;
         }
 
         private static void TodosAssinaramDocumentoPorInteiro(Dictionary<string, string> naoAssinaramTodoDocumento)
