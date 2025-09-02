@@ -2,6 +2,8 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
+    <UserSecretsId>5eac718a-9f91-46d0-905b-e8f173c91062</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
   </PropertyGroup>
 
   <ItemGroup>
@@ -11,6 +13,7 @@
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="10.1.1" />
     <PackageReference Include="Elastic.Apm.NetCoreAll" Version="1.12.1" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.22.1" />
     <PackageReference Include="Prodest.HealthCheck" Version="0.0.3" />
     <PackageReference Include="Prodest.Monitoring" Version="0.1.2" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.2.3" />
