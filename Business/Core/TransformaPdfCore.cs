@@ -1,11 +1,19 @@
 ﻿using Business.Core.ICore;
+using Business.Handlers;
 using Business.Helpers;
 using Business.Shared.Models;
 using Infrastructure;
+using Infrastructure.Models;
 using iText.Html2pdf;
+using iText.Kernel.Events;
 using iText.Kernel.Exceptions;
+using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
+using iText.Kernel.Pdf.Xobject;
 using iText.Kernel.Utils;
+using iText.Kernel.XMP.Impl;
+using iText.Layout;
+using iText.Layout.Element;
 using iText.Pdfa;
 using Newtonsoft.Json;
 using System;
@@ -228,6 +236,83 @@ namespace Business.Core
             var output = new MemoryStream();
             HtmlConverter.ConvertToPdf(html, output);
             return output.ToArray();
+        }
+
+        public byte[] HtmlPdfCompleto(PdfRequest request)
+        {
+            using var outputStream = new MemoryStream();
+
+            var writer = new PdfWriter(outputStream);
+
+            var pdfDocument = new PdfDocument(writer);
+
+            var totalPages = new PdfFormXObject(new Rectangle(0, 0, 50, 12));
+
+            request.Page ??= PdfPageDefinition.Default();
+
+            var pageSize = Helpers.Utils.GetPageSize(request.Page);
+            pdfDocument.SetDefaultPageSize(pageSize);
+
+            // REGISTRA HANDLERS
+            // HEADER
+            if (!string.IsNullOrWhiteSpace(request.HtmlHeader))
+            {
+                pdfDocument.AddEventHandler(
+                    PdfDocumentEvent.END_PAGE,
+                    new PdfHeaderHandler(request.HtmlHeader, request.Page)
+                );
+            }
+
+            // FOOTER
+            if (!string.IsNullOrWhiteSpace(request.HtmlFooter))
+            {
+                pdfDocument.AddEventHandler(
+                    PdfDocumentEvent.END_PAGE,
+                    new PdfFooterHandler(request.HtmlFooter, request.Page, totalPages)
+                );
+            }
+
+            // WATERMARK
+            if (!string.IsNullOrWhiteSpace(request.HtmlWatermark))
+            {
+                pdfDocument.AddEventHandler(
+                    PdfDocumentEvent.END_PAGE,
+                    new PdfWatermarkHandler(request.HtmlWatermark)
+                );
+            }
+
+            // GERA O PDF DO HTML PRINCIPAL
+            // Converte HTML para PDF
+            var converterProperties = new ConverterProperties();
+
+            // Permite CSS externo ou imagens
+            converterProperties.SetBaseUri("");
+
+            var document = HtmlConverter.ConvertToDocument(
+                request.HtmlBody,
+                pdfDocument,
+                converterProperties
+            );
+
+            document.SetMargins(
+                request.Page.MarginTop,
+                request.Page.MarginRight,
+                request.Page.MarginBottom,
+                request.Page.MarginLeft
+            );
+
+            if (totalPages != null)
+            {
+                int totalPageCount = pdfDocument.GetNumberOfPages();
+
+                var canvas = new Canvas(totalPages, pdfDocument);
+                canvas.Add(new Paragraph(totalPageCount.ToString()));
+                canvas.Close();
+            }
+
+            pdfDocument.Close();
+
+            return outputStream.ToArray();
         }
 
         public byte[] PdfPagination(byte[] file, int itemsByPage, int page)

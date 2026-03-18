@@ -260,6 +260,13 @@ namespace API.Controllers
         }
 
         [HttpPost]
+        public IActionResult HtmlPdfCompleto([FromBody] PdfRequest request)
+        {
+            var output = TransformaPdfCore.HtmlPdfCompleto(request);
+            return Ok(new ApiResponse<byte[]>(200, "success", output));
+        }
+
+        [HttpPost]
         public async Task<IActionResult> HtmlPdfByFile(IFormFile arquivo)
         {
             if (arquivo.Length > 0)

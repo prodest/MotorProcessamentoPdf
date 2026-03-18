@@ -28,5 +28,7 @@ namespace Business.Core.ICore
         PdfInfo PdfInfo(MemoryStream memoryStream);
 
         Task<ValidationsResult> Validacoes(string url, string validations);
+        byte[] HtmlPdfCompleto(PdfRequest request);
+
     }
 }
