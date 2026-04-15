@@ -3,7 +3,6 @@ using iText.Html2pdf;
 using iText.Kernel.Events;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf.Canvas;
-using iText.Kernel.Pdf.Xobject;
 using iText.Layout;
 using iText.Layout.Element;
 
@@ -13,16 +12,13 @@ namespace Business.Handlers
     {
         private readonly string _html;
         private readonly PdfPageDefinition _page;
-        private readonly PdfFormXObject _totalPagesPlaceholder;
 
         public PdfFooterHandler(
             string html,
-            PdfPageDefinition page,
-            PdfFormXObject totalPagesPlaceholder)
+            PdfPageDefinition page)
         {
             _html = html;
             _page = page;
-            _totalPagesPlaceholder = totalPagesPlaceholder;
         }
 
         public void HandleEvent(Event @event)
@@ -35,14 +31,17 @@ namespace Business.Handlers
 
             var pageSize = page.GetPageSize();
 
-            var rectangle = new Rectangle(
+            var width = pageSize.GetWidth() - _page.MarginLeft - _page.MarginRight;
+
+            var footerRectangle = new Rectangle(
                 _page.MarginLeft,
                 10,
-                pageSize.GetWidth() - _page.MarginLeft - _page.MarginRight,
-                _page.MarginBottom
+                width,
+                _page.FooterHeight
             );
 
-            var canvas = new Canvas(new PdfCanvas(page), rectangle);
+
+            var canvas = new Canvas(new PdfCanvas(page), footerRectangle);
 
             // HTML do footer
             if (!string.IsNullOrWhiteSpace(_html))
@@ -50,26 +49,45 @@ namespace Business.Handlers
                 var elements = HtmlConverter.ConvertToElements(_html);
 
                 foreach (var element in elements)
-                    canvas.Add((IBlockElement)element);
+                {
+                    if (element is IBlockElement blockElement)
+                        canvas.Add(blockElement);
+                }
             }
 
-            // PAGINAÇÃO
-            var paragraph = new Paragraph()
-                .Add("Página ")
-                .Add(pageNumber.ToString())
-                .Add(" de ");
-
-            canvas.Add(paragraph);
-
-            var pdfCanvas = new PdfCanvas(page);
-
-            pdfCanvas.AddXObject(
-                _totalPagesPlaceholder,
-                rectangle.GetRight() - 30,
-                rectangle.GetBottom() + 2
-            );
+            //AddPageNumber(pdf, page, pageNumber, pageSize);
 
             canvas.Close();
         }
+
+        //private void AddPageNumber(PdfDocument pdf, PdfPage page, int pageNumber, Rectangle pageSize)
+        //{
+        //    var pdfCanvas = new PdfCanvas(page);
+
+        //    var font = PdfFontFactory.CreateFont(StandardFonts.HELVETICA);
+        //    float fontSize = 8f;
+
+        //    string pageText = $"Página {pageNumber} de ";
+
+        //    float textWidth = font.GetWidth(pageText, fontSize);
+        //    float placeholderWidth = font.GetWidth("999", fontSize); // reserva segura
+
+        //    float x = pageSize.GetWidth() - _page.MarginRight - textWidth - placeholderWidth;
+        //    float y = 20f;
+
+        //    var canvas = new Canvas(pdfCanvas, pageSize);
+        //    canvas.SetFont(font);
+        //    canvas.SetFontSize(fontSize);
+
+        //    canvas.ShowTextAligned(pageText, x, y, TextAlignment.LEFT);
+
+        //    pdfCanvas.AddXObject(
+        //        _totalPagesPlaceholder,
+        //        x + textWidth,
+        //        y
+        //    );
+
+        //    canvas.Close();
+        //}
     }
 }

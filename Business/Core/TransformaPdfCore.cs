@@ -5,15 +5,18 @@ using Business.Shared.Models;
 using Infrastructure;
 using Infrastructure.Models;
 using iText.Html2pdf;
+using iText.IO.Font.Constants;
+using iText.Kernel.Colors;
 using iText.Kernel.Events;
 using iText.Kernel.Exceptions;
+using iText.Kernel.Font;
 using iText.Kernel.Geom;
 using iText.Kernel.Pdf;
 using iText.Kernel.Pdf.Xobject;
 using iText.Kernel.Utils;
-using iText.Kernel.XMP.Impl;
 using iText.Layout;
 using iText.Layout.Element;
+using iText.Layout.Properties;
 using iText.Pdfa;
 using Newtonsoft.Json;
 using System;
@@ -57,7 +60,7 @@ namespace Business.Core
             byte[] file;
             try
             {
-                if (!string.IsNullOrWhiteSpace(url)) 
+                if (!string.IsNullOrWhiteSpace(url))
                     file = await JsonData.GetAndReadByteArrayAsync(url);
                 else
                     throw new Exception("Não é possível ler este documento pois ele não é um arquivo PDF válido.");
@@ -136,7 +139,7 @@ namespace Business.Core
                 result = await PdfInfo(inputFile.FileUrl);
             else
                 result = PdfInfo(inputFile.FileBytes);
-            
+
             return result;
         }
 
@@ -243,23 +246,21 @@ namespace Business.Core
             using var outputStream = new MemoryStream();
 
             var writer = new PdfWriter(outputStream);
-
             var pdfDocument = new PdfDocument(writer);
-
-            var totalPages = new PdfFormXObject(new Rectangle(0, 0, 50, 12));
 
             request.Page ??= PdfPageDefinition.Default();
 
             var pageSize = Helpers.Utils.GetPageSize(request.Page);
             pdfDocument.SetDefaultPageSize(pageSize);
 
-            // REGISTRA HANDLERS
+            var totalPages = new PdfFormXObject(new Rectangle(0, 0, 20, 12));
+
             // HEADER
             if (!string.IsNullOrWhiteSpace(request.HtmlHeader))
             {
                 pdfDocument.AddEventHandler(
                     PdfDocumentEvent.END_PAGE,
-                    new PdfHeaderHandler(request.HtmlHeader, request.Page)
+                    new PdfHeaderHandler(request.HtmlHeader, request.Page, totalPages)
                 );
             }
 
@@ -268,7 +269,7 @@ namespace Business.Core
             {
                 pdfDocument.AddEventHandler(
                     PdfDocumentEvent.END_PAGE,
-                    new PdfFooterHandler(request.HtmlFooter, request.Page, totalPages)
+                    new PdfFooterHandler(request.HtmlFooter, request.Page)
                 );
             }
 
@@ -281,18 +282,10 @@ namespace Business.Core
                 );
             }
 
-            // GERA O PDF DO HTML PRINCIPAL
-            // Converte HTML para PDF
             var converterProperties = new ConverterProperties();
-
-            // Permite CSS externo ou imagens
             converterProperties.SetBaseUri("");
 
-            var document = HtmlConverter.ConvertToDocument(
-                request.HtmlBody,
-                pdfDocument,
-                converterProperties
-            );
+            var document = new Document(pdfDocument, pageSize);
 
             document.SetMargins(
                 request.Page.MarginTop,
@@ -301,16 +294,43 @@ namespace Business.Core
                 request.Page.MarginLeft
             );
 
-            if (totalPages != null)
-            {
-                int totalPageCount = pdfDocument.GetNumberOfPages();
+            var elements = HtmlConverter.ConvertToElements(request.HtmlBody, converterProperties);
 
-                var canvas = new Canvas(totalPages, pdfDocument);
-                canvas.Add(new Paragraph(totalPageCount.ToString()));
-                canvas.Close();
+            foreach (var element in elements)
+            {
+                switch (element)
+                {
+                    case IBlockElement blockElement:
+                        document.Add(blockElement);
+                        break;
+
+                    case Image image:
+                        document.Add(image);
+                        break;
+
+                    case AreaBreak areaBreak:
+                        document.Add(areaBreak);
+                        break;
+                }
             }
 
-            pdfDocument.Close();
+            int totalPageCount = pdfDocument.GetNumberOfPages();
+
+            var font = PdfFontFactory.CreateFont(StandardFonts.HELVETICA);
+            var canvas = new Canvas(totalPages, pdfDocument);
+
+            canvas.SetFont(font);
+            canvas.SetFontSize(7);
+            canvas.SetFontColor(new DeviceRgb(107, 114, 128)); // equivalente o #6b7280 - cinza
+            canvas.ShowTextAligned(
+                totalPageCount.ToString(),
+                0,
+                0,
+                TextAlignment.LEFT
+            );
+            canvas.Close();
+
+            document.Close();
 
             return outputStream.ToArray();
         }
@@ -396,7 +416,7 @@ namespace Business.Core
         {
             byte[] documentoFromUrl = await JsonData.GetAndReadByteArrayAsync(url);
 
-            ValidationsSelector validationsSelector = 
+            ValidationsSelector validationsSelector =
                 JsonConvert.DeserializeObject<ValidationsSelector>(validations);
 
             ValidationsResult result = new ValidationsResult();
@@ -411,8 +431,8 @@ namespace Business.Core
 
                 // Possui carimbo edocs
                 result.RegexResult = CarimboCore.BuscarExpressoesRegulares(
-                    memoryStream, 
-                    validationsSelector.RegularExpressionsParameters.ExpressoesRegulares, 
+                    memoryStream,
+                    validationsSelector.RegularExpressionsParameters.ExpressoesRegulares,
                     validationsSelector.RegularExpressionsParameters.Paginas
                 );
 
@@ -470,7 +490,7 @@ namespace Business.Core
                 return output;
             }
         }
-        
+
         #endregion
     }
 }

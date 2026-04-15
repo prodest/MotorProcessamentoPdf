@@ -6,13 +6,13 @@
 
         public string Orientation { get; set; } = "Portrait";
 
-        public float MarginTop { get; set; } = 80;
-
-        public float MarginBottom { get; set; } = 60;
-
+        public float MarginTop { get; set; } = 40;
+        public float MarginBottom { get; set; } = 40;
         public float MarginLeft { get; set; } = 40;
-
         public float MarginRight { get; set; } = 40;
+
+        public float HeaderHeight { get; set; } = 60;
+        public float FooterHeight { get; set; } = 40;
 
         public static PdfPageDefinition Default()
         {
