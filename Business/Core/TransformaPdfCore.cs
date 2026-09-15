@@ -348,44 +348,51 @@ namespace Business.Core
         public byte[] PdfConcatenation(IEnumerable<byte[]> files)
         {
             var sourceDocuments = new List<PdfDocument>();
+            var outputMemoryStream = new MemoryStream();
+            PdfDocument outputPdfDocument = null;
 
             try
             {
-                using (var outputMemoryStream = new MemoryStream())
+                outputPdfDocument = new PdfDocument(new PdfWriter(outputMemoryStream));
+
+                foreach (var file in files)
                 {
-                    using (var outputPdfWriter = new PdfWriter(outputMemoryStream))
-                    using (var outputPdfDocument = new PdfDocument(outputPdfWriter))
-                    {
-                        foreach (var file in files)
-                        {
-                            var filePdfReader = new PdfReader(new MemoryStream(file));
-                            // ignorando as restrições de segurança do documento
-                            // https://kb.itextpdf.com/home/it7kb/faq/how-to-read-pdfs-created-with-an-unknown-random-owner-password
-                            filePdfReader.SetUnethicalReading(true);
+                    var filePdfReader = new PdfReader(new MemoryStream(file));
+                    // ignorando as restrições de segurança do documento
+                    // https://kb.itextpdf.com/home/it7kb/faq/how-to-read-pdfs-created-with-an-unknown-random-owner-password
+                    filePdfReader.SetUnethicalReading(true);
 
-                            var filePdfDocument = new PdfDocument(filePdfReader);
-                            sourceDocuments.Add(filePdfDocument);
+                    var filePdfDocument = new PdfDocument(filePdfReader);
+                    sourceDocuments.Add(filePdfDocument);
 
-                            filePdfDocument.CopyPagesTo(1, filePdfDocument.GetNumberOfPages(), outputPdfDocument);
-                        }
-
-                        // As origens só podem ser fechadas depois do destino: fechar a origem
-                        // dispara o flush dos objetos copiados e, dependendo do PDF, grava o
-                        // catálogo do destino antes da hora ("Cannot close document with
-                        // already flushed PDF Catalog").
-                        outputPdfDocument.Close();
-                    }
-
-                    return outputMemoryStream.ToArray();
+                    filePdfDocument.CopyPagesTo(1, filePdfDocument.GetNumberOfPages(), outputPdfDocument);
                 }
+
+                // Close() do destino é chamado UMA única vez. Se este Close() falhar, a
+                // exceção real precisa subir; um segundo Close() (por Dispose/using) veria
+                // o catálogo já gravado e lançaria "Cannot close document with already
+                // flushed PDF Catalog", mascarando o erro verdadeiro.
+                outputPdfDocument.Close();
+                outputPdfDocument = null;
+
+                return outputMemoryStream.ToArray();
             }
             finally
             {
+                // Só entra aqui se houve falha antes do Close() acima. Os catch vazios
+                // impedem que uma falha de limpeza substitua a exceção original.
+                if (outputPdfDocument != null)
+                {
+                    try { outputPdfDocument.Close(); } catch { /* documento incompleto */ }
+                }
+
                 foreach (var sourceDocument in sourceDocuments)
                 {
                     // PdfDocument.Close() também fecha o PdfReader e o MemoryStream de leitura.
                     try { sourceDocument.Close(); } catch { /* já fechado ou falha na leitura */ }
                 }
+
+                outputMemoryStream.Dispose();
             }
         }
 

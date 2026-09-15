@@ -17,7 +17,9 @@ namespace API.Shared.Filters
                 var response = new ApiResponse<object>(
                     statusCode:   500, 
                     message: context.Exception.Message,
-                    stackTrace: context.Exception.StackTrace
+                    // ToString() em vez de StackTrace: inclui o tipo da exceção e as
+                    // InnerExceptions, essenciais para diagnosticar falhas de PDF.
+                    stackTrace: context.Exception.ToString()
                     );
                 context.Result = new ObjectResult(response){ StatusCode = 500};
                 context.ExceptionHandled = true;
