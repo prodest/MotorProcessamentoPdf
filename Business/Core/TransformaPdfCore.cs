@@ -347,33 +347,45 @@ namespace Business.Core
 
         public byte[] PdfConcatenation(IEnumerable<byte[]> files)
         {
-            using (var outputMemoryStream = new MemoryStream())
-            using (var outputPdfWriter = new PdfWriter(outputMemoryStream))
-            using (var outputPdfDocument = new PdfDocument(outputPdfWriter))
+            var sourceDocuments = new List<PdfDocument>();
+
+            try
             {
-                foreach (var file in files)
+                using (var outputMemoryStream = new MemoryStream())
                 {
-                    using (var fileMemoryStream = new MemoryStream(file))
-                    using (var filePdfReader = new PdfReader(fileMemoryStream))
+                    using (var outputPdfWriter = new PdfWriter(outputMemoryStream))
+                    using (var outputPdfDocument = new PdfDocument(outputPdfWriter))
                     {
-                        // ignorando as restrições de segurança do documento
-                        // https://kb.itextpdf.com/home/it7kb/faq/how-to-read-pdfs-created-with-an-unknown-random-owner-password
-                        filePdfReader.SetUnethicalReading(true);
-                        using (var filePdfDocument = new PdfDocument(filePdfReader))
+                        foreach (var file in files)
                         {
+                            var filePdfReader = new PdfReader(new MemoryStream(file));
+                            // ignorando as restrições de segurança do documento
+                            // https://kb.itextpdf.com/home/it7kb/faq/how-to-read-pdfs-created-with-an-unknown-random-owner-password
+                            filePdfReader.SetUnethicalReading(true);
+
+                            var filePdfDocument = new PdfDocument(filePdfReader);
+                            sourceDocuments.Add(filePdfDocument);
+
                             filePdfDocument.CopyPagesTo(1, filePdfDocument.GetNumberOfPages(), outputPdfDocument);
-                            filePdfDocument.Close();
                         }
-                        filePdfReader.Close();
-                        fileMemoryStream.Close();
+
+                        // As origens só podem ser fechadas depois do destino: fechar a origem
+                        // dispara o flush dos objetos copiados e, dependendo do PDF, grava o
+                        // catálogo do destino antes da hora ("Cannot close document with
+                        // already flushed PDF Catalog").
+                        outputPdfDocument.Close();
                     }
+
+                    return outputMemoryStream.ToArray();
                 }
-
-                outputPdfDocument.Close();
-                outputPdfWriter.Close();
-                outputMemoryStream.Close();
-
-                return outputMemoryStream.ToArray();
+            }
+            finally
+            {
+                foreach (var sourceDocument in sourceDocuments)
+                {
+                    // PdfDocument.Close() também fecha o PdfReader e o MemoryStream de leitura.
+                    try { sourceDocument.Close(); } catch { /* já fechado ou falha na leitura */ }
+                }
             }
         }
 
