@@ -345,6 +345,77 @@ namespace Business.Core
 
         #region PdfConcatenation
 
+        /// <summary>
+        /// Deixa o /Filter de todo stream do documento com valores diretos.
+        /// <para>
+        /// Ao gravar um stream, o iText 7.2.0 chama PdfOutputStream.ContainsFlateFilter,
+        /// que percorre o array de /Filter com PdfArray.Contains. Se algum item for uma
+        /// referência indireta que não resolve, esse percurso lança NullReferenceException
+        /// e derruba o Close() do documento concatenado. Resolver os itens para valores
+        /// diretos aqui, ainda na origem, evita o problema sem alterar a semântica do PDF.
+        /// </para>
+        /// </summary>
+        private static void NormalizarFiltrosDeStream(PdfDocument document)
+        {
+            // Números de objeto válidos vão de 1 até GetNumberOfPdfObjects() - 1.
+            for (int numeroObjeto = 1; numeroObjeto < document.GetNumberOfPdfObjects(); numeroObjeto++)
+            {
+                PdfStream stream;
+                try
+                {
+                    if (!(document.GetPdfObject(numeroObjeto) is PdfStream pdfStream)) continue;
+                    stream = pdfStream;
+                }
+                catch { continue; }
+
+                PdfArray filtroOriginal;
+                try
+                {
+                    if (!(stream.Get(PdfName.Filter) is PdfArray pdfArray)) continue;
+                    filtroOriginal = pdfArray;
+                }
+                catch { continue; }
+
+                var filtroNormalizado = new PdfArray();
+                var precisaSubstituir = false;
+
+                for (int indice = 0; indice < filtroOriginal.Size(); indice++)
+                {
+                    PdfObject itemBruto;
+                    try { itemBruto = filtroOriginal.Get(indice, false); }
+                    catch { itemBruto = null; }
+
+                    if (itemBruto == null)
+                    {
+                        precisaSubstituir = true;
+                        continue;
+                    }
+
+                    PdfObject itemResolvido = itemBruto;
+                    if (itemBruto.IsIndirectReference())
+                    {
+                        precisaSubstituir = true;
+                        try { itemResolvido = ((PdfIndirectReference)itemBruto).GetRefersTo(true); }
+                        catch { itemResolvido = null; }
+                    }
+
+                    // item nulo indica referência quebrada na origem: nada a preservar
+                    if (itemResolvido == null)
+                    {
+                        precisaSubstituir = true;
+                        continue;
+                    }
+
+                    filtroNormalizado.Add(itemResolvido);
+                }
+
+                if (!precisaSubstituir) continue;
+
+                try { stream.Put(PdfName.Filter, filtroNormalizado); }
+                catch { /* origem somente leitura em estado inesperado: segue sem normalizar */ }
+            }
+        }
+
         public byte[] PdfConcatenation(IEnumerable<byte[]> files)
         {
             var sourceDocuments = new List<PdfDocument>();
@@ -372,6 +443,10 @@ namespace Business.Core
                 // exceção real precisa subir; um segundo Close() (por Dispose/using) veria
                 // o catálogo já gravado e lançaria "Cannot close document with already
                 // flushed PDF Catalog", mascarando o erro verdadeiro.
+                // Precisa rodar no documento de SAÍDA e antes do Close(): é na gravação
+                // dos objetos copiados que o iText percorre o /Filter e estoura.
+                NormalizarFiltrosDeStream(outputPdfDocument);
+
                 outputPdfDocument.Close();
                 outputPdfDocument = null;
 
