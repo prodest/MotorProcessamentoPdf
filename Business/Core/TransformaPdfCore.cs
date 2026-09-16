@@ -347,7 +347,6 @@ namespace Business.Core
 
         public byte[] PdfConcatenation(IEnumerable<byte[]> files)
         {
-            var sourceDocuments = new List<PdfDocument>();
             var outputMemoryStream = new MemoryStream();
             PdfDocument outputPdfDocument = null;
 
@@ -360,15 +359,22 @@ namespace Business.Core
 
                 foreach (var file in files)
                 {
-                    var filePdfReader = new PdfReader(new MemoryStream(file));
-                    // ignorando as restrições de segurança do documento
-                    // https://kb.itextpdf.com/home/it7kb/faq/how-to-read-pdfs-created-with-an-unknown-random-owner-password
-                    filePdfReader.SetUnethicalReading(true);
+                    using (var fileMemoryStream = new MemoryStream(file))
+                    using (var filePdfReader = new PdfReader(fileMemoryStream))
+                    {
+                        // ignorando as restrições de segurança do documento
+                        // https://kb.itextpdf.com/home/it7kb/faq/how-to-read-pdfs-created-with-an-unknown-random-owner-password
+                        filePdfReader.SetUnethicalReading(true);
 
-                    var filePdfDocument = new PdfDocument(filePdfReader);
-                    sourceDocuments.Add(filePdfDocument);
-
-                    filePdfDocument.CopyPagesTo(1, filePdfDocument.GetNumberOfPages(), outputPdfDocument);
+                        // Cada origem é fechada aqui, ainda dentro do laço, de propósito:
+                        // é o fechamento da origem que faz o iText gravar os objetos já
+                        // copiados. Segurar todas as origens abertas até o fim acumula
+                        // tudo para o Close() final e degrada muito a concatenação.
+                        using (var filePdfDocument = new PdfDocument(filePdfReader))
+                        {
+                            filePdfDocument.CopyPagesTo(1, filePdfDocument.GetNumberOfPages(), outputPdfDocument);
+                        }
+                    }
                 }
 
                 // Close() do destino é chamado UMA única vez. Se este Close() falhar, a
@@ -387,12 +393,6 @@ namespace Business.Core
                 if (outputPdfDocument != null)
                 {
                     try { outputPdfDocument.Close(); } catch { /* documento incompleto */ }
-                }
-
-                foreach (var sourceDocument in sourceDocuments)
-                {
-                    // PdfDocument.Close() também fecha o PdfReader e o MemoryStream de leitura.
-                    try { sourceDocument.Close(); } catch { /* já fechado ou falha na leitura */ }
                 }
 
                 outputMemoryStream.Dispose();
