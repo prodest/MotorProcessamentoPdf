@@ -64,46 +64,64 @@ namespace Business.Core
         private byte[] CarimboLateral(byte[] arquivo, string texto, float tamanhoFonte, Margem margem, string cor, 
             int? paginaInicial, int? totalPaginas
         ){
-            using MemoryStream readingStream = new MemoryStream(arquivo);
-            using PdfReader pdfReader = new PdfReader(readingStream);
+            var writingStream = new MemoryStream();
+            PdfDocument pdfDocument = null;
 
-            using MemoryStream writingStream = new MemoryStream();
-            using PdfWriter pdfWriter = new PdfWriter(writingStream);
-
-            using PdfDocument pdfDocument = new PdfDocument(pdfReader, pdfWriter);
-
-            if (paginaInicial == null)
-                paginaInicial = 1;
-
-            int numberOfPages = pdfDocument.GetNumberOfPages();
-            if (totalPaginas == null)
-                totalPaginas = numberOfPages;
-
-            paginaInicial--;
-            for (int i = 1; i <= numberOfPages; i++)
+            try
             {
-                PdfPage page = pdfDocument.GetPage(i);
-                page.SetIgnorePageRotationForContent(true);
-                Rectangle pageSize = pdfDocument.GetPage(i).GetPageSizeWithRotation();
-                Rectangle rectangle = new Rectangle(0, 0, 10, pageSize.GetHeight());
+                using MemoryStream readingStream = new MemoryStream(arquivo);
+                using PdfReader pdfReader = new PdfReader(readingStream);
 
-                using (Canvas canvas = new Canvas(page, rectangle))
+                // PdfWriterTolerante em vez de PdfWriter: o documento carimbado vem da
+                // concatenação e carrega streams copiados de outros PDFs, sujeitos aos
+                // mesmos defeitos de /Filter que derrubam a gravação.
+                pdfDocument = new PdfDocument(pdfReader, new PdfWriterTolerante(writingStream));
+
+                if (paginaInicial == null)
+                    paginaInicial = 1;
+
+                int numberOfPages = pdfDocument.GetNumberOfPages();
+                if (totalPaginas == null)
+                    totalPaginas = numberOfPages;
+
+                paginaInicial--;
+                for (int i = 1; i <= numberOfPages; i++)
                 {
-                    Paragraph paragraph = CriarParagrafo(
-                        texto, tamanhoFonte, margem, cor, 
-                        pageSize.GetHeight(), paginaInicial + i, 
-                        totalPaginas
-                    );
+                    PdfPage page = pdfDocument.GetPage(i);
+                    page.SetIgnorePageRotationForContent(true);
+                    Rectangle pageSize = pdfDocument.GetPage(i).GetPageSizeWithRotation();
+                    Rectangle rectangle = new Rectangle(0, 0, 10, pageSize.GetHeight());
 
-                    ConfigurarCanvas(canvas, pageSize, margem, paragraph, i);
-                    
-                    canvas.Close();
+                    // o using já fecha o Canvas; fechar também na mão duplicava o fechamento
+                    using (Canvas canvas = new Canvas(page, rectangle))
+                    {
+                        Paragraph paragraph = CriarParagrafo(
+                            texto, tamanhoFonte, margem, cor, 
+                            pageSize.GetHeight(), paginaInicial + i, 
+                            totalPaginas
+                        );
+
+                        ConfigurarCanvas(canvas, pageSize, margem, paragraph, i);
+                    }
                 }
+
+                // Close() uma única vez. Com o Close() explícito somado ao using, qualquer
+                // falha aqui era substituída por "Cannot close document with already flushed
+                // PDF Catalog", lançada pelo segundo fechamento, escondendo o erro real.
+                pdfDocument.Close();
+                pdfDocument = null;
+
+                return writingStream.ToArray();
             }
+            finally
+            {
+                if (pdfDocument != null)
+                {
+                    try { pdfDocument.Close(); } catch { /* documento incompleto */ }
+                }
 
-            pdfDocument.Close();
-
-            return writingStream.ToArray();
+                writingStream.Dispose();
+            }
         }
         
         #endregion

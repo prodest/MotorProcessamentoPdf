@@ -6,7 +6,8 @@ using iText.Kernel.Pdf;
 namespace Business.Helpers
 {
     /// <summary>
-    /// PdfWriter tolerante a arrays com itens nulos, usado na concatenação de PDFs.
+    /// PdfWriter tolerante a defeitos de estrutura em documentos gravados pelo iText.
+    /// Usado onde há streams vindos de outros documentos: concatenação e carimbo.
     /// <para>
     /// Ao concatenar, alguns documentos produzem no arquivo de saída arrays com item
     /// nulo, tipicamente na entrada /Filter de um stream. O iText 7.2.0 não trata esse
@@ -20,7 +21,7 @@ namespace Business.Helpers
     /// objetos entram na tabela de referências durante o próprio fechamento.
     /// </para>
     /// </summary>
-    public class ConcatenacaoPdfWriter : PdfWriter
+    public class PdfWriterTolerante : PdfWriter
     {
         /// <summary>
         /// Profundidade máxima do percurso. Itens nulos aparecem em arrays que são filhos
@@ -29,7 +30,7 @@ namespace Business.Helpers
         /// </summary>
         private const int ProfundidadeMaxima = 6;
 
-        public ConcatenacaoPdfWriter(Stream outputStream) : base(outputStream) { }
+        public PdfWriterTolerante(Stream outputStream) : base(outputStream) { }
 
         /// <summary>
         /// Versão tolerante da verificação de filtro Flate do iText.

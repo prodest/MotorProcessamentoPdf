@@ -352,10 +352,10 @@ namespace Business.Core
 
             try
             {
-                // ConcatenacaoPdfWriter em vez de PdfWriter: limpa arrays com item nulo
+                // PdfWriterTolerante em vez de PdfWriter: limpa arrays com item nulo
                 // na hora de gravar cada objeto, evitando o NullReferenceException que
                 // o iText 7.2.0 lança ao percorrer o /Filter de streams copiados.
-                outputPdfDocument = new PdfDocument(new ConcatenacaoPdfWriter(outputMemoryStream));
+                outputPdfDocument = new PdfDocument(new PdfWriterTolerante(outputMemoryStream));
 
                 foreach (var file in files)
                 {
