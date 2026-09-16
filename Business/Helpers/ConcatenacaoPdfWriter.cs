@@ -31,6 +31,58 @@ namespace Business.Helpers
 
         public ConcatenacaoPdfWriter(Stream outputStream) : base(outputStream) { }
 
+        /// <summary>
+        /// Versão tolerante da verificação de filtro Flate do iText.
+        /// <para>
+        /// O original faz PdfArray.Contains no array de /Filter. Se esse array for um
+        /// objeto indireto já gravado, seu conteúdo interno foi liberado e Contains lança
+        /// NullReferenceException, derrubando o Close(). O mesmo ocorre se o array tiver
+        /// item nulo.
+        /// </para>
+        /// <para>
+        /// Quando não é possível inspecionar o array, a resposta é "já tem Flate". Isso faz
+        /// o iText gravar o stream como está, sem recomprimir, que é o correto para um
+        /// stream copiado de outro documento.
+        /// </para>
+        /// </summary>
+        protected override bool ContainsFlateFilter(PdfStream pdfStream)
+        {
+            PdfObject filtro;
+            try { filtro = pdfStream.Get(PdfName.Filter); }
+            catch { return true; }
+
+            if (filtro == null) return false;
+            if (filtro.IsName()) return PdfName.FlateDecode.Equals(filtro);
+
+            if (!(filtro is PdfArray array)) return true;
+
+            // array já gravado: conteúdo liberado, não há o que inspecionar
+            if (array.IsFlushed()) return true;
+
+            int tamanho;
+            try { tamanho = array.Size(); }
+            catch { return true; }
+
+            for (int indice = 0; indice < tamanho; indice++)
+            {
+                PdfObject item;
+                try { item = array.Get(indice, false); }
+                catch { continue; }
+
+                if (item == null) continue;
+
+                if (item.IsIndirectReference())
+                {
+                    try { item = ((PdfIndirectReference)item).GetRefersTo(true); }
+                    catch { item = null; }
+                }
+
+                if (item != null && PdfName.FlateDecode.Equals(item)) return true;
+            }
+
+            return false;
+        }
+
         protected override void FlushObject(PdfObject pdfObject, bool canBeInObjStm)
         {
             RemoverItensNulos(pdfObject, 0, null);
